@@ -1,10 +1,8 @@
 import pandas as pd
-import numpy as np
-import re
-import nltk
-from nltk.stem.snowball import SnowballStemmer
 from langdetect import detect, DetectorFactory
 import exceptions as e
+from zipfile import ZipFile
+import os
 
 DetectorFactory.seed = 0
 
@@ -39,5 +37,4 @@ def standardize_df(df: pd.DataFrame) -> pd.DataFrame:
 
     df.dropna(inplace=True)  # usunięcie wartości NaN
     df['depressed'] = df['depressed'].astype(int)
-
     return df
