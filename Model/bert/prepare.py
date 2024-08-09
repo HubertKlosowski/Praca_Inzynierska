@@ -1,8 +1,5 @@
 import pandas as pd
 from langdetect import detect, DetectorFactory
-import exceptions as e
-from zipfile import ZipFile
-import os
 
 DetectorFactory.seed = 0
 
@@ -28,9 +25,6 @@ def limit_length(df: pd.DataFrame, limit_to: int) -> pd.DataFrame:  # usunięcie
 
 
 def standardize_df(df: pd.DataFrame) -> pd.DataFrame:
-    if len(df.columns) != 2:  # tylko tekst i klasa
-        raise e.DataframeException
-
     columns = ['text', 'depressed']  # zmiana nazw kolumn
     for i, column in enumerate(df.columns):
         df.rename(columns={column: columns[i]}, inplace=True)

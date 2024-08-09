@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import exceptions as e
 
 
 torch.manual_seed(1)
@@ -21,13 +20,10 @@ def positional_encoding(data: torch.Tensor, d_model: int, num_tokens: int, n: in
 # Kodowanie słów różni się od podstawowego transformatora z 2017. Mamy 3 warstwy:
 # 1. Reprezentacja tokenów przy wykorzystaniu ich ID w całym zbiorze tokenów
 # 2. Reprezentacja pozycji poszczególnych tokenów w sekwencji
-# 3. Reprezentacja typu tokena:
+# 3. Reprezentacja typu tokena: czy należy do zdania A czy B (next sentence prediction)
 # Na końcu wszystkie wygenerowane wektory są dodawane (standardowe operacje z normalizacją i dropoutem)
 class BERTEmbedding(nn.Module):
     def __init__(self, vocab_size: int, d_model: int, seq_length: int) -> None:
-        if seq_length > 512:
-            raise e.ParameterValueException
-
         super().__init__()
         self.vocab_size = vocab_size
         self.seq_length = seq_length
@@ -53,9 +49,6 @@ class BERTEmbedding(nn.Module):
 
 class SingleHeadAttention(nn.Module):
     def __init__(self, d_model: int, mask: bool = False) -> None:
-        if d_model < 1:
-            raise e.ParameterValueException
-
         super().__init__()
         self.d_model = d_model
         self.mask = mask
@@ -79,9 +72,6 @@ class SingleHeadAttention(nn.Module):
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model: int, h: int) -> None:
-        if d_model < 1 or h < 1:
-            raise e.ParameterValueException
-
         super().__init__()
         self.h = h  # ilość 'head'
         self.d_model = d_model
@@ -109,9 +99,6 @@ class MultiHeadAttention(nn.Module):
 # Warstwa wyjściowa to tylko warstwa liniowa
 class FeedForwardNetwork(nn.Module):
     def __init__(self, d_model: int, d_ff: int) -> None:
-        if d_model < 1 or d_ff < 1:
-            raise e.ParameterValueException
-
         super().__init__()
         self.layers = nn.Sequential(
             nn.Linear(d_model, d_ff),
@@ -127,9 +114,6 @@ class FeedForwardNetwork(nn.Module):
 # Normalizacja wyjść z FFN (Feed-Forward Network) i MHA (Multi-Head Attention)
 class LayerNorm(nn.Module):
     def __init__(self, d_model: int, eps: float = 1e-6) -> None:
-        if d_model < 1:
-            raise e.ParameterValueException
-
         super().__init__()
         self.eps = eps
         self.layer_norm = nn.LayerNorm(d_model)
@@ -142,9 +126,6 @@ class LayerNorm(nn.Module):
 # Jedna warstwa enkodera zawierająca wszystkie części wyżej wymienione.
 class EncoderLayer(nn.Module):
     def __init__(self, d_model: int, d_ff: int, h: int) -> None:
-        if d_model < 1 or d_ff < 1 or h < 1 or d_model % h != 0:
-            raise e.ParameterValueException
-
         super().__init__()
         self.multi_head = MultiHeadAttention(d_model, h=h)
         self.ffn = FeedForwardNetwork(d_model, d_ff)
@@ -158,9 +139,6 @@ class EncoderLayer(nn.Module):
 
 class Encoder(nn.Module):
     def __init__(self, d_model: int, d_ff: int, h: int, num_layers: int) -> None:
-        if num_layers < 1 or d_model < 1 or d_ff < 1 or h < 1 or d_model % h != 0:
-            raise e.ParameterValueException
-
         super().__init__()
         self.layers = nn.ModuleList([EncoderLayer(d_model, d_ff, h) for _ in range(num_layers)])
 

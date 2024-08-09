@@ -77,7 +77,7 @@ optimizer = optim.Adam(
 )
 criterion = nn.CrossEntropyLoss()
 
-training_dataset = pd.read_csv(os.path.join('..', 'data', 'dataset_2.csv'))
+training_dataset = pd.read_csv(os.path.join('..', 'data', 'depression_dataset_reddit_cleaned.csv'))
 training_dataset = standardize_df(training_dataset)
 training_dataset = limit_length(training_dataset, seq_length)
 # training_dataset = limit_lang(training_dataset)
