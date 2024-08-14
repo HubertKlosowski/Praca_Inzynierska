@@ -9,7 +9,8 @@ DetectorFactory.seed = 0
 
 
 def limit_lang(df: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:  # usunięcie wpisów nie w wybranym języku
-    df['lang'] = df['text'].apply(lambda x: detect(x))
+    if 'lang' not in df.columns:
+        df['lang'] = df['text'].apply(lambda x: detect(x))
     df.drop(index=df.loc[(df['lang'] != lang), :].index, inplace=True)
     df.drop(columns=['lang'], inplace=True)
     df.reset_index(drop=True, inplace=True)

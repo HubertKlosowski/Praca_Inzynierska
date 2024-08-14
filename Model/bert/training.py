@@ -29,8 +29,8 @@ def create_dataset(df: pd.DataFrame, labels: pd.Series) -> tuple[torch.Tensor, t
             labels_proba_tensor.to(dtype=torch.float))
 
 
-def train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, labels_proba: torch.Tensor, epochs: int = 5,
-          batch_size: int = 256):
+def bert_train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, labels_proba: torch.Tensor, epochs: int = 5,
+               batch_size: int = 256):
     batch_num = math.ceil(input_ids.shape[0] / batch_size)
     model.train()
     for epoch in range(epochs):
@@ -51,7 +51,7 @@ def train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, labels_proba: t
         print(f'Epoch: {epoch}, AVG Loss: {epoch_loss / batch_num}')
 
 
-def test(input_ids: torch.Tensor, token_type_ids: torch.Tensor, y_true: torch.Tensor):
+def bert_test(input_ids: torch.Tensor, token_type_ids: torch.Tensor, y_true: torch.Tensor):
     model.eval()
     with torch.no_grad():
         y_pred = model(input_ids, token_type_ids)
@@ -61,6 +61,7 @@ def test(input_ids: torch.Tensor, token_type_ids: torch.Tensor, y_true: torch.Te
 
 seq_length = 128
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
 
 model = BERT(
     d_model=768,
@@ -68,7 +69,7 @@ model = BERT(
     h=12,
     num_layers=12,
     seq_length=seq_length
-)
+).to(device=device)
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')  # uncased -> nie ma znaczenia wielkość liter
 optimizer = optim.Adam(
@@ -91,6 +92,6 @@ X_test = pd.DataFrame(X_test, columns=X.columns).reset_index(drop=True)
 train_input_ids, train_token_type_ids, train_label_proba = create_dataset(X_train, y_train)
 test_input_ids, test_token_type_ids, test_label_proba = create_dataset(X_test, y_test)
 
-train(train_input_ids, train_token_type_ids, train_label_proba)
+bert_train(train_input_ids, train_token_type_ids, train_label_proba)
 
-test(test_input_ids, test_token_type_ids, torch.tensor(y_test.values))
+bert_test(test_input_ids, test_token_type_ids, torch.tensor(y_test.values))
