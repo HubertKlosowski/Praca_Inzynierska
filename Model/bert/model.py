@@ -23,19 +23,20 @@ def positional_encoding(data: torch.Tensor, d_model: int, num_tokens: int, n: in
 # 3. Reprezentacja typu tokena: czy należy do zdania A czy B (next sentence prediction)
 # Na końcu wszystkie wygenerowane wektory są dodawane (standardowe operacje z normalizacją i dropoutem)
 class BERTEmbedding(nn.Module):
-    def __init__(self, vocab_size: int, d_model: int, seq_length: int) -> None:
+    def __init__(self, vocab_size: int, d_model: int, seq_length: int, device: str) -> None:
         super().__init__()
         self.vocab_size = vocab_size
         self.seq_length = seq_length
         self.d_model = d_model
-        self.word_embeddings = nn.Embedding(vocab_size, d_model)
-        self.positional_embeddings = nn.Embedding(seq_length, d_model)
-        self.token_type_embeddings = nn.Embedding(2, d_model)
+        self.device = device
+        self.word_embeddings = nn.Embedding(vocab_size, d_model).to(device=self.device)
+        self.positional_embeddings = nn.Embedding(seq_length, d_model).to(device=self.device)
+        self.token_type_embeddings = nn.Embedding(2, d_model).to(device=self.device)
         self.layer_norm = LayerNorm(d_model, 1e-12)
         self.dropout = nn.Dropout(p=0.1)
 
     def forward(self, input_ids: torch.Tensor, token_type_ids: torch.Tensor) -> torch.Tensor:
-        position_ids = torch.arange(self.seq_length)
+        position_ids = torch.arange(self.seq_length).to(device=self.device)
 
         word_embeddings = self.word_embeddings(input_ids)
         positional_embeddings = self.positional_embeddings(position_ids)
@@ -71,14 +72,14 @@ class SingleHeadAttention(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, d_model: int, h: int) -> None:
+    def __init__(self, d_model: int, h: int, device: str) -> None:
         super().__init__()
         self.h = h  # ilość 'head'
         self.d_model = d_model
-        self.Wq = nn.Linear(d_model, d_model)
-        self.Wk = nn.Linear(d_model, d_model)
-        self.Wv = nn.Linear(d_model, d_model)
-        self.Wo = nn.Linear(d_model, d_model)
+        self.Wq = nn.Linear(d_model, d_model).to(device=device)
+        self.Wk = nn.Linear(d_model, d_model).to(device=device)
+        self.Wv = nn.Linear(d_model, d_model).to(device=device)
+        self.Wo = nn.Linear(d_model, d_model).to(device=device)
         self.heads = nn.ModuleList([SingleHeadAttention(d_model) for _ in range(h)])
 
     def forward(self, encoder_input: torch.Tensor) -> torch.Tensor:
@@ -125,9 +126,9 @@ class LayerNorm(nn.Module):
 
 # Jedna warstwa enkodera zawierająca wszystkie części wyżej wymienione.
 class EncoderLayer(nn.Module):
-    def __init__(self, d_model: int, d_ff: int, h: int) -> None:
+    def __init__(self, d_model: int, d_ff: int, h: int, device: str) -> None:
         super().__init__()
-        self.multi_head = MultiHeadAttention(d_model, h=h)
+        self.multi_head = MultiHeadAttention(d_model, h=h, device=device)
         self.ffn = FeedForwardNetwork(d_model, d_ff)
         self.layer_norm = LayerNorm(d_model)
 
@@ -138,9 +139,9 @@ class EncoderLayer(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, d_model: int, d_ff: int, h: int, num_layers: int) -> None:
+    def __init__(self, d_model: int, d_ff: int, h: int, num_layers: int, device: str) -> None:
         super().__init__()
-        self.layers = nn.ModuleList([EncoderLayer(d_model, d_ff, h) for _ in range(num_layers)])
+        self.layers = nn.ModuleList([EncoderLayer(d_model, d_ff, h, device) for _ in range(num_layers)])
 
     def forward(self, encoder_input: torch.Tensor) -> torch.Tensor:
         x = encoder_input
@@ -150,11 +151,11 @@ class Encoder(nn.Module):
 
 
 class BERT(nn.Module):
-    def __init__(self, d_model: int, d_ff: int, h: int, num_layers: int, seq_length: int) -> None:
+    def __init__(self, d_model: int, d_ff: int, h: int, num_layers: int, seq_length: int, device: str) -> None:
         super().__init__()
-        self.bert_embedding = BERTEmbedding(30522, d_model, seq_length)
-        self.encoder_part = Encoder(d_model, d_ff, h=h, num_layers=num_layers)
-        self.linear = nn.Linear(d_model, 2)
+        self.bert_embedding = BERTEmbedding(30522, d_model, seq_length, device)
+        self.encoder_part = Encoder(d_model=d_model, d_ff=d_ff, h=h, num_layers=num_layers, device=device)
+        self.linear = nn.Linear(d_model, 2).to(device=device)
 
     def forward(self, input_ids: torch.Tensor, token_type_ids: torch.Tensor) -> torch.Tensor:
         word_embedding = self.bert_embedding(input_ids, token_type_ids)
