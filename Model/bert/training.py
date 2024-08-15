@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from time import perf_counter
 
 
-def create_dataset(df: pd.DataFrame, labels: pd.Series, dev: str) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+def create_dataset(df: pd.DataFrame, labels: pd.Series) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     input_ids_tensor = torch.zeros(size=(len(df), seq_length))
     token_type_ids_tensor = torch.zeros(size=(len(df), seq_length))
     labels_proba_tensor = torch.zeros(size=(len(df), 2), dtype=torch.long)
@@ -28,7 +28,7 @@ def create_dataset(df: pd.DataFrame, labels: pd.Series, dev: str) -> tuple[torch
         labels_proba_tensor[index][labels.iloc[index]] = 1
     return (input_ids_tensor.to(dtype=torch.int, device=device),
             token_type_ids_tensor.to(dtype=torch.int, device=device),
-            labels_proba_tensor.to(dtype=torch.float, device=dev))
+            labels_proba_tensor.to(dtype=torch.float, device=device))
 
 
 def bert_train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, labels_proba: torch.Tensor, epochs: int = 5,
@@ -38,8 +38,10 @@ def bert_train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, labels_pro
     for epoch in range(epochs):
         epoch_loss = 0
         start_epoch_time = perf_counter()  # z ciekawości
+
         for batch_idx in range(batch_num):
             start_batch_time = perf_counter()  # z ciekawości
+
             batch_input_ids = input_ids[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
             batch_token_type_ids = token_type_ids[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
             batch_labels_proba = labels_proba[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
@@ -48,11 +50,12 @@ def bert_train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, labels_pro
             y_pred = model(batch_input_ids, batch_token_type_ids)
 
             loss = criterion(y_pred, batch_labels_proba)
-            print(f'Batch loss: {loss.item()}, Time: {perf_counter() - start_batch_time}s')
             epoch_loss += loss.item()
             loss.backward()
             optimizer.step()
-        print(f'Epoch: {epoch}, AVG Loss: {epoch_loss / batch_num}, Time: {perf_counter() - start_epoch_time}s')
+            print(f'Batch loss: {loss.item()}, Time: {round(perf_counter() - start_batch_time, 2)}s')
+
+        print(f'Epoch: {epoch}, AVG Loss: {epoch_loss / batch_num}, Time: {round(perf_counter() - start_epoch_time, 2)}s')
 
 
 def bert_test(input_ids: torch.Tensor, token_type_ids: torch.Tensor, y_true: torch.Tensor):
@@ -64,7 +67,7 @@ def bert_test(input_ids: torch.Tensor, token_type_ids: torch.Tensor, y_true: tor
 
 
 if __name__ == '__main__':
-    seq_length = 128
+    seq_length = 256
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     model = BERT(
@@ -94,8 +97,8 @@ if __name__ == '__main__':
     X_train = pd.DataFrame(X_train, columns=X.columns).reset_index(drop=True)
     X_test = pd.DataFrame(X_test, columns=X.columns).reset_index(drop=True)
 
-    train_input_ids, train_token_type_ids, train_label_proba = create_dataset(X_train, y_train, device)
-    test_input_ids, test_token_type_ids, test_label_proba = create_dataset(X_test, y_test, device)
+    train_input_ids, train_token_type_ids, train_label_proba = create_dataset(X_train, y_train)
+    test_input_ids, test_token_type_ids, test_label_proba = create_dataset(X_test, y_test)
 
     bert_train(train_input_ids, train_token_type_ids, train_label_proba)
 

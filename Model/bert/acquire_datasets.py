@@ -5,6 +5,7 @@ import json
 from api_keys import public_key, secret_key
 import praw
 from datetime import datetime
+from praw.models import MoreComments
 
 
 # Dla zbioru danych MDDL z githuba
@@ -48,7 +49,7 @@ def read_json_tweet(filename: str, label: int) -> dict:
 
 
 # Dla wpisów z języka polskiego z Reddita
-def save_dataframe_reddit(search_by: str = 'depresja') -> pd.DataFrame:
+def save_dataframe_reddit(search_by: str) -> pd.DataFrame:
     reddit = praw.Reddit(
         client_id=public_key,
         client_secret=secret_key,
@@ -61,9 +62,7 @@ def save_dataframe_reddit(search_by: str = 'depresja') -> pd.DataFrame:
         for f in as_completed(res):
             posts.append(f.result())
 
-    df = pd.DataFrame(posts)
-    df.to_csv(os.path.join('..', 'data', 'polish_reddit_posts.csv'), index=False)
-    return df
+    return pd.DataFrame(posts)
 
 
 def read_reddit_post(sub: praw.reddit.Submission) -> dict:
@@ -75,12 +74,21 @@ def read_reddit_post(sub: praw.reddit.Submission) -> dict:
         'upvote_ratio': sub.upvote_ratio,
         'num_comments': sub.num_comments,
         'over_18': sub.over_18,
-        'comments': [c.body for c in sub.comments],
+        'comments': [c.body for c in sub.comments if not isinstance(c, MoreComments)],
     }
 
 
 # Przykłady użycia:
 # dataframe1 = get_dataframe_twitter(os.path.join(get_path_to_mddl(), 'unlabeled', 'tweet'))
 # dataframe2 = get_dataframe_twitter(os.path.join(path_to_dataset, 'unlabeled', 'positive', 'tweet'))
-similar_topics = ['alkoholizm', 'samotność', 'samookaleczanie', 'samobójstwo', 'żałoba']
-dataframe3 = save_dataframe_reddit()
+
+# lista wszystkich polskich subredditów: https://www.reddit.com/r/Polska/wiki/subreddity/
+
+# similar_topics = ['stan depresyjny', 'stan depresji', 'alkoholizm', 'stany lękowe', 'samotność', 'samookaleczanie',
+#                   'samobójstwo', 'żałoba', 'depresja']
+# final = pd.DataFrame()
+# for topic in similar_topics:
+#     df = save_dataframe_reddit(topic)
+#     final = pd.concat([final, df])
+# final.drop_duplicates(subset=['title', 'text'], keep='first', inplace=True)
+# final.to_csv(os.path.join('..', 'data', 'polish_reddit_posts.csv'), index=False)
