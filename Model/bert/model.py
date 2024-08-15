@@ -49,10 +49,12 @@ class BERTEmbedding(nn.Module):
 
 
 class SingleHeadAttention(nn.Module):
-    def __init__(self, d_model: int, mask: bool = False) -> None:
+    def __init__(self, d_k: int, device: str, mask: bool = False) -> None:
         super().__init__()
-        self.d_model = d_model
+        self.d_k = d_k
         self.mask = mask
+
+        self.device = device
 
     # Parametry wejściowe to Q, K, V.
     # Mnożymy macierz Q przez transponowaną macierz K. Skalujemy otrzymane wartości przez pierwiastek z d_model.
@@ -62,13 +64,12 @@ class SingleHeadAttention(nn.Module):
     # Zwracamy macierz, która przechowuje znaczenie każdego słowa oraz relacje słów między sobą.
     # Wymiary (num_tokens x d_model)
     def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor) -> torch.Tensor:
-        if self.d_model != query.shape[1] or self.d_model != key.shape[1] or self.d_model != value.shape[1]:
-            return torch.zeros_like(query)
-        dot_product = torch.matmul(query, key.transpose(0, 1)) / (self.d_model ** 0.5)
+        dot_product = torch.matmul(query, key.transpose(0, 1)) / (self.d_k ** 0.5)
         if self.mask:
-            dot_product += torch.triu(torch.full(dot_product.shape, -torch.inf), diagonal=1)
+            dot_product += torch.triu(torch.full(dot_product.shape, -torch.inf, device=self.device), diagonal=1)
         attention_weights = torch.softmax(dot_product, dim=-1)
-        return attention_weights
+        attention = torch.matmul(attention_weights, value)
+        return attention
 
 
 class MultiHeadAttention(nn.Module):
@@ -80,7 +81,7 @@ class MultiHeadAttention(nn.Module):
         self.Wk = nn.Linear(d_model, d_model).to(device=device)
         self.Wv = nn.Linear(d_model, d_model).to(device=device)
         self.Wo = nn.Linear(d_model, d_model).to(device=device)
-        self.heads = nn.ModuleList([SingleHeadAttention(d_model) for _ in range(h)])
+        self.heads = nn.ModuleList([SingleHeadAttention(d_model, device) for _ in range(self.h)])
 
     def forward(self, encoder_input: torch.Tensor) -> torch.Tensor:
         batch_dim = (encoder_input.shape[0], encoder_input.shape[1], self.h, encoder_input.shape[2] // self.h)
@@ -157,7 +158,8 @@ class BERT(nn.Module):
         self.encoder_part = Encoder(d_model=d_model, d_ff=d_ff, h=h, num_layers=num_layers, device=device)
         self.linear = nn.Linear(d_model, 2).to(device=device)
 
-    def forward(self, input_ids: torch.Tensor, token_type_ids: torch.Tensor) -> torch.Tensor:
+    def forward(self, input_ids: torch.Tensor, token_type_ids: torch.Tensor,
+                attention_mask: torch.Tensor) -> torch.Tensor:
         word_embedding = self.bert_embedding(input_ids, token_type_ids)
         after_encoder = self.encoder_part(word_embedding)
         last_linear = self.linear(after_encoder)
