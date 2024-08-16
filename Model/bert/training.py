@@ -44,7 +44,6 @@ def bert_train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_
 
         for batch_idx in range(batch_num):
             start_batch_time = perf_counter()  # z ciekawości
-
             batch_input_ids = input_ids[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
             batch_token_type_ids = token_type_ids[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
             batch_attention_mask = attention_mask[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
