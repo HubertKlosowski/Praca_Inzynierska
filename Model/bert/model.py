@@ -81,9 +81,10 @@ class MultiHeadAttention(nn.Module):
         self.Wk = nn.Linear(d_model, d_model).to(device=device)
         self.Wv = nn.Linear(d_model, d_model).to(device=device)
         self.Wo = nn.Linear(d_model, d_model).to(device=device)
-        self.heads = nn.ModuleList([SingleHeadAttention(d_model, device) for _ in range(self.h)])
+        self.heads = nn.ModuleList([SingleHeadAttention(d_model // self.h, device) for _ in range(self.h)])
 
-    def forward(self, encoder_input: torch.Tensor) -> torch.Tensor:
+    def forward(self, encoder_input: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+        xd = attention_mask
         batch_dim = (encoder_input.shape[0], encoder_input.shape[1], self.h, encoder_input.shape[2] // self.h)
         query = self.Wq(encoder_input).reshape(batch_dim).transpose(1, 2)
         key = self.Wk(encoder_input).reshape(batch_dim).transpose(1, 2)
@@ -118,7 +119,7 @@ class LayerNorm(nn.Module):
     def __init__(self, d_model: int, eps: float = 1e-6) -> None:
         super().__init__()
         self.eps = eps
-        self.layer_norm = nn.LayerNorm(d_model)
+        self.layer_norm = nn.LayerNorm(d_model, eps=self.eps)
 
     def forward(self, encoder_input: torch.Tensor) -> torch.Tensor:
         layer_norm_output = self.layer_norm(encoder_input)
@@ -133,8 +134,8 @@ class EncoderLayer(nn.Module):
         self.ffn = FeedForwardNetwork(d_model, d_ff)
         self.layer_norm = LayerNorm(d_model)
 
-    def forward(self, encoder_input: torch.Tensor) -> torch.Tensor:
-        after_multi_head = self.layer_norm(encoder_input + self.multi_head(encoder_input))
+    def forward(self, encoder_input: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+        after_multi_head = self.layer_norm(encoder_input + self.multi_head(encoder_input, attention_mask))
         after_ffn = self.layer_norm(after_multi_head + self.ffn(after_multi_head))
         return after_ffn
 
@@ -144,10 +145,10 @@ class Encoder(nn.Module):
         super().__init__()
         self.layers = nn.ModuleList([EncoderLayer(d_model, d_ff, h, device) for _ in range(num_layers)])
 
-    def forward(self, encoder_input: torch.Tensor) -> torch.Tensor:
+    def forward(self, encoder_input: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
         x = encoder_input
         for layer in self.layers:
-            x = layer(x)
+            x = layer(x, attention_mask)
         return x
 
 
@@ -161,7 +162,7 @@ class BERT(nn.Module):
     def forward(self, input_ids: torch.Tensor, token_type_ids: torch.Tensor,
                 attention_mask: torch.Tensor) -> torch.Tensor:
         word_embedding = self.bert_embedding(input_ids, token_type_ids)
-        after_encoder = self.encoder_part(word_embedding)
+        after_encoder = self.encoder_part(word_embedding, attention_mask)
         last_linear = self.linear(after_encoder)
         cls_output = last_linear[:, 0, :]  # interesują nas tylko wartosci z tokena [CLS]
         proba = torch.softmax(cls_output, dim=-1)
