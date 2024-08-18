@@ -33,7 +33,7 @@ def create_dataset(df: pd.DataFrame, labels: pd.Series) -> tuple[Tensor, Tensor,
     input_ids_tensor = torch.zeros(size=(len(df), seq_length), dtype=torch.int, device=device)
     token_type_ids_tensor = torch.zeros(size=(len(df), seq_length), dtype=torch.int, device=device)
     attention_mask_tensor = torch.zeros(size=(len(df), seq_length), dtype=torch.int, device=device)
-    labels_proba_tensor = torch.zeros(size=(len(df), 2), dtype=torch.float, device=device)
+    labels_proba_tensor = torch.zeros(size=(len(df), 2), dtype=torch.float16, device=device)
     for index, row in df.iterrows():
         single_sentence = tokenizer(
             row['text'],
@@ -112,7 +112,8 @@ if __name__ == '__main__':
         device=device
     ).to(device=device)
 
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')  # uncased -> nie ma znaczenia wielkość liter
+    # uncased -> nie ma znaczenia wielkość liter
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', clean_up_tokenization_spaces=True)
     optimizer = optim.AdamW(
         model.parameters(),
         lr=1e-5,
