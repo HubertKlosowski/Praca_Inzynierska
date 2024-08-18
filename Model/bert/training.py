@@ -12,10 +12,10 @@ from time import perf_counter
 
 
 def create_dataset(df: pd.DataFrame, labels: pd.Series) -> tuple[Tensor, Tensor, Tensor, Tensor]:
-    input_ids_tensor = torch.zeros(size=(len(df), seq_length))
-    token_type_ids_tensor = torch.zeros(size=(len(df), seq_length))
-    attention_mask_tensor = torch.zeros(size=(len(df), seq_length))
-    labels_proba_tensor = torch.zeros(size=(len(df), 2), dtype=torch.long)
+    input_ids_tensor = torch.zeros(size=(len(df), seq_length), device=device)
+    token_type_ids_tensor = torch.zeros(size=(len(df), seq_length), device=device)
+    attention_mask_tensor = torch.zeros(size=(len(df), seq_length), device=device)
+    labels_proba_tensor = torch.zeros(size=(len(df), 2), dtype=torch.long, device=device)
     for index, row in df.iterrows():
         single_sentence = tokenizer(
             row['text'],
@@ -28,14 +28,14 @@ def create_dataset(df: pd.DataFrame, labels: pd.Series) -> tuple[Tensor, Tensor,
         token_type_ids_tensor[index] = single_sentence['token_type_ids']
         attention_mask_tensor[index] = single_sentence['attention_mask']
         labels_proba_tensor[index][labels.iloc[index]] = 1
-    return (input_ids_tensor.to(dtype=torch.int, device=device),
-            token_type_ids_tensor.to(dtype=torch.int, device=device),
-            attention_mask_tensor.to(dtype=torch.int, device=device),
-            labels_proba_tensor.to(dtype=torch.float, device=device))
+    return input_ids_tensor, token_type_ids_tensor, attention_mask_tensor, labels_proba_tensor
 
 
 def bert_train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_mask: torch.Tensor,
                labels_proba: torch.Tensor, epochs: int = 5, batch_size: int = 256):
+    # Użycie skalowania gradientu w technice AMP zapobiega zanikaniu gradientów o małych wartościach
+    scaler = torch.amp.GradScaler('cuda')
+
     batch_num = math.ceil(input_ids.shape[0] / batch_size)
     model.train()
     for epoch in range(epochs):
@@ -49,22 +49,30 @@ def bert_train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_
             batch_attention_mask = attention_mask[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
             batch_labels_proba = labels_proba[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
 
-            optimizer.zero_grad()
-            y_pred = model(batch_input_ids, batch_token_type_ids, batch_attention_mask)
+            # polecane zamiast optimizer.zero_grad() ze względu na ograniczenie operacji w pamięci
+            optimizer.zero_grad(set_to_none=True)
 
-            loss = criterion(y_pred, batch_labels_proba)
-            epoch_loss += loss.item()
-            loss.backward()
-            optimizer.step()
+            # Automatic Mixed Precision (AMP) umożliwia wykonanie pewnych operacji przy użyciu FP16, niż FP32 bez straty
+            # dokładności w wynikach.
+            # Zalety: mniejsze użycie pamięci karty graficznej, szybsze wykonanie operacji
+            with torch.autocast(device_type=device, dtype=torch.float16):
+                y_pred = model(batch_input_ids, batch_token_type_ids, batch_attention_mask)
+
+                loss = criterion(y_pred, batch_labels_proba)
+                epoch_loss += loss.item()
+
+            scaler.scale(loss).backward()  # zamiast loss.backward()
+            scaler.step(optimizer)  # zamiast optimizer.step()
+            scaler.update()
+
             print(f'Batch loss: {loss.item()}, Time: {round(perf_counter() - start_batch_time, 2)}s')
-
         print(f'Epoch: {epoch}, Loss: {epoch_loss / batch_num}, Time: {round(perf_counter() - start_epoch_time, 2)}s')
 
 
-def bert_test(input_ids: torch.Tensor, token_type_ids: torch.Tensor, y_true: torch.Tensor):
+def bert_test(input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_mask: torch.Tensor, y_true: torch.Tensor):
     model.eval()
     with torch.no_grad():
-        y_pred = model(input_ids, token_type_ids)
+        y_pred = model(input_ids, token_type_ids, attention_mask)
         y_pred = y_pred.squeeze().argmax(dim=1).numpy(force=True)
     print(classification_report(y_true, y_pred))
 
@@ -83,7 +91,7 @@ if __name__ == '__main__':
     ).to(device=device)
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')  # uncased -> nie ma znaczenia wielkość liter
-    optimizer = optim.Adam(
+    optimizer = optim.AdamW(
         model.parameters(),
         lr=1e-5,
         betas=(0.9, 0.99)
@@ -104,6 +112,8 @@ if __name__ == '__main__':
     train_input_ids, train_token_type_ids, train_attention_mask, train_label_proba = create_dataset(X_train, y_train)
     test_input_ids, test_token_type_ids, test_attention_mask, test_label_proba = create_dataset(X_test, y_test)
 
-    bert_train(train_input_ids, train_token_type_ids, train_attention_mask, train_label_proba)
+    bert_train(train_input_ids, train_token_type_ids, train_attention_mask, train_label_proba, batch_size=128)
 
-    bert_test(test_input_ids, test_token_type_ids, torch.tensor(y_test.values))
+    torch.save(model.state_dict(), os.path.join('..', 'data', 'custom-bert-base.pt'))
+
+    bert_test(test_input_ids, test_token_type_ids, test_attention_mask, torch.tensor(y_test.values))

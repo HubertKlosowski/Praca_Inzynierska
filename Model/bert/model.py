@@ -5,18 +5,6 @@ import torch.nn as nn
 torch.manual_seed(1)
 
 
-def positional_encoding(data: torch.Tensor, d_model: int, num_tokens: int, n: int) -> torch.Tensor:  # nie dla BERT
-    pos_encoding = torch.zeros(size=(num_tokens, d_model), dtype=torch.float)
-    for k in range(num_tokens):
-        zeros = torch.zeros(size=(d_model, ), dtype=torch.float)
-        i = torch.tensor([_ for _ in range(d_model // 2)], dtype=torch.float)
-        arg = k / n ** (2 * i / d_model)
-        zeros[:len(zeros) - 1:2] = torch.sin(arg)  # jeśli d_model jest nieparzysty
-        zeros[1::2] = torch.cos(arg)
-        pos_encoding[k] = zeros
-    return pos_encoding + data
-
-
 # Kodowanie słów różni się od podstawowego transformatora z 2017. Mamy 3 warstwy:
 # 1. Reprezentacja tokenów przy wykorzystaniu ich ID w całym zbiorze tokenów
 # 2. Reprezentacja pozycji poszczególnych tokenów w sekwencji
