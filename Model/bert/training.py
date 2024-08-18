@@ -13,8 +13,7 @@ from torch.utils.data import Dataset, DataLoader
 
 
 class BertDataset(Dataset):
-    def __init__(self, input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_mask: torch.Tensor,
-                 labels_proba: torch.Tensor):
+    def __init__(self, input_ids: Tensor, token_type_ids: Tensor, attention_mask: Tensor, labels_proba: Tensor):
         self.input_ids = input_ids
         self.token_type_ids = token_type_ids
         self.attention_mask = attention_mask
@@ -33,7 +32,7 @@ def create_dataset(df: pd.DataFrame, labels: pd.Series) -> tuple[Tensor, Tensor,
     input_ids_tensor = torch.zeros(size=(len(df), seq_length), dtype=torch.int, device=device)
     token_type_ids_tensor = torch.zeros(size=(len(df), seq_length), dtype=torch.int, device=device)
     attention_mask_tensor = torch.zeros(size=(len(df), seq_length), dtype=torch.int, device=device)
-    labels_proba_tensor = torch.zeros(size=(len(df), 2), dtype=torch.float16, device=device)
+    labels_proba_tensor = torch.zeros(size=(len(df), 2), dtype=torch.float, device=device)
     for index, row in df.iterrows():
         single_sentence = tokenizer(
             row['text'],
@@ -49,8 +48,8 @@ def create_dataset(df: pd.DataFrame, labels: pd.Series) -> tuple[Tensor, Tensor,
     return input_ids_tensor, token_type_ids_tensor, attention_mask_tensor, labels_proba_tensor
 
 
-def bert_train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_mask: torch.Tensor,
-               labels_proba: torch.Tensor, epochs: int = 5, batch_size: int = 256):
+def bert_train(input_ids: Tensor, token_type_ids: Tensor, attention_mask: Tensor, labels_proba: Tensor,
+               epochs: int = 10, batch_size: int = 128):
     dataset = BertDataset(input_ids, token_type_ids, attention_mask, labels_proba)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
 
@@ -91,7 +90,7 @@ def bert_train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_
         print(f'Epoch: {epoch}, Loss: {epoch_loss / batch_num}, Time: {round(perf_counter() - start_epoch_time, 2)}s')
 
 
-def bert_test(input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_mask: torch.Tensor, y_true: torch.Tensor):
+def bert_test(input_ids: Tensor, token_type_ids: Tensor, attention_mask: Tensor, y_true: Tensor):
     model.eval()
     with torch.no_grad():
         y_pred = model(input_ids, token_type_ids, attention_mask)
@@ -112,8 +111,7 @@ if __name__ == '__main__':
         device=device
     ).to(device=device)
 
-    # uncased -> nie ma znaczenia wielkość liter
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', clean_up_tokenization_spaces=True)
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')  # uncased -> nie ma znaczenia wielkość liter
     optimizer = optim.AdamW(
         model.parameters(),
         lr=1e-5,
