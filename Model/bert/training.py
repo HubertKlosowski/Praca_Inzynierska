@@ -9,13 +9,31 @@ from prepare import limit_lang, standardize_df, limit_length
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from time import perf_counter
+from torch.utils.data import Dataset, DataLoader
+
+
+class BertDataset(Dataset):
+    def __init__(self, input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_mask: torch.Tensor,
+                 labels_proba: torch.Tensor):
+        self.input_ids = input_ids
+        self.token_type_ids = token_type_ids
+        self.attention_mask = attention_mask
+        self.labels_proba = labels_proba
+
+    def __len__(self):
+        return self.input_ids.shape[0]
+
+    def __getitem__(self, idx):
+        sample = {'input_ids': self.input_ids[idx], 'token_type_ids': self.token_type_ids[idx],
+                  'attention_mask': self.attention_mask[idx], 'labels_proba': self.labels_proba[idx]}
+        return sample
 
 
 def create_dataset(df: pd.DataFrame, labels: pd.Series) -> tuple[Tensor, Tensor, Tensor, Tensor]:
-    input_ids_tensor = torch.zeros(size=(len(df), seq_length), device=device)
-    token_type_ids_tensor = torch.zeros(size=(len(df), seq_length), device=device)
-    attention_mask_tensor = torch.zeros(size=(len(df), seq_length), device=device)
-    labels_proba_tensor = torch.zeros(size=(len(df), 2), dtype=torch.long, device=device)
+    input_ids_tensor = torch.zeros(size=(len(df), seq_length), dtype=torch.int, device=device)
+    token_type_ids_tensor = torch.zeros(size=(len(df), seq_length), dtype=torch.int, device=device)
+    attention_mask_tensor = torch.zeros(size=(len(df), seq_length), dtype=torch.int, device=device)
+    labels_proba_tensor = torch.zeros(size=(len(df), 2), dtype=torch.float, device=device)
     for index, row in df.iterrows():
         single_sentence = tokenizer(
             row['text'],
@@ -27,27 +45,31 @@ def create_dataset(df: pd.DataFrame, labels: pd.Series) -> tuple[Tensor, Tensor,
         input_ids_tensor[index] = single_sentence['input_ids']
         token_type_ids_tensor[index] = single_sentence['token_type_ids']
         attention_mask_tensor[index] = single_sentence['attention_mask']
-        labels_proba_tensor[index][labels.iloc[index]] = 1
+        labels_proba_tensor[index][labels.iloc[index]] = 1.0
     return input_ids_tensor, token_type_ids_tensor, attention_mask_tensor, labels_proba_tensor
 
 
 def bert_train(input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_mask: torch.Tensor,
                labels_proba: torch.Tensor, epochs: int = 5, batch_size: int = 256):
+    dataset = BertDataset(input_ids, token_type_ids, attention_mask, labels_proba)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+
     # Użycie skalowania gradientu w technice AMP zapobiega zanikaniu gradientów o małych wartościach
     scaler = torch.amp.GradScaler('cuda')
 
     batch_num = math.ceil(input_ids.shape[0] / batch_size)
-    model.train()
     for epoch in range(epochs):
+        model.train()
         epoch_loss = 0
         start_epoch_time = perf_counter()  # z ciekawości
 
-        for batch_idx in range(batch_num):
+        for batch in dataloader:
             start_batch_time = perf_counter()  # z ciekawości
-            batch_input_ids = input_ids[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
-            batch_token_type_ids = token_type_ids[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
-            batch_attention_mask = attention_mask[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
-            batch_labels_proba = labels_proba[batch_idx * batch_size:(batch_idx + 1) * batch_size, :]
+
+            batch_input_ids = batch['input_ids']
+            batch_token_type_ids = batch['token_type_ids']
+            batch_attention_mask = batch['attention_mask']
+            batch_labels_proba = batch['labels_proba']
 
             # polecane zamiast optimizer.zero_grad() ze względu na ograniczenie operacji w pamięci
             optimizer.zero_grad(set_to_none=True)
@@ -112,7 +134,7 @@ if __name__ == '__main__':
     train_input_ids, train_token_type_ids, train_attention_mask, train_label_proba = create_dataset(X_train, y_train)
     test_input_ids, test_token_type_ids, test_attention_mask, test_label_proba = create_dataset(X_test, y_test)
 
-    bert_train(train_input_ids, train_token_type_ids, train_attention_mask, train_label_proba, batch_size=128)
+    bert_train(train_input_ids, train_token_type_ids, train_attention_mask, train_label_proba)
 
     torch.save(model.state_dict(), os.path.join('..', 'data', 'custom-bert-base.pt'))
 

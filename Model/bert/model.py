@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 torch.manual_seed(1)
@@ -10,7 +10,7 @@ torch.manual_seed(1)
 # 2. Reprezentacja pozycji poszczególnych tokenów w sekwencji
 # 3. Reprezentacja typu tokena: czy należy do zdania A czy B (next sentence prediction)
 # Na końcu wszystkie wygenerowane wektory są dodawane (standardowe operacje z normalizacją i dropoutem)
-class BERTEmbedding(nn.Module):
+class BertEmbedding(nn.Module):
     def __init__(self, vocab_size: int, d_model: int, seq_length: int, device: str) -> None:
         super().__init__()
         self.vocab_size = vocab_size
@@ -136,7 +136,7 @@ class Encoder(nn.Module):
 class BERT(nn.Module):
     def __init__(self, d_model: int, d_ff: int, h: int, num_layers: int, seq_length: int, device: str) -> None:
         super().__init__()
-        self.bert_embedding = BERTEmbedding(30522, d_model, seq_length, device)
+        self.bert_embedding = BertEmbedding(30522, d_model, seq_length, device)
         self.encoder_part = Encoder(d_model=d_model, d_ff=d_ff, h=h, num_layers=num_layers, device=device)
         self.linear = nn.Linear(d_model, 2)
 
