@@ -50,11 +50,11 @@ def create_dataset(df: pd.DataFrame, labels: pd.Series) -> tuple[Tensor, Tensor,
 
 
 def bert_train(input_ids: Tensor, token_type_ids: Tensor, attention_mask: Tensor, labels_proba: Tensor,
-               epochs: int = 10, batch_size: int = 96):
+               epochs: int = 5, batch_size: int = 128):
     mp.set_start_method('spawn', force=True)
 
     dataset = BertDataset(input_ids, token_type_ids, attention_mask, labels_proba)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
 
     # Użycie skalowania gradientu w technice AMP zapobiega zanikaniu gradientów o małych wartościach
     scaler = torch.amp.GradScaler('cuda')
