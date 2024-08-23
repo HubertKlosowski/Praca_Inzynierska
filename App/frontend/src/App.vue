@@ -1,47 +1,97 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { RouterView } from "vue-router";
+
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+  <div class="container">
+    <div class="header">
+      <div class="project_info">
+      </div>
+      <div class="links">
+        <RouterLink to="/">
+          <img src="./assets/home.png" alt="Strona główna">
+        </RouterLink>
+        <RouterLink to="/details">
+          <img src="./assets/details.png" alt="Szczegóły projektu">
+        </RouterLink>
+        <RouterLink to='/login'>
+          <img src="./assets/user.png" alt="Konto">
+        </RouterLink>
+      </div>
     </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+    <div class="main">
+      <RouterView></RouterView>
+    </div>
+    <div class="footer">
+      Footer
+    </div>
+  </div>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  font-family: Arial, sans-serif;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2c3e50;
+  color: white;
+  padding: 10px 20px;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+.project_info {
+  display: flex;
+  gap: 20px;
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+.links {
+  display: flex;
+  gap: 15px;
+}
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+img {
+  max-width: 30px;
+  height: auto;
+  cursor: pointer;
+}
+
+.main {
+  flex: 3;
+  background-color: #34495e;
+  color: white;
+  padding: 20px;
+}
+
+.footer {
+  flex: 0.5;
+  background-color: #16a085;
+  color: white;
+  text-align: center;
+  padding: 10px 0;
+}
+
+a {
+  text-decoration: none;
+  color: #2c3e50;
+  background-color: #ecf0f1;
+  border: 2px solid #bdc3c7;
+  padding: 8px 12px;
+  margin: 0 5px;
+  border-radius: 5px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+a:hover {
+  background-color: #bdc3c7;
+  color: #2c3e50;
 }
 </style>
+
