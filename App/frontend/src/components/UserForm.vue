@@ -138,7 +138,7 @@ input[type="text"]:focus {
 
 button[type="submit"] {
   padding: 10px 15px;
-  background-color: #3498db;
+  background-color: forestgreen;
   color: white;
   border: none;
   border-radius: 4px;
@@ -148,7 +148,7 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover {
-  background-color: #2980b9;
+  background-color: darkgreen;
 }
 
 p, li {
