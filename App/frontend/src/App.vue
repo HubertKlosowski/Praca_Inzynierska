@@ -1,5 +1,5 @@
 <script setup>
-import { RouterView } from "vue-router";
+import MainPage from "@/components/MainPage.vue";
 
 </script>
 
@@ -20,9 +20,7 @@ import { RouterView } from "vue-router";
         </RouterLink>
       </div>
     </div>
-    <div class="main">
-      <RouterView></RouterView>
-    </div>
+    <MainPage></MainPage>
     <div class="footer">
       Footer
     </div>
@@ -61,13 +59,6 @@ img {
   max-width: 30px;
   height: auto;
   cursor: pointer;
-}
-
-.main {
-  flex: 3;
-  background-color: #34495e;
-  color: white;
-  padding: 20px;
 }
 
 .footer {
