@@ -1,5 +1,6 @@
 <script setup>
-import MainPage from "@/components/MainPage.vue";
+import MainPage from "@/components/MainPage.vue"
+import Footer from "@/components/Footer.vue";
 
 </script>
 
@@ -21,9 +22,7 @@ import MainPage from "@/components/MainPage.vue";
       </div>
     </div>
     <MainPage></MainPage>
-    <div class="footer">
-      Footer
-    </div>
+    <Footer></Footer>
   </div>
 </template>
 
@@ -40,9 +39,10 @@ import MainPage from "@/components/MainPage.vue";
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #2c3e50;
+  background-color: lightblue;
   color: white;
   padding: 10px 20px;
+  border-bottom: 2px black solid;
 }
 
 .project_info {
@@ -59,14 +59,6 @@ img {
   max-width: 30px;
   height: auto;
   cursor: pointer;
-}
-
-.footer {
-  flex: 0.5;
-  background-color: #16a085;
-  color: white;
-  text-align: center;
-  padding: 10px 0;
 }
 
 a {

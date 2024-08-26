@@ -1,9 +1,9 @@
 <script setup>
-import {computed, ref} from "vue";
+import {computed, ref} from "vue"
 
 const name = ref('')
 const surname = ref('')
-const account_name = ref('')
+const username = ref('')
 const password = ref('')
 const repeat_password = ref('')
 
@@ -30,11 +30,28 @@ window.onload = () => {
   repeat_password_input.onpaste = e => e.preventDefault()
 }
 
-const createAccount = () => {
-  if (name.value.length === 0) {
-
-  }
+const check_for_same_username = (username) => {
   return false
+}
+
+const createAccount = () => {
+  if (!passwordsMatch) {
+    return -1
+  } else if (check_for_same_username(username.value)) {
+    return -2
+  }
+  const user_obj = {
+    name: name.value,
+    surname: surname.value,
+    username: username.value,
+    password: password.value
+  }
+  for (const [key, value] of Object.entries(user_obj)) {
+    if (value.length === 0) {
+      return -3
+    }
+  }
+  return 0
 }
 </script>
 
@@ -45,8 +62,8 @@ const createAccount = () => {
       <input type="text" id="name" v-model="name">
       <label for="surname">Nazwisko</label>
       <input type="text" id="surname" v-model="surname">
-      <label for="account_name">Nazwa konta</label>
-      <input type="text" id="account_name" v-model="account_name">
+      <label for="username">Nazwa konta</label>
+      <input type="text" id="username" v-model="username">
       <label for="password">Hasło</label>
       <div class="password_part">
         <input v-if="showPassword" type="password" id="password" v-model="password">
@@ -56,8 +73,9 @@ const createAccount = () => {
         </button>
       </div>
       <label for="repeat_password">Powtórz hasło</label>
-      <input v-if="passwordsMatch === true" style="background-color: lightgreen" type="password" id="repeat_password" v-model="repeat_password">
-      <input v-else style="background-color: indianred" type="password" id="repeat_password" v-model="repeat_password">
+      <input v-if="repeat_password === ''" style="background-color: #ecf0f1" type="password" id="repeat_password" v-model="repeat_password">
+      <input v-else-if="passwordsMatch === true && repeat_password !== ''" style="background-color: lightgreen" type="password" id="repeat_password" v-model="repeat_password">
+      <input v-else-if="passwordsMatch === false && repeat_password !== ''" style="background-color: indianred" type="password" id="repeat_password" v-model="repeat_password">
       <button type="submit">Załóż konto</button>
     </form>
     <div class="password_requirements">

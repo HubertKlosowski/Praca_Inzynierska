@@ -1,5 +1,5 @@
 <script setup>
-import {RouterView} from "vue-router";
+import {RouterView} from "vue-router"
 
 </script>
 
@@ -12,7 +12,7 @@ import {RouterView} from "vue-router";
 <style scoped>
 .main {
   flex: 3;
-  background-color: #34495e;
+  background-color: steelblue;
   color: white;
   padding: 20px;
 }
