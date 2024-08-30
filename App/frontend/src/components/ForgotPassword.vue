@@ -14,7 +14,7 @@ const resetPassword = () => {
       <label for="email">Podaj email do konta, na którym zapomniałeś/aś hasła</label>
       <input type="text" id="email" v-model="email">
       <div class="row">
-        <RouterLink to="/create_account" class="cancel">Anuluj</RouterLink>
+        <RouterLink to="/" class="cancel">Anuluj</RouterLink>
         <button type="submit">Dalej</button>
       </div>
     </form>

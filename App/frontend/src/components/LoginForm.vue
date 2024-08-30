@@ -7,7 +7,7 @@ const check_password_length = computed(() => password.value.length > 8)
 const at_least_one_number = computed(() => new RegExp('[0-9]').test(password.value))
 const at_least_one_capital = computed(() => new RegExp('[A-Z]').test(password.value))
 const at_least_one_special = computed(() => new RegExp('[!@#$%^&*(),.?":{}|<>]').test(password.value))
-const showPassword = ref(true)
+const show_password = ref(true)
 
 const checkPassword = () => {
   // musi mieć conajmniej jedną cyfrę, dużą literę i znak specjalny
@@ -37,10 +37,10 @@ const loginUser = () => {
         <input type="text" id="username" v-model="name">
         <label for="password">Hasło</label>
         <div class="password_part">
-          <input v-if="showPassword" id="password" type="password" v-model="password">
+          <input v-if="show_password" id="password" type="password" v-model="password">
           <input v-else id="password" type="text" v-model="password">
-          <button type="button" @click="showPassword = !showPassword">
-            <i class="fas" :class="{ 'fa-eye-slash': showPassword, 'fa-eye': !showPassword }"></i>
+          <button type="button" @click="show_password = !show_password">
+            <i class="fas" :class="{ 'fa-eye-slash': show_password, 'fa-eye': !show_password }"></i>
           </button>
         </div>
         <button type="submit">Zaloguj się</button>
@@ -54,9 +54,11 @@ const loginUser = () => {
           <li :style="{ color: at_least_one_special ? 'darkgreen' : 'darkred' }">jeden znak specjalny</li>
         </ol>
       </div>
+      <div class="links_column">
+        <RouterLink to="/forgot_passwd" class="additional_links">Nie pamiętam hasła</RouterLink>
+        <RouterLink to="/create_account" class="additional_links">Utwórz konto</RouterLink>
+      </div>
     </div>
-    <RouterLink to="/forgot_passwd" class="forgot_password">Nie pamiętam hasła</RouterLink>
-    <RouterLink to="/create_account" class="forgot_password">Utwórz konto</RouterLink>
   </div>
 </template>
 
@@ -75,6 +77,12 @@ const loginUser = () => {
   justify-content: center;
 }
 
+.links_column {
+  display: flex;
+  flex-direction: column;
+  width: 25%;
+}
+
 .row {
   display: flex;
   width: 100%;
@@ -85,7 +93,7 @@ const loginUser = () => {
 form {
   display: flex;
   flex-direction: column;
-  width: 45%;
+  width: 35%;
   height: 90%;
   padding: 20px;
   background-color: #f8f9fa;
@@ -94,7 +102,7 @@ form {
 }
 
 .password_requirements {
-  width: 45%;
+  width: 25%;
   background-color: #f8f9fa;
   height: 90%;
   padding: 20px;
@@ -161,16 +169,19 @@ p {
   color: #2c3e50;
 }
 
-.forgot_password {
+.additional_links {
   margin-top: 20px;
   color: blue;
-  font-size: 1rem;
+  font-size: 1.2rem;
   text-decoration: none;
-  padding: 5px;
   transition: color 0.3s ease;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
 }
 
-.forgot_password:hover {
+.additional_links:hover {
   color: darkblue;
 }
 </style>

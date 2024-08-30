@@ -1,11 +1,11 @@
 from django.db import models
 
-
 class User(models.Model):
     name = models.CharField(max_length=255)
-    surname = models.CharField(max_length=255)
+    email = models.EmailField(max_length=255)
     username = models.CharField(max_length=255)
+    usertype = models.IntegerField(default=0)
     password = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.username
+        return f'User {self.name} {self.email} {self.username} {self.usertype}'

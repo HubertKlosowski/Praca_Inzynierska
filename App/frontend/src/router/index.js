@@ -7,11 +7,11 @@ import CreateAccount from "@/components/CreateAccount.vue";
 import MainPage from "@/components/MainPage.vue";
 
 const routes = [
-    { path: '/', component: MainPage},
+    { path: '/', component: MainPage },
     { path: '/login', component: UserForm },
     { path: '/details', component: Details },
     { path: '/forgot_passwd', component: ForgotPassword },
-    { path: '/create_account', component: CreateAccount}
+    { path: '/create_account', component: CreateAccount }
 ]
 
 const router = createRouter({

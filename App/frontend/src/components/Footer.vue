@@ -34,10 +34,6 @@
   border-top: 2px black solid;
 }
 
-.contact, .social_media, .thanks {
-  flex: 0.33;
-}
-
 .social_media {
   display: flex;
   flex-direction: row;

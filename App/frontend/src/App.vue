@@ -8,16 +8,18 @@ import Footer from "@/components/Footer.vue";
   <div class="container">
     <div class="header">
       <div class="project_info">
+        <img src="@/assets/logo.png" alt="Logo" id="logo">
+        <h2>Aplikacja do wykrycia depresji</h2>
       </div>
       <div class="links">
         <RouterLink to="/">
-          <img src="./assets/home.png" alt="Strona główna">
+          <img src="@/assets/home.png" alt="Strona główna">
         </RouterLink>
         <RouterLink to="/details">
-          <img src="./assets/details.png" alt="Szczegóły projektu">
+          <img src="@/assets/details.png" alt="Szczegóły projektu">
         </RouterLink>
         <RouterLink to='/login'>
-          <img src="./assets/user.png" alt="Konto">
+          <img src="@/assets/user.png" alt="Konto">
         </RouterLink>
       </div>
     </div>
@@ -33,6 +35,15 @@ import Footer from "@/components/Footer.vue";
   height: 100vh;
   margin: 0;
   font-family: Arial, sans-serif;
+}
+
+#logo {
+  max-width: 100px;
+  height: auto;
+}
+
+h2 {
+  transform: translateY(0.5rem);
 }
 
 .header {
@@ -55,7 +66,7 @@ import Footer from "@/components/Footer.vue";
   gap: 15px;
 }
 
-img {
+img:not(#logo) {
   max-width: 30px;
   height: auto;
   cursor: pointer;
