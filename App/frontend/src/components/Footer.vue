@@ -3,14 +3,11 @@
 </script>
 
 <template>
-  <div class="container">
+  <div class="footer">
     <div class="contact">
       <p>Kontakt</p>
       <p>Telefon: 123-321-231</p>
       <p>Email: a@a.com</p>
-    </div>
-    <div class="more_info">
-      Więcej infomacji na temat depresji można znaleźć <a href="https://www.who.int/news-room/fact-sheets/detail/depression" target="_blank">tutaj</a>
     </div>
     <div class="social_media">
       <a href="https://www.facebook.com/" target="_blank"><img src="@/assets/facebook.png" alt="Facebook icon"></a>
@@ -24,27 +21,31 @@
 </template>
 
 <style scoped>
-.container {
+.footer {
   flex: 0.5;
   background-color: cornflowerblue;
   color: white;
   text-align: center;
   padding: 10px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  flex-direction: row;
+  justify-content: center;
   align-items: center;
   border-top: 2px black solid;
 }
 
 .social_media {
+  flex-shrink: 1.5;
   display: flex;
   flex-direction: row;
-  gap: 20px;
+}
+
+.thanks {
+  flex-shrink: 2;
 }
 
 img {
-  width: 10%;
+  width: 30%;
   height: auto;
 }
 </style>

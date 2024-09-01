@@ -64,7 +64,7 @@
       </div>
       <div class="content">
         <ul class="features">
-          <li>Możliwość detekcji depresji w wpisach użytkowników</li>
+          <li>Możliwość detekcji depresji we wpisach użytkowników</li>
           <li>Obsługa angielskich i polskich wpisów</li>
           <li>Wykorzystanie LLM's do wykrycia depresji</li>
         </ul>
@@ -117,27 +117,6 @@
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   font-size: 1.5rem;
-}
-
-::-webkit-scrollbar {
-  width: 20px;
-  height: 20px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgb(154,160,193);
-  background: linear-gradient(0deg, rgba(154,160,193,1) 35%, rgba(0,147,255,1) 100%);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(101,105,122);
-  background: linear-gradient(0deg, rgba(101,105,122,1) 35%, rgba(0,1,255,1) 100%);
 }
 
 .symptoms > * {

@@ -5,3 +5,24 @@ html, body {
   width: 100%;
   font-family: "Times New Roman", sans-serif;
 }
+
+::-webkit-scrollbar {
+  width: 20px;
+  height: 20px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(154,160,193);
+  background: linear-gradient(0deg, rgba(154,160,193,1) 35%, rgba(0,147,255,1) 100%);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(101,105,122);
+  background: linear-gradient(0deg, rgba(101,105,122,1) 35%, rgba(0,1,255,1) 100%);
+}
