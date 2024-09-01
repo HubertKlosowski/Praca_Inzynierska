@@ -48,7 +48,7 @@ form {
   width: 45%;
   height: 40%;
   padding: 20px;
-  background-color: #f8f9fa;
+  background-color: rgb(248, 249, 250);
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -89,6 +89,10 @@ button[type="submit"] {
   background-color: lightslategrey;
   text-decoration: none;
   text-align: center;
+}
+
+.cancel:hover {
+  background-color: darkslategrey;
 }
 
 button[type="submit"]:hover {

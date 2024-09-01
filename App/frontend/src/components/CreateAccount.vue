@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, reactive, ref} from "vue"
+import {computed, ref} from "vue"
 import axios from "axios"
 
 const name = ref('')
@@ -9,7 +9,7 @@ const password = ref('')
 const repeat_password = ref('')
 const usertype = ref(0)
 const show_password = ref(true)
-let error_index = ref(-1)
+const error_index = ref(-1)
 
 const showInfo = computed(() => {
   const error_info = [
@@ -18,7 +18,7 @@ const showInfo = computed(() => {
     'BŁĄD!! Hasło nie spełnia wymagań!!',
     'BŁĄD!! Wpisane hasła nie pasują do siebie!!',
     'BŁĄD!! Email nie spełnia wymagań!!',
-    'BŁĄD!! Użytkownik o tej samej nazwie istnieje!!',
+    'BŁĄD!! Użytkownik o tej samej nazwie/emailu istnieje!!',
     'BŁĄD!! Nie udało się dodać użytkownika!!'
   ]
   return error_info[error_index.value]
@@ -27,7 +27,7 @@ const check_password_length = computed(() => password.value.length > 8)
 const at_least_one_number = computed(() => new RegExp('[0-9]').test(password.value))
 const at_least_one_capital = computed(() => new RegExp('[A-Z]').test(password.value))
 const at_least_one_special = computed(() => new RegExp('[!@#$%^&*(),.?":{}|<>]').test(password.value.trim()))
-const check_email = computed(() => new RegExp('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$').test(email.value.trim()))
+const check_email = computed(() => new RegExp('^[a-zA-Z0-9]+@[a-zA-Z0-9]+\\.[a-zA-Z]{2,}$').test(email.value.trim()))
 const passwords_match = computed(() => {
   return repeat_password.value.length !== 0 && password.value.length !== 0 && repeat_password.value === password.value
 })
@@ -40,48 +40,46 @@ window.onload = () => {
   repeat_password_input.onpaste = e => e.preventDefault()
 }
 
-const checkForSameUsername = (username) => {
-  let usernames = []
-  axios.get('http://localhost:8000/api/user/' + username)
-    .then(response => {
-      usernames = response
-    })
-    .catch(error => {
-      console.log(error)
-    })
-  return false
+const resetInputs = () => {
+  name.value = ''
+  email.value = ''
+  username.value = ''
+  password.value = ''
+  repeat_password.value = ''
+  usertype.value = 0
+  show_password.value = true
 }
 
-const checkForSameEmail = (email) => {
-  let emails = []
-  axios.get('http://localhost:8000/api/user/' + email)
-    .then(response => {
-      emails = response
-    })
-    .catch(error => {
-      console.log(error)
-    })
-  return false
+const existsWithSameParam = async (param, path) => {
+  try {
+    const response = await axios.get(path + param)
+    return response.status !== 404
+  } catch (error) {
+    return false
+  }
 }
 
-const isDataValid = (user_obj) => {
+const isDataValid = async (user_obj) => {
   for (const [key, value] of Object.entries(user_obj)) {
     if (value.length === 0) {
       return 1
     }
-  } if (!(check_password_length && at_least_one_special && at_least_one_number && at_least_one_capital)) {
+  } if (!check_password_length.value || !at_least_one_special.value || !at_least_one_number.value || !at_least_one_capital.value) {
     return 2
-  } else if (!passwords_match) {
+  } else if (!passwords_match.value) {
     return 3
-  } else if (check_email) {
+  } else if (!check_email.value) {
     return 4
-  } else if (checkForSameUsername(username.value)) {
+  }
+  const email_exists = await existsWithSameParam(user_obj['email'], 'http://localhost:8000/api/user/email/')
+  const username_exists = await existsWithSameParam(user_obj['username'], 'http://localhost:8000/api/user/username/')
+  if (email_exists || username_exists) {
     return 5
   }
   return 0
 }
 
-const createAccount = () => {
+const createAccount = async () => {
   const user_obj = {
     name: name.value,
     email: email.value,
@@ -89,10 +87,10 @@ const createAccount = () => {
     usertype: +usertype.value,  // konwersja do int I love JS
     password: password.value
   }
-  error_index.value = isDataValid(user_obj)
+  error_index.value = await isDataValid(user_obj)
   if (error_index.value === 0) {
     try {
-      axios.post('http://localhost:8000/api/user/create_user', {
+      await axios.post('http://localhost:8000/api/user/create_user', {
         name: name.value,
         email: email.value,
         username: username.value,
@@ -104,6 +102,7 @@ const createAccount = () => {
       error_index.value = 6
     }
   }
+  resetInputs()
 }
 </script>
 
@@ -147,7 +146,10 @@ const createAccount = () => {
       <input v-if="passwords_match === true" style="background-color: lightgreen" type="password" id="repeat_password" v-model="repeat_password">
       <input v-else-if="passwords_match === false" style="background-color: indianred" type="password" id="repeat_password" v-model="repeat_password">
 
-      <button type="submit">Załóż konto</button>
+      <div class="buttons_row">
+        <button type="submit">Załóż konto</button>
+        <button type="reset" @click="resetInputs">Resetuj</button>
+      </div>
     </form>
 
     <div class="not_form_column">
@@ -157,10 +159,10 @@ const createAccount = () => {
           <li :style="{ color: check_password_length ? 'darkgreen' : 'darkred' }">osiem znaków</li>
           <li :style="{ color: at_least_one_number ? 'darkgreen' : 'darkred' }">jedną cyfrę</li>
           <li :style="{ color: at_least_one_capital ? 'darkgreen' : 'darkred' }">jedną wielką literę</li>
-          <li :style="{ color: at_least_one_special ? 'darkgreen' : 'darkred' }">jeden znak specjalny collapse</li>
+          <li :style="{ color: at_least_one_special ? 'darkgreen' : 'darkred' }">jeden znak specjalny</li>
         </ol>
       </div>
-      <div class="info" :style="{ visibility: error_index.value !== -1 ? 'visible' : 'collapse' }">
+      <div class="info" :style="{ color: error_index.value === 0 ? 'darkgreen' : 'darkred' }">
         {{ showInfo }}
       </div>
       <div class="go_back_to_login">
@@ -206,7 +208,7 @@ input[type="radio"] {
 }
 
 .password_requirements {
-  background-color: #f8f9fa;
+  background-color: rgb(248, 249, 250);
   height: 50%;
   padding: 20px;
   border-radius: 8px;
@@ -231,6 +233,31 @@ button[type="button"] {
   width: 15%;
 }
 
+button[type="reset"] {
+  padding: 10px 15px;
+  background-color: lightslategrey;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button[type="reset"]:hover {
+  background-color: darkslategrey;
+}
+
+.buttons_row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+
+.buttons_row > * {
+  width: 35%;
+}
+
 .password_part {
   display: flex;
   flex-direction: row;
@@ -241,7 +268,7 @@ form {
   flex-direction: column;
   width: 55%;
   padding: 20px;
-  background-color: #f8f9fa;
+  background-color: rgb(248, 249, 250);
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -284,7 +311,7 @@ button[type="submit"]:hover {
   text-decoration: none;
   padding: 20px;
   transition: color 0.3s ease;
-  background-color: #f8f9fa;
+  background-color: rgb(248, 249, 250);
   border-radius: 8px;
   text-align: center;
 }
@@ -295,7 +322,7 @@ button[type="submit"]:hover {
 
 .info {
   padding: 20px;
-  background-color: #f8f9fa;
+  background-color: rgb(248, 249, 250);
   border-radius: 8px;
   color: darkred;
   font-size: 1.2rem;

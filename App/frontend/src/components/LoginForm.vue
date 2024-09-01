@@ -96,14 +96,14 @@ form {
   width: 35%;
   height: 90%;
   padding: 20px;
-  background-color: #f8f9fa;
+  background-color: rgb(248, 249, 250);
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .password_requirements {
   width: 25%;
-  background-color: #f8f9fa;
+  background-color: rgb(248, 249, 250);
   height: 90%;
   padding: 20px;
   border-radius: 8px;
@@ -175,7 +175,7 @@ p {
   font-size: 1.2rem;
   text-decoration: none;
   transition: color 0.3s ease;
-  background-color: #f8f9fa;
+  background-color: rgb(248, 249, 250);
   border-radius: 8px;
   padding: 20px;
   text-align: center;
