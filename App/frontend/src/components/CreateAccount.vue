@@ -1,6 +1,6 @@
 <script setup>
-import {computed, ref} from "vue"
-import axios from "axios"
+import {computed, ref} from 'vue'
+import axios from 'axios'
 
 const name = ref('')
 const email = ref('')

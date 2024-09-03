@@ -1,18 +1,13 @@
 <script setup>
-import {computed, ref} from "vue"
+import { ref } from 'vue'
+import axios from 'axios'
+import { useUserData } from '@/stores/store.js'
 
-const name = ref('')
+const username = ref('')
 const password = ref('')
-const check_password_length = computed(() => password.value.length > 8)
-const at_least_one_number = computed(() => new RegExp('[0-9]').test(password.value))
-const at_least_one_capital = computed(() => new RegExp('[A-Z]').test(password.value))
-const at_least_one_special = computed(() => new RegExp('[!@#$%^&*(),.?":{}|<>]').test(password.value))
 const show_password = ref(true)
+const store = useUserData()
 
-const checkPassword = () => {
-  // musi mieć conajmniej jedną cyfrę, dużą literę i znak specjalny
-  return check_password_length && at_least_one_special && at_least_one_number && at_least_one_capital
-}
 
 // zablokowanie 'wklejania' tekstu do pola hasła i powtórzenia hasła
 window.onload = () => {
@@ -20,11 +15,13 @@ window.onload = () => {
   password_input.onpaste = e => e.preventDefault()
 }
 
-const loginUser = () => {
-  if (checkPassword(password.value)) {
-    console.log(name, password)
-  } else {
-    console.log('Cos chyba nie dziala')
+const loginUser = async () => {
+  try {
+    const response = await axios.get('http://localhost:8000/api/user/username/' + username.value)
+    store.updateUser(response.data)
+  } catch (error) {
+    console.log('Błąd logowania!!!')
+    console.log(error)
   }
 }
 </script>
@@ -34,7 +31,7 @@ const loginUser = () => {
     <div class="row">
       <form @submit.prevent="loginUser">
         <label for="username">Nazwa użytkownika</label>
-        <input type="text" id="username" v-model="name">
+        <input type="text" id="username" v-model="username">
         <label for="password">Hasło</label>
         <div class="password_part">
           <input v-if="show_password" id="password" type="password" v-model="password">
@@ -45,17 +42,8 @@ const loginUser = () => {
         </div>
         <button type="submit">Zaloguj się</button>
       </form>
-      <div class="password_requirements">
-        <p>Hasło musi mieć conajmniej:</p>
-        <ol type="1">
-          <li :style="{ color: check_password_length ? 'darkgreen' : 'darkred' }">osiem znaków</li>
-          <li :style="{ color: at_least_one_number ? 'darkgreen' : 'darkred' }">jedną cyfrę</li>
-          <li :style="{ color: at_least_one_capital ? 'darkgreen' : 'darkred' }">jedną wielką literę</li>
-          <li :style="{ color: at_least_one_special ? 'darkgreen' : 'darkred' }">jeden znak specjalny</li>
-        </ol>
-      </div>
       <div class="links_column">
-        <RouterLink to="/forgot_passwd" class="additional_links">Nie pamiętam hasła</RouterLink>
+        <RouterLink to="/forgot_password" class="additional_links">Nie pamiętam hasła</RouterLink>
         <RouterLink to="/create_account" class="additional_links">Utwórz konto</RouterLink>
       </div>
     </div>
@@ -97,15 +85,6 @@ form {
   height: 90%;
   padding: 20px;
   background-color: rgb(248, 249, 250);
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.password_requirements {
-  width: 25%;
-  background-color: rgb(248, 249, 250);
-  height: 90%;
-  padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }

@@ -9,6 +9,9 @@
     <h2>Aplikacja do wykrycia depresji</h2>
   </div>
   <div class="links">
+    <RouterLink to="/submissions">
+      <img src="@/assets/submit.png" alt="Submission">
+    </RouterLink>
     <RouterLink to="/">
       <img src="@/assets/home.png" alt="Strona główna">
     </RouterLink>

@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
+from django.contrib.auth.hashers import make_password, check_password
 from .models import User
 from .serializer import UserSerializer
 
@@ -24,7 +25,10 @@ def get_user_by_email(request, email):
 
 @api_view(['POST'])
 def create_user(request):
-    serializer = UserSerializer(data=request.data)
+    data = request.data.copy()
+    data['password'] = make_password(data['password'])
+    serializer = UserSerializer(data=data)
+
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
