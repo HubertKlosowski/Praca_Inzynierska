@@ -1,3 +1,5 @@
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -26,6 +28,11 @@ def get_user_by_email(request, email):
 @api_view(['POST'])
 def create_user(request):
     data = request.data.copy()
+    try:
+        validate_password(data['password'])
+    except ValidationError as e:
+        return Response(e.messages, status=status.HTTP_400_BAD_REQUEST)
+
     data['password'] = make_password(data['password'])
     serializer = UserSerializer(data=data)
 
