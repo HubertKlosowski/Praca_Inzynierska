@@ -29,7 +29,7 @@ const at_least_one_capital = computed(() => new RegExp('[A-Z]').test(password.va
 const at_least_one_special = computed(() => new RegExp('[!@#$%^&*(),.?":{}|<>]').test(password.value.trim()))
 const check_email = computed(() => new RegExp('^[a-zA-Z0-9]+@[a-zA-Z0-9]+\\.[a-zA-Z]{2,}$').test(email.value.trim()))
 const passwords_match = computed(() => {
-  return repeat_password.value.length !== 0 && password.value.length !== 0 && repeat_password.value === password.value
+  return repeat_password.value === password.value
 })
 
 // zablokowanie 'wklejania' tekstu do pola hasła i powtórzenia hasła
@@ -50,9 +50,9 @@ const resetInputs = () => {
   show_password.value = true
 }
 
-const existsWithSameParam = async (param, path) => {
+const existsWithSameParam = async (path, param, field) => {
   try {
-    const response = await axios.get(path + param)
+    const response = await axios.get(path, { params: { field: param } })
     return response.status !== 404
   } catch (error) {
     return false
@@ -71,8 +71,8 @@ const isDataValid = async (user_obj) => {
   } else if (!check_email.value) {
     return 4
   }
-  const email_exists = await existsWithSameParam(user_obj['email'], 'http://localhost:8000/api/user/email/')
-  const username_exists = await existsWithSameParam(user_obj['username'], 'http://localhost:8000/api/user/username/')
+  const email_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', user_obj['email'], 'email')
+  const username_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', user_obj['username'], 'username')
   if (email_exists || username_exists) {
     return 5
   }
@@ -143,8 +143,7 @@ const createAccount = async () => {
       </div>
 
       <label for="repeat_password">Powtórz hasło</label>
-      <input v-if="passwords_match === true" style="background-color: lightgreen" type="password" id="repeat_password" v-model="repeat_password">
-      <input v-else-if="passwords_match === false" style="background-color: indianred" type="password" id="repeat_password" v-model="repeat_password">
+      <input :style="{ backgroundColor: passwords_match ? '#ecf0f1' : 'indianred' }" type="password" id="repeat_password" v-model="repeat_password">
 
       <div class="buttons_row">
         <button type="submit">Załóż konto</button>
@@ -162,7 +161,7 @@ const createAccount = async () => {
           <li :style="{ color: at_least_one_special ? 'darkgreen' : 'darkred' }">jeden znak specjalny</li>
         </ol>
       </div>
-      <div class="info" :style="{ color: error_index.value === 0 ? 'darkgreen' : 'darkred' }">
+      <div class="info" :style="{ color: error_index >= 0 ? 'darkred' : 'darkgreen', display: error_index === -1 ? 'none' : 'initial' }">
         {{ showInfo }}
       </div>
       <div class="go_back_to_login">

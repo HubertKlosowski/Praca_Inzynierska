@@ -1,11 +1,20 @@
 <script setup>
-import { ref } from 'vue'
+import {computed, ref} from 'vue'
 import axios from 'axios'
 import { useUserData } from '@/stores/store.js'
 
 const username = ref('')
 const password = ref('')
 const show_password = ref(true)
+const error_index = ref(-1)
+const showInfo = computed(() => {
+  const error_info = [
+    'SUKCES!! Udało się zalogować!!',
+    'BŁĄD!! Żadne pole nie może być puste!!',
+    'BŁĄD!! Podane hasło jest niepoprawne!!'
+  ]
+  return error_info[error_index.value]
+})
 const store = useUserData()
 
 
@@ -16,12 +25,18 @@ window.onload = () => {
 }
 
 const loginUser = async () => {
-  try {
-    const response = await axios.get('http://localhost:8000/api/user/username/' + username.value)
-    store.updateUser(response.data)
-  } catch (error) {
-    console.log('Błąd logowania!!!')
-    console.log(error)
+  if (username.value === '' || password.value === '') {
+    error_index.value = 1
+  } else {
+    try {
+      const response = await axios.get('http://localhost:8000/api/user/login',
+          { params: { username: username.value, password: password.value } })
+      store.updateUser(response.data)
+      error_index.value = 0
+    } catch (error) {
+      error_index.value = 2
+      console.log(error)
+    }
   }
 }
 </script>
@@ -31,16 +46,19 @@ const loginUser = async () => {
     <div class="row">
       <form @submit.prevent="loginUser">
         <label for="username">Nazwa użytkownika</label>
-        <input type="text" id="username" v-model="username">
+        <input type="text" id="username" v-model="username" :style="{ backgroundColor: error_index >= 1 ? 'indianred' : '#ecf0f1' }">
         <label for="password">Hasło</label>
         <div class="password_part">
-          <input v-if="show_password" id="password" type="password" v-model="password">
-          <input v-else id="password" type="text" v-model="password">
+          <input v-if="show_password" id="password" type="password" v-model="password" :style="{ backgroundColor: error_index >= 1 ? 'indianred' : '#ecf0f1' }">
+          <input v-else id="password" type="text" v-model="password" :style="{ backgroundColor: error_index >= 1 ? 'indianred' : '#ecf0f1' }">
           <button type="button" @click="show_password = !show_password">
             <i class="fas" :class="{ 'fa-eye-slash': show_password, 'fa-eye': !show_password }"></i>
           </button>
         </div>
         <button type="submit">Zaloguj się</button>
+        <div class="info" :style="{ color: error_index >= 0 ? 'darkred' : 'darkgreen', display: error_index === -1 ? 'none' : 'initial' }">
+          {{ showInfo }}
+        </div>
       </form>
       <div class="links_column">
         <RouterLink to="/forgot_password" class="additional_links">Nie pamiętam hasła</RouterLink>
@@ -118,11 +136,6 @@ input[type="text"], input[type="password"], button[type="button"] {
   transition: border-color 0.3s;
 }
 
-input[type="text"]:focus {
-  border-color: #3498db;
-  outline: none;
-}
-
 button[type="submit"] {
   padding: 10px 15px;
   background-color: forestgreen;
@@ -162,5 +175,13 @@ p {
 
 .additional_links:hover {
   color: darkblue;
+}
+
+.info {
+  padding-top: 20px;
+  background-color: rgb(248, 249, 250);
+  border-radius: 8px;
+  color: darkred;
+  font-size: 1rem;
 }
 </style>
