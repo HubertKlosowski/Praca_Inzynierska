@@ -50,7 +50,7 @@ const resetInputs = () => {
   show_password.value = true
 }
 
-const existsWithSameParam = async (path, param, field) => {
+const existsWithSameParam = async (path, param) => {
   try {
     const response = await axios.get(path, { params: { field: param } })
     return response.status !== 404
@@ -71,8 +71,8 @@ const isDataValid = async (user_obj) => {
   } else if (!check_email.value) {
     return 4
   }
-  const email_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', user_obj['email'], 'email')
-  const username_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', user_obj['username'], 'username')
+  const email_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', user_obj['email'])
+  const username_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', user_obj['username'])
   if (email_exists || username_exists) {
     return 5
   }
@@ -161,7 +161,7 @@ const createAccount = async () => {
           <li :style="{ color: at_least_one_special ? 'darkgreen' : 'darkred' }">jeden znak specjalny</li>
         </ol>
       </div>
-      <div class="info" :style="{ color: error_index >= 0 ? 'darkred' : 'darkgreen', display: error_index === -1 ? 'none' : 'initial' }">
+      <div class="info" :style="{ color: error_index > 0 ? 'darkred' : 'darkgreen', display: error_index === -1 ? 'none' : 'initial' }">
         {{ showInfo }}
       </div>
       <div class="go_back_to_login">

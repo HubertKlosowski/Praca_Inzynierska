@@ -1,5 +1,9 @@
 <script setup>
+import { inject, ref } from 'vue'
 
+const $cookies = inject('$cookies')
+
+const show_submissions = ref($cookies.isKey(''))
 </script>
 
 <template>
@@ -9,7 +13,7 @@
     <h2>Aplikacja do wykrycia depresji</h2>
   </div>
   <div class="links">
-    <RouterLink to="/submissions">
+    <RouterLink to="/submissions" v-show="show_submissions">
       <img src="@/assets/submit.png" alt="Submission">
     </RouterLink>
     <RouterLink to="/">
@@ -19,7 +23,7 @@
       <img src="@/assets/details.png" alt="Szczegóły projektu">
     </RouterLink>
     <RouterLink to='/login'>
-      <img src="@/assets/user.png" alt="Konto">
+      <img src="@/assets/user.png" alt="Logowanie">
     </RouterLink>
   </div>
 </div>
