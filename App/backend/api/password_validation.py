@@ -10,7 +10,7 @@ class MinimumLengthValidator:
     def validate(self, password, user=None):
         if len(password) < self.min_length:
             raise ValidationError(
-                _(f'Błąd!! Zbyt krótkie hasło (conajmniej {self.min_length} znaków).'),
+                _(f'BŁĄD!! Zbyt krótkie hasło (conajmniej {self.min_length} znaków).'),
             )
 
     def get_help_text(self):
@@ -26,7 +26,7 @@ class DigitValidator:
         regex = f'[0-9]{{{self.min_num}}}'
         if not re.search(regex, password):
             raise ValidationError(
-                _(f'Błąd!! Hasło nie zawiera cyfr.')
+                _(f'BŁĄD!! Hasło nie zawiera cyfr.')
             )
 
     def get_help_text(self):
@@ -42,7 +42,7 @@ class CapitalLetterValidator:
         regex = f'[A-Z]{{{self.min_num}}}'
         if not re.search(regex, password):
             raise ValidationError(
-                _(f'Błąd!! Hasło nie zawiera dużych liter.')
+                _(f'BŁĄD!! Hasło nie zawiera dużych liter.')
             )
 
     def get_help_text(self):
@@ -58,7 +58,7 @@ class SpecialCharacterValidator:
         regex = f'[~!@#$%^&*()_+:;?]{{{self.min_num}}}'
         if not re.search(regex, password):
             raise ValidationError(
-                _(f'Błąd!! Hasło nie zawiera specjalnych znaków.')
+                _(f'BŁĄD!! Hasło nie zawiera specjalnych znaków.')
             )
 
     def get_help_text(self):

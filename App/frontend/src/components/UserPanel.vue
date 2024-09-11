@@ -30,16 +30,27 @@ const updateUser = async () => {
 
   try {
     const to_update = await axios.patch('http://localhost:8000/api/user/update_user/' + $cookies.get('user')['id'], user_obj)
+    console.log(to_update.data)
     info.value = to_update.data['success']
   } catch (error) {
-    info.value = error.response.data['error']
+    const error_response = error.response.data
+    if (typeof error_response['error'] === 'string') {
+      info.value = error.response.data['error']
+    } else {
+      info.value = error.response.data['error'].join(' ')
+    }
   }
-  
+
+  let prev = $cookies.get('user')
+  for (const [key, value] of Object.entries(user_obj)) {
+    prev[key] = value
+  }
+  $cookies.remove('user')
+  $cookies.set('user', prev)
+
   setTimeout(() => "500")
   edit_user_data.value = false
 }
-
-console.log($cookies.get('user'))
 
 const deleteUser = async () => {
   try {
@@ -121,9 +132,10 @@ const resetInputs = () => {
             <button type="button" class="form_buttons" id="return" @click="resetInputs">Wróć</button>
           </div>
         </form>
-        <div class="info"
-             :style="{
-          color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen', display: info.length === 0 ? 'none' : 'initial' }">
+        <div
+            class="info"
+            v-show="info.length !== 0"
+            :style="{ color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen' }">
           {{ info }}
         </div>
       </div>

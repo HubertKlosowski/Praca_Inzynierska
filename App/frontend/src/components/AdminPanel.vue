@@ -14,7 +14,7 @@ onMounted(async () => {
     data = data.filter(user => user.username !== $cookies.get('user')['username'])
     users.push(...data)
   } catch (error) {
-    console.log('Error fetching users:', error)
+    console.log(error)
   }
 })
 
@@ -24,7 +24,12 @@ const deleteUser = async (user) => {
     info.value = to_delete.data['success']
     document.getElementById(user.id).remove()
   } catch (error) {
-    info.value = error.response.data['error']
+    const error_response = error.response.data
+    if (typeof error_response['error'] === 'string') {
+      info.value = error.response.data['error']
+    } else {
+      info.value = error.response.data['error'].join(' ')
+    }
   }
 }
 </script>

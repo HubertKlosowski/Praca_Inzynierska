@@ -26,7 +26,12 @@ const loginUser = async () => {
     info.value = 'SUKCES!! Udało się zalogować.'
     await router.push('/profile')
   } catch (error) {
-    info.value = error.response.data.error
+    const error_response = error.response.data
+    if (typeof error_response['error'] === 'string') {
+      info.value = error.response.data['error']
+    } else {
+      info.value = error.response.data['error'].join(' ')
+    }
   }
 }
 
