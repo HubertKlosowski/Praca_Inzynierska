@@ -7,6 +7,9 @@ class User(models.Model):
     usertype = models.IntegerField(default=0)
     password = models.CharField(max_length=255)
     created_at = models.DateTimeField(null=True)
+    submission_num = models.IntegerField(default=10, null=False)
 
     def __str__(self):
-        return f'User {self.name} {self.email} {self.username} {self.usertype} {self.created_at}'
+        return (f'User info\n name: {self.name}, email: {self.email}, '
+                f'username: {self.username}, usertype: {self.usertype}, '
+                f'created_at: {self.created_at}, submission_num: {self.submission_num}')

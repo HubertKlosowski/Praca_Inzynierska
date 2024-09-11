@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { inject } from 'vue'
 
 import UserForm from '@/components/LoginForm.vue'
 import ForgotPassword from '@/components/ForgotPassword.vue'
@@ -7,7 +8,6 @@ import CreateAccount from '@/components/CreateAccount.vue'
 import MainPage from '@/components/MainPage.vue'
 import Submission from '@/components/Submission.vue'
 import UserProfile from '@/components/UserProfile.vue'
-import { inject } from 'vue'
 
 
 const routes = [

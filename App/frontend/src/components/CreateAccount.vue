@@ -1,6 +1,10 @@
 <script setup>
-import {computed, ref} from 'vue'
+import { computed, ref } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
+import SetPassword from '@/components/SetPassword.vue'
+
+const router = useRouter()
 
 const name = ref('')
 const email = ref('')
@@ -50,9 +54,9 @@ const resetInputs = () => {
   show_password.value = true
 }
 
-const existsWithSameParam = async (path, param) => {
+const existsWithSameParam = async (path, params) => {
   try {
-    const response = await axios.get(path, { params: { field: param } })
+    const response = await axios.get(path, { params: params })
     return response.status !== 404
   } catch (error) {
     return false
@@ -71,8 +75,8 @@ const isDataValid = async (user_obj) => {
   } else if (!check_email.value) {
     return 4
   }
-  const email_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', user_obj['email'])
-  const username_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', user_obj['username'])
+  const email_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', { 'email': user_obj['email'] })
+  const username_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', { 'username': user_obj['username'] })
   if (email_exists || username_exists) {
     return 5
   }
@@ -80,12 +84,14 @@ const isDataValid = async (user_obj) => {
 }
 
 const createAccount = async () => {
+  const sub_num = [10, 30, 100][+usertype.value] || 10
   const user_obj = {
     name: name.value,
     email: email.value,
     username: username.value,
     usertype: +usertype.value,  // konwersja do int I love JS
-    password: password.value
+    password: password.value,
+    submission_num: sub_num
   }
   error_index.value = await isDataValid(user_obj)
   if (error_index.value === 0) {
@@ -95,7 +101,8 @@ const createAccount = async () => {
         email: email.value,
         username: username.value,
         usertype: +usertype.value,
-        password: password.value
+        password: password.value,
+        submission_num: sub_num
       })
     } catch (error) {
       console.log(error)
@@ -103,6 +110,8 @@ const createAccount = async () => {
     }
   }
   resetInputs()
+  setTimeout(() => "500")
+  await router.push('/login')
 }
 </script>
 
@@ -133,14 +142,7 @@ const createAccount = async () => {
         </div>
       </div>
 
-      <label for="password">Hasło</label>
-      <div class="password_part">
-        <input v-if="show_password" type="password" id="password" v-model="password">
-        <input v-else type="text" id="password" v-model="password">
-        <button type="button" @click="show_password = !show_password">
-          <i class="fas" :class="{ 'fa-eye-slash': show_password, 'fa-eye': !show_password }"></i>
-        </button>
-      </div>
+      <SetPassword @set-password="(passwd) => password = passwd"></SetPassword>
 
       <label for="repeat_password">Powtórz hasło</label>
       <input :style="{ backgroundColor: passwords_match ? '#ecf0f1' : 'indianred' }" type="password" id="repeat_password" v-model="repeat_password">
@@ -224,14 +226,6 @@ p, li {
   margin-bottom: 8px;
 }
 
-#password {
-  width: 85%;
-}
-
-button[type="button"] {
-  width: 15%;
-}
-
 button[type="reset"] {
   padding: 10px 15px;
   background-color: lightslategrey;
@@ -255,11 +249,6 @@ button[type="reset"]:hover {
 
 .buttons_row > * {
   width: 35%;
-}
-
-.password_part {
-  display: flex;
-  flex-direction: row;
 }
 
 form {

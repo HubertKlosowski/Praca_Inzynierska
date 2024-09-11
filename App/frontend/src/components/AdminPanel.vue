@@ -1,0 +1,151 @@
+<script setup>
+import { reactive, onMounted, inject, ref } from 'vue'
+import axios from 'axios'
+
+const users = reactive([])
+const $cookies = inject('$cookies')
+const user_types = ['Normal', 'Pro', 'Admin']
+const info = ref('')
+
+onMounted(async () => {
+  try {
+    const response = await axios.get('http://localhost:8000/api/user/get_users')
+    let data = response.data
+    data = data.filter(user => user.username !== $cookies.get('user')['username'])
+    users.push(...data)
+  } catch (error) {
+    console.log('Error fetching users:', error)
+  }
+})
+
+const deleteUser = async (user) => {
+  try {
+    const to_delete = await axios.delete('http://localhost:8000/api/user/delete_user/' + user['username'])
+    info.value = to_delete.data['success']
+    document.getElementById(user.id).remove()
+  } catch (error) {
+    info.value = error.response.data['error']
+  }
+}
+</script>
+
+<template>
+  <div class="container">
+    <div class="users">
+      <div class="row">
+        <div>Nazwa użytkownika</div>
+        <div>Email</div>
+        <div>Typ konta</div>
+        <div>Liczba prób</div>
+        <div>Usuń</div>
+      </div>
+      <div class="row" v-for="user in users" :key="user.id" :id="user.id">
+        <div>{{ user.username }}</div>
+        <div>{{ user.email }}</div>
+        <div>{{ user_types[user.usertype] }}</div>
+        <div>{{ user.submission_num }}</div>
+        <button class="delete" @click="deleteUser(user)">X</button>
+      </div>
+    </div>
+    <div class="rest">
+      <div
+          class="error"
+          :style="{ color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen',
+          display: info.length === 0 ? 'none' : 'initial' }"
+      >
+        {{ info }}
+      </div>
+      <button id="return" class="buttons" @click="$emit('goBack', false)">Wróć</button>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.users {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  height: 80%;
+}
+
+.rest {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  width: 100%;
+  height: 20%;
+  align-items: center;
+}
+
+.error {
+  width: 70%;
+  height: 30%;
+  padding: 20px;
+  background-color: rgb(248, 249, 250);
+  border-radius: 8px;
+  color: darkred;
+  font-size: 1.2rem;
+}
+
+#return {
+  width: 20%;
+  height: 30%;
+  background-color: lightslategrey;
+  text-decoration: none;
+  text-align: center;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  padding: 10px 15px;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+#return:hover {
+  background-color: darkslategrey;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  padding: 20px;
+  margin: 10px;
+  background-color: rgb(248, 249, 250);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  color: #2c3e50;
+}
+
+div {
+  text-align: center;
+}
+
+.row > :first-child {
+  width: 40%;
+}
+
+.row > :nth-child(2) {
+  width: 30%;
+}
+
+.row > :nth-child(n + 3) {
+  width: 10%;
+}
+
+.delete {
+  width: 5%;
+  background-color: firebrick;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #f1f1f1;
+  border-radius: 8px;
+  border: none;
+}
+
+.delete:hover {
+  background-color: darkred;
+}
+</style>

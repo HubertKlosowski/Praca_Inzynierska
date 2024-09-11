@@ -4,12 +4,12 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const $cookies = inject('$cookies')
 
 const username = ref('')
 const password = ref('')
 const show_password = ref(true)
 const info = ref('')
-const $cookies = inject('$cookies')
 
 
 // zablokowanie 'wklejania' tekstu do pola hasła i powtórzenia hasła

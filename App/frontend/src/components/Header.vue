@@ -3,30 +3,30 @@ import { inject, ref } from 'vue'
 
 const $cookies = inject('$cookies')
 
-const show_submissions = ref($cookies.isKey(''))
+const show_submissions = ref($cookies.isKey('user'))
 </script>
 
 <template>
-<div class="header">
-  <div class="project_info">
-    <img src="@/assets/logo.png" alt="Logo" id="logo">
-    <h2>Aplikacja do wykrycia depresji</h2>
+  <div class="header">
+    <div class="project_info">
+      <img src="@/assets/logo.png" alt="Logo" id="logo">
+      <h2>Aplikacja do wykrycia depresji</h2>
+    </div>
+    <div class="links">
+      <RouterLink to="/submissions" v-show="show_submissions">
+        <img src="@/assets/submit.png" alt="Submission">
+      </RouterLink>
+      <RouterLink to="/">
+        <img src="@/assets/home.png" alt="Strona główna">
+      </RouterLink>
+      <RouterLink to="/details">
+        <img src="@/assets/details.png" alt="Szczegóły projektu">
+      </RouterLink>
+      <RouterLink to='/login'>
+        <img src="@/assets/user.png" alt="Logowanie">
+      </RouterLink>
+    </div>
   </div>
-  <div class="links">
-    <RouterLink to="/submissions" v-show="show_submissions">
-      <img src="@/assets/submit.png" alt="Submission">
-    </RouterLink>
-    <RouterLink to="/">
-      <img src="@/assets/home.png" alt="Strona główna">
-    </RouterLink>
-    <RouterLink to="/details">
-      <img src="@/assets/details.png" alt="Szczegóły projektu">
-    </RouterLink>
-    <RouterLink to='/login'>
-      <img src="@/assets/user.png" alt="Logowanie">
-    </RouterLink>
-  </div>
-</div>
 </template>
 
 <style scoped>
