@@ -62,8 +62,7 @@ def login(request):
     password = request.GET.get('password')
 
     if len(username) == 0 or len(password) == 0:
-        return Response(data={'error': 'BŁĄD!! Żadne pole nie może być puste.'},
-                        status=status.HTTP_406_NOT_ACCEPTABLE)
+        return Response(data={'error': 'BŁĄD!! Żadne pole nie może być puste.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     if not User.objects.filter(username=username).exists():
         return Response(data={'error': f'BŁĄD!! Użytkownik o nazwie {username} nie istnieje.'},
@@ -90,16 +89,14 @@ def delete_user(request, username):
 @api_view(['PATCH'])
 def update_user(request, user_id):
     if not User.objects.filter(id=user_id).exists():
-        return Response(data={'error': 'BŁĄD!! Użytkownik nie istnieje.'},
-                        status=status.HTTP_404_NOT_FOUND)
+        return Response(data={'error': 'BŁĄD!! Użytkownik nie istnieje.'}, status=status.HTTP_404_NOT_FOUND)
 
     if {'username', 'email', 'name', 'password'} in set(request.data.keys()):
         return Response(data={'error': 'BŁĄD!! Można tylko zmienić tylko nazwę użytkownika, email, imię i hasło.'},
                         status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    if any(len(el) == 0 for el in request.data.values()):
-        return Response(data={'error': 'BŁĄD!! Żadne pole nie może być puste.'},
-                        status=status.HTTP_406_NOT_ACCEPTABLE)
+    if any(len(el) == 0 for el in request.data.values()) or len(request.data.keys()) == 0:
+        return Response(data={'error': 'BŁĄD!! Żadne pole nie może być puste.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     data = dict(zip(request.data.keys(), request.data.values()))
     user = User.objects.get(id=user_id)
@@ -116,5 +113,27 @@ def update_user(request, user_id):
         serializer.save()
         return Response(data={'success': 'SUKCES!! Dane użytkownika zostały poprawnie zmienione.'},
                         status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PATCH'])
+def renew_submission(request, username):
+    if not User.objects.filter(username=username).exists():
+        return Response(data={'error': 'BŁĄD!! Użytkownik nie istnieje.'}, status=status.HTTP_404_NOT_FOUND)
+
+    user = User.objects.get(username=username)
+
+    if user.usertype == 0:
+        user.submission_num = 10
+    elif user.usertype == 1:
+        user.submission_num = 30
+    else:
+        user.submission_num = 100
+
+    serializer = UserSerializer(user, data={'submission_num': user.submission_num}, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(data={'user': UserSerializer(user).data, 'success': 'SUKCES!! Liczba prób została odnowiona.'}, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

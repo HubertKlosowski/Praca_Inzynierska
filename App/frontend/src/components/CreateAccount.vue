@@ -110,7 +110,9 @@ const createAccount = async () => {
     }
   }
   resetInputs()
-  setTimeout(() => "500")
+
+  await new Promise(resolve => setTimeout(resolve, 1000))
+
   await router.push('/login')
 }
 </script>

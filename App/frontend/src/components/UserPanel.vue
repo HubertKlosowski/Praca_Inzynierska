@@ -9,6 +9,7 @@ const $cookies = inject('$cookies')
 
 const user_types = ['Normal', 'Pro', 'Admin']
 const edit_user_data = ref(false)
+const show_info = ref(false)
 const name = ref('')
 const username = ref('')
 const email = ref('')
@@ -35,9 +36,9 @@ const updateUser = async () => {
   } catch (error) {
     const error_response = error.response.data
     if (typeof error_response['error'] === 'string') {
-      info.value = error.response.data['error']
+      info.value = error_response['error']
     } else {
-      info.value = error.response.data['error'].join(' ')
+      info.value = error_response['error'].join(' ')
     }
   }
 
@@ -47,8 +48,12 @@ const updateUser = async () => {
   }
   $cookies.remove('user')
   $cookies.set('user', prev)
+  show_info.value = true
 
-  setTimeout(() => "500")
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  resetInputs()
+
+  show_info.value = false
   edit_user_data.value = false
 }
 
@@ -77,7 +82,7 @@ const resetInputs = () => {
 </script>
 
 <template>
-  <div class="container">
+  <div class="container" v-if="!show_info">
     <div class="row main_row">
       <div class="image">
         <img src="@/assets/user.png" alt="Ikonka">
@@ -85,10 +90,11 @@ const resetInputs = () => {
           Utworzony: {{ $cookies.get('user')['created_at'].slice(0, 10) }}
         </div>
         <div class="row">
-          <button @click="edit_user_data = !edit_user_data" class="buttons" id="edit" v-show="!edit_user_data">Edytuj</button>
-          <button @click="deleteUser" class="buttons" id="delete" v-show="!edit_user_data">Usuń</button>
-          <button @click="logout" class="buttons" id="logout" v-show="!edit_user_data">Wyloguj</button>
+          <button type="button" @click="edit_user_data = !edit_user_data" class="buttons" id="edit" v-show="!edit_user_data">Edytuj</button>
+          <button type="button" @click="deleteUser" class="buttons" id="delete" v-show="!edit_user_data">Usuń</button>
+          <button type="button" @click="logout" class="buttons" id="logout" v-show="!edit_user_data">Wyloguj</button>
           <button
+              type="button"
               @click="$emit('goBack', true)" class="buttons"
               v-show="!edit_user_data && user_types[$cookies.get('user')['usertype']] === 'Admin'"
               id="manage">Zarządzaj</button>
@@ -132,18 +138,19 @@ const resetInputs = () => {
             <button type="button" class="form_buttons" id="return" @click="resetInputs">Wróć</button>
           </div>
         </form>
-        <div
-            class="info"
-            v-show="info.length !== 0"
-            :style="{ color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen' }">
-          {{ info }}
-        </div>
       </div>
     </div>
     <div class="row main_row">
       <div class="submission" v-for="n in 3">
         {{ n }}
       </div>
+    </div>
+  </div>
+  <div class="container" v-else>
+    <div
+        class="info"
+        :style="{ color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen', display: info.length !== 0 ? 'initial' : 'none' }">
+      {{ info }}
     </div>
   </div>
 </template>
@@ -213,6 +220,14 @@ form {
   grid-gap: 15px;
 }
 
+.info {
+  padding: 20px;
+  background-color: rgb(248, 249, 250);
+  border-radius: 8px;
+  color: darkred;
+  font-size: 1.2rem;
+}
+
 .form_row {
   display: contents;
 }
@@ -242,7 +257,7 @@ input {
   transition: border-color 0.3s;
 }
 
-button {
+button[type="button"] {
   padding: 10px 15px;
   color: white;
   border: none;
@@ -288,13 +303,5 @@ button {
 
 #logout:hover, #return:hover, #manage:hover {
   background-color: darkslategrey;
-}
-
-.info {
-  padding: 20px;
-  background-color: rgb(248, 249, 250);
-  border-radius: 8px;
-  color: darkred;
-  font-size: 1.2rem;
 }
 </style>

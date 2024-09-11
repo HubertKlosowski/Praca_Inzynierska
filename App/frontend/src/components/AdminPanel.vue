@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, onMounted, inject, ref } from 'vue'
+import { reactive, onMounted, inject, ref, watchEffect } from 'vue'
 import axios from 'axios'
 
 const users = reactive([])
@@ -26,10 +26,22 @@ const deleteUser = async (user) => {
   } catch (error) {
     const error_response = error.response.data
     if (typeof error_response['error'] === 'string') {
-      info.value = error.response.data['error']
+      info.value = error_response['error']
     } else {
-      info.value = error.response.data['error'].join(' ')
+      info.value = error_response['error'].join(' ')
     }
+  }
+}
+
+const renewSubmissions = async (user) => {
+  try {
+    const to_update = await axios.patch('http://localhost:8000/api/user/renew_submission/' + user['username'])
+    info.value = to_update.data['success']
+    const element = document.getElementById(user.id).childNodes[3]
+    element.textContent = to_update.data['user'].submission_num
+  } catch (error) {
+    const error_response = error.response.data
+    info.value = error_response['error']
   }
 }
 </script>
@@ -43,13 +55,15 @@ const deleteUser = async (user) => {
         <div>Typ konta</div>
         <div>Liczba prób</div>
         <div>Usuń</div>
+        <div>Odnów próby</div>
       </div>
       <div class="row" v-for="user in users" :key="user.id" :id="user.id">
         <div>{{ user.username }}</div>
         <div>{{ user.email }}</div>
         <div>{{ user_types[user.usertype] }}</div>
         <div>{{ user.submission_num }}</div>
-        <button class="delete" @click="deleteUser(user)">X</button>
+        <button type="button" class="delete" @click="deleteUser(user)">X</button>
+        <button type="button" class="renew" @click="renewSubmissions(user)">+</button>
       </div>
     </div>
     <div class="rest">
@@ -60,7 +74,7 @@ const deleteUser = async (user) => {
       >
         {{ info }}
       </div>
-      <button id="return" class="buttons" @click="$emit('goBack', false)">Wróć</button>
+      <button type="button" id="return" class="buttons" @click="$emit('goBack', false)">Wróć</button>
     </div>
   </div>
 </template>
@@ -129,20 +143,18 @@ div {
 }
 
 .row > :first-child {
-  width: 40%;
+  width: 30%;
 }
 
 .row > :nth-child(2) {
-  width: 30%;
+  width: 20%;
 }
 
 .row > :nth-child(n + 3) {
   width: 10%;
 }
 
-.delete {
-  width: 5%;
-  background-color: firebrick;
+button[type="button"] {
   font-size: 1.2rem;
   font-weight: bold;
   color: #f1f1f1;
@@ -150,7 +162,19 @@ div {
   border: none;
 }
 
+.delete {
+  background-color: firebrick;
+}
+
+.renew {
+  background-color: forestgreen;
+}
+
 .delete:hover {
   background-color: darkred;
+}
+
+.renew:hover {
+  background-color: darkgreen;
 }
 </style>

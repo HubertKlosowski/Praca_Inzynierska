@@ -28,9 +28,9 @@ const loginUser = async () => {
   } catch (error) {
     const error_response = error.response.data
     if (typeof error_response['error'] === 'string') {
-      info.value = error.response.data['error']
+      info.value = error_response['error']
     } else {
-      info.value = error.response.data['error'].join(' ')
+      info.value = error_response['error'].join(' ')
     }
   }
 }
