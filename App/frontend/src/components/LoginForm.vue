@@ -22,8 +22,8 @@ const loginUser = async () => {
   try {
     const response = await axios.get('http://localhost:8000/api/user/login',
         { params: { username: username.value, password: password.value } })
-    $cookies.set('user', response.data)
-    info.value = 'SUKCES!! Udało się zalogować.'
+    $cookies.set('user', response.data['user'])
+    info.value = response.data['success']
     await router.push('/profile')
   } catch (error) {
     const error_response = error.response.data
@@ -58,9 +58,11 @@ if ($cookies.isKey('user')) {
           </button>
         </div>
         <button type="submit">Zaloguj się</button>
-        <div class="info"
-             :style="{
-          color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen', display: info.length === 0 ? 'none' : 'initial' }">
+        <div
+            class="info"
+            :style="{
+          color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen',
+          display: info.length === 0 ? 'none' : 'initial' }">
           {{ info }}
         </div>
       </form>

@@ -63,7 +63,9 @@ const renewSubmissions = async (user) => {
         <div>{{ user_types[user.usertype] }}</div>
         <div>{{ user.submission_num }}</div>
         <button type="button" class="delete" @click="deleteUser(user)">X</button>
-        <button type="button" class="renew" @click="renewSubmissions(user)">+</button>
+        <button type="button" class="renew" @click="renewSubmissions(user)">
+          &#x21bb;
+        </button>
       </div>
     </div>
     <div class="rest">

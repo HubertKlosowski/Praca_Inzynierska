@@ -47,8 +47,8 @@ def create_user(request):
 
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'user': serializer.data, 'success': 'SUKCES!! Dodano użytkownika.'}, status=status.HTTP_201_CREATED)
+    return Response(data={'error': 'BŁĄD!! Nie udało się dodać użytkownika.', 'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def get_users(request):
@@ -71,7 +71,7 @@ def login(request):
     user = User.objects.get(username=username)
 
     if check_password(password, user.password):
-        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+        return Response(data={'user': UserSerializer(user).data, 'success': 'SUKCES!! Udało się zalogować.'}, status=status.HTTP_200_OK)
 
     return Response(data={'error': 'BŁĄD!! Niepoprawne hasło.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -100,6 +100,7 @@ def update_user(request, user_id):
 
     data = dict(zip(request.data.keys(), request.data.values()))
     user = User.objects.get(id=user_id)
+
     if 'password' in data:
         try:
             validate_password(request.data['password'])
@@ -109,9 +110,10 @@ def update_user(request, user_id):
         data['password'] = make_password(data['password'])
 
     serializer = UserSerializer(user, data=request.data, partial=True)
+
     if serializer.is_valid():
         serializer.save()
-        return Response(data={'success': 'SUKCES!! Dane użytkownika zostały poprawnie zmienione.'},
+        return Response(data={'user': UserSerializer(user).data, 'success': 'SUKCES!! Dane użytkownika zostały poprawnie zmienione.'},
                         status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

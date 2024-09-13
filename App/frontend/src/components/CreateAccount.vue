@@ -13,20 +13,8 @@ const password = ref('')
 const repeat_password = ref('')
 const usertype = ref(0)
 const show_password = ref(true)
-const error_index = ref(-1)
 
-const showInfo = computed(() => {
-  const error_info = [
-    'SUKCES!! Podane dane są poprawne',
-    'BŁĄD!! Żadne pole nie może być puste!!',
-    'BŁĄD!! Hasło nie spełnia wymagań!!',
-    'BŁĄD!! Wpisane hasła nie pasują do siebie!!',
-    'BŁĄD!! Email nie spełnia wymagań!!',
-    'BŁĄD!! Użytkownik o tej samej nazwie/emailu istnieje!!',
-    'BŁĄD!! Nie udało się dodać użytkownika!!'
-  ]
-  return error_info[error_index.value]
-})
+const info = ref('')
 const check_password_length = computed(() => password.value.length > 8)
 const at_least_one_number = computed(() => new RegExp('[0-9]').test(password.value))
 const at_least_one_capital = computed(() => new RegExp('[A-Z]').test(password.value))
@@ -54,49 +42,21 @@ const resetInputs = () => {
   show_password.value = true
 }
 
-const existsWithSameParam = async (path, params) => {
-  try {
-    const response = await axios.get(path, { params: params })
-    return response.status !== 404
-  } catch (error) {
-    return false
-  }
-}
-
-const isDataValid = async (user_obj) => {
-  for (const [key, value] of Object.entries(user_obj)) {
-    if (value.length === 0) {
-      return 1
-    }
-  } if (!check_password_length.value || !at_least_one_special.value || !at_least_one_number.value || !at_least_one_capital.value) {
-    return 2
-  } else if (!passwords_match.value) {
-    return 3
+const isDataValid = async () => {
+  if (!passwords_match.value) {
+    return 'BŁĄD!! Wpisane hasła nie pasują do siebie.'
   } else if (!check_email.value) {
-    return 4
+    return 'BŁĄD!! Email nie spełnia wymagań.'
   }
-  const email_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', { 'email': user_obj['email'] })
-  const username_exists = await existsWithSameParam('http://localhost:8000/api/user/get_user', { 'username': user_obj['username'] })
-  if (email_exists || username_exists) {
-    return 5
-  }
-  return 0
+  return 'SUKCES!! Email i hasła spełniają wymagania.'
 }
 
 const createAccount = async () => {
   const sub_num = [10, 30, 100][+usertype.value] || 10
-  const user_obj = {
-    name: name.value,
-    email: email.value,
-    username: username.value,
-    usertype: +usertype.value,  // konwersja do int I love JS
-    password: password.value,
-    submission_num: sub_num
-  }
-  error_index.value = await isDataValid(user_obj)
-  if (error_index.value === 0) {
+  info.value = await isDataValid()
+  if (info.value.startsWith('SUKCES!!')) {
     try {
-      await axios.post('http://localhost:8000/api/user/create_user', {
+      const response = await axios.post('http://localhost:8000/api/user/create_user', {
         name: name.value,
         email: email.value,
         username: username.value,
@@ -104,16 +64,20 @@ const createAccount = async () => {
         password: password.value,
         submission_num: sub_num
       })
+      info.value = response.data['success']
+
+      resetInputs()
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      await router.push('/login')
     } catch (error) {
-      console.log(error)
-      error_index.value = 6
+      const error_response = error.response.data
+      if (typeof error_response['error'] === 'string') {
+        info.value = error_response['error']
+      } else {
+        info.value = error_response['error'].join(' ')
+      }
     }
   }
-  resetInputs()
-
-  await new Promise(resolve => setTimeout(resolve, 1000))
-
-  await router.push('/login')
 }
 </script>
 
@@ -165,8 +129,12 @@ const createAccount = async () => {
           <li :style="{ color: at_least_one_special ? 'darkgreen' : 'darkred' }">jeden znak specjalny</li>
         </ol>
       </div>
-      <div class="info" :style="{ color: error_index > 0 ? 'darkred' : 'darkgreen', display: error_index === -1 ? 'none' : 'initial' }">
-        {{ showInfo }}
+      <div
+          class="info"
+          :style="{
+        color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen',
+        display: info.length === 0 ? 'none' : 'initial' }">
+        {{ info }}
       </div>
       <div class="go_back_to_login">
         <RouterLink to="/login" class="additional_links">Wróć do logowania</RouterLink>
