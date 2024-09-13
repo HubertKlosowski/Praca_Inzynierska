@@ -18,7 +18,6 @@
     </div>
     <div class="row">
       <div class="content">
-        <h4>Częste objawy</h4>
         <ul class="symptoms">
           <li>słaba koncentracja</li>
           <li>uczucie przygnębienia i niskiej samooceny</li>
@@ -27,7 +26,6 @@
           <li>brak energii i uczucie zmęczenia</li>
           <li>utrata apetytu lub wagi</li>
         </ul>
-        Czas trwania depresji jest dłuższy od zmian nastrojów.
       </div>
       <div class="question">
         Jakie są objawy depresji?

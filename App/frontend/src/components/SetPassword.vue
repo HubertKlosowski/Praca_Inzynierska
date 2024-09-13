@@ -9,6 +9,8 @@ const emit = defineEmits(['setPassword'])
 watch(password, (passwd) => {
   emit('setPassword', passwd)
 })
+
+window.addEventListener('copy', event => event.preventDefault())
 </script>
 
 <template>

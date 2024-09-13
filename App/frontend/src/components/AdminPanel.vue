@@ -48,16 +48,16 @@ const renewSubmissions = async (user) => {
 
 <template>
   <div class="container">
+    <div class="row title">
+      <div>Nazwa użytkownika</div>
+      <div>Email</div>
+      <div>Typ konta</div>
+      <div>Liczba prób</div>
+      <div>Usuń</div>
+      <div>Odnów próby</div>
+    </div>
     <div class="users">
-      <div class="row">
-        <div>Nazwa użytkownika</div>
-        <div>Email</div>
-        <div>Typ konta</div>
-        <div>Liczba prób</div>
-        <div>Usuń</div>
-        <div>Odnów próby</div>
-      </div>
-      <div class="row" v-for="user in users" :key="user.id" :id="user.id">
+      <div class="row center" v-for="user in users" :key="user.id" :id="user.id">
         <div>{{ user.username }}</div>
         <div>{{ user.email }}</div>
         <div>{{ user_types[user.usertype] }}</div>
@@ -72,8 +72,7 @@ const renewSubmissions = async (user) => {
       <div
           class="error"
           :style="{ color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen',
-          display: info.length === 0 ? 'none' : 'initial' }"
-      >
+          display: info.length === 0 ? 'none' : 'initial' }">
         {{ info }}
       </div>
       <button type="button" id="return" class="buttons" @click="$emit('goBack', false)">Wróć</button>
@@ -85,8 +84,14 @@ const renewSubmissions = async (user) => {
 .users {
   display: flex;
   flex-direction: column;
-  width: 80%;
-  height: 80%;
+  width: 90%;
+  height: 60%;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.title {
+  width: 90%;
 }
 
 .rest {
@@ -145,15 +150,15 @@ div {
 }
 
 .row > :first-child {
-  width: 30%;
+  width: 35%;
 }
 
 .row > :nth-child(2) {
-  width: 20%;
+  width: 25%;
 }
 
 .row > :nth-child(n + 3) {
-  width: 10%;
+  width: 5%;
 }
 
 button[type="button"] {

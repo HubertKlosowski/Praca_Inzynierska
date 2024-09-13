@@ -11,13 +11,6 @@ const password = ref('')
 const show_password = ref(true)
 const info = ref('')
 
-
-// zablokowanie 'wklejania' tekstu do pola hasła i powtórzenia hasła
-window.onload = () => {
-  const password_input = document.getElementById('password')
-  password_input.onpaste = e => e.preventDefault()
-}
-
 const loginUser = async () => {
   try {
     const response = await axios.get('http://localhost:8000/api/user/login',

@@ -149,7 +149,8 @@ const resetInputs = () => {
   <div class="container" v-else>
     <div
         class="info"
-        :style="{ color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen', display: info.length !== 0 ? 'initial' : 'none' }">
+        :style="{ color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen',
+        display: info.length !== 0 ? 'initial' : 'none' }">
       {{ info }}
     </div>
   </div>
@@ -257,7 +258,7 @@ input {
   transition: border-color 0.3s;
 }
 
-button[type="button"] {
+button {
   padding: 10px 15px;
   color: white;
   border: none;

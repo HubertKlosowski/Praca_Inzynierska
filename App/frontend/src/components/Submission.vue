@@ -1,30 +1,32 @@
 <script setup>
-const makeBigger = (param) => {
-  const element = document.getElementsByClassName(param)[0]
-  console.log(element)
-}
+import { ref } from 'vue'
+import ChatPanel from '@/components/ChatPanel.vue'
+import StatsPanel from '@/components/StatsPanel.vue'
+import SubmitPanel from '@/components/SubmitPanel.vue'
+
+const show = ref(-1)
 </script>
 
 <template>
   <div class="submission">
-    <div class="requirements" @click="makeBigger('requirements')">
-
-    </div>
-    <div class="submit" @click="makeBigger('submit')">
-
-    </div>
-    <div class="choose_model" @click="makeBigger('choose_model')">
-
-    </div>
-    <div class="stats" @click="makeBigger('stats')">
-
-    </div>
+    <SubmitPanel
+        @show-component="(param) => show = param"
+        :style="{ maxHeight: show === 1 ? '90%' : '1%',
+        display: show !== 1 && show !== -1 ? 'none': 'initial' }"></SubmitPanel>
+    <ChatPanel
+        @show-component="(param) => show = param"
+        :style="{ maxHeight: show === 2 ? '90%' : '1%',
+        display: show !== 2 && show !== -1 ? 'none': 'initial' }"></ChatPanel>
+    <StatsPanel
+        @show-component="(param) => show = param"
+        :style="{ maxHeight: show === 3 ? '90%' : '1%',
+        display: show !== 3 && show !== -1 ? 'none': 'initial' }"></StatsPanel>
   </div>
 </template>
 
 <style scoped>
 .submission {
-  width: 80%;
+  width: 90%;
   padding: 20px;
   height: 90%;
   margin: 0 auto;
@@ -32,18 +34,8 @@ const makeBigger = (param) => {
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   justify-content: space-evenly;
-  flex-wrap: wrap;
-}
-
-.submit, .choose_model, .stats, .requirements {
-  width: 40%;
-  height: 40%;
-  background-color: rgb(248, 249, 250);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

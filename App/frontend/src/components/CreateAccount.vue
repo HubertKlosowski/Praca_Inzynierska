@@ -24,14 +24,6 @@ const passwords_match = computed(() => {
   return repeat_password.value === password.value
 })
 
-// zablokowanie 'wklejania' tekstu do pola hasła i powtórzenia hasła
-window.onload = () => {
-  const password_input = document.getElementById('password')
-  password_input.onpaste = e => e.preventDefault()
-  const repeat_password_input = document.getElementById('repeat_password')
-  repeat_password_input.onpaste = e => e.preventDefault()
-}
-
 const resetInputs = () => {
   name.value = ''
   email.value = ''
@@ -42,18 +34,18 @@ const resetInputs = () => {
   show_password.value = true
 }
 
-const isDataValid = async () => {
-  if (!passwords_match.value) {
+const isDataValid = () => {
+  if (repeat_password.value !== password.value) {
     return 'BŁĄD!! Wpisane hasła nie pasują do siebie.'
   } else if (!check_email.value) {
     return 'BŁĄD!! Email nie spełnia wymagań.'
   }
-  return 'SUKCES!! Email i hasła spełniają wymagania.'
+  return 'SUKCES!! Email i hasło spełniają wymagania.'
 }
 
 const createAccount = async () => {
   const sub_num = [10, 30, 100][+usertype.value] || 10
-  info.value = await isDataValid()
+  info.value = isDataValid()
   if (info.value.startsWith('SUKCES!!')) {
     try {
       const response = await axios.post('http://localhost:8000/api/user/create_user', {
@@ -111,8 +103,9 @@ const createAccount = async () => {
       <SetPassword @set-password="(passwd) => password = passwd"></SetPassword>
 
       <label for="repeat_password">Powtórz hasło</label>
-      <input :style="{ backgroundColor: passwords_match ? '#ecf0f1' : 'indianred' }" type="password" id="repeat_password" v-model="repeat_password">
-
+      <input
+          :style="{ backgroundColor: passwords_match ? '#ecf0f1' : 'indianred' }"
+          type="password" id="repeat_password" v-model="repeat_password">
       <div class="buttons_row">
         <button type="submit">Załóż konto</button>
         <button type="reset" @click="resetInputs">Resetuj</button>
