@@ -3,17 +3,15 @@
 </script>
 
 <template>
-  <div
-      class="chat"
-      @click="$emit('showComponent', 2)">
+  <div class="chat">
     chat
   </div>
 </template>
 
 <style scoped>
 .chat {
-  width: 80%;
-  height: 100%;
+  width: 90%;
+  height: 90%;
   background-color: rgb(248, 249, 250);
   padding: 20px;
   border-radius: 8px;

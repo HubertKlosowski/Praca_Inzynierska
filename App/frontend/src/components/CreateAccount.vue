@@ -88,12 +88,12 @@ const createAccount = async () => {
       <label>Typ konta</label>
 
       <div class="checkbox_column">
-        <div class="checkbox_row">
+        <div class="radio_row">
           <label for="normal">Normal</label>
           <label for="pro">Pro</label>
           <label for="admin">Admin</label>
         </div>
-        <div class="checkbox_row">
+        <div class="radio_row">
           <input type="radio" id="normal" value="0" v-model="usertype">
           <input type="radio" id="pro" value="1" v-model="usertype">
           <input type="radio" id="admin" value="2" v-model="usertype">
@@ -158,7 +158,7 @@ const createAccount = async () => {
   width: 35%;
 }
 
-.checkbox_row {
+.radio_row {
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;

@@ -8,6 +8,8 @@ import CreateAccount from '@/components/CreateAccount.vue'
 import MainPage from '@/components/MainPage.vue'
 import Submission from '@/components/Submission.vue'
 import UserProfile from '@/components/UserProfile.vue'
+import SubmitPanel from '@/components/SubmitPanel.vue'
+import ChatPanel from '@/components/ChatPanel.vue'
 
 
 const routes = [
@@ -16,7 +18,18 @@ const routes = [
     { path: '/details', component: Details },
     { path: '/forgot_password', component: ForgotPassword },
     { path: '/create_account', component: CreateAccount },
-    { path: '/submissions', component: Submission },
+    { path: '/submissions', component: Submission,
+        children: [
+            {
+                path: 'submit',
+                component: SubmitPanel
+            },
+            {
+                path: 'chat',
+                component: ChatPanel
+            }
+        ]
+    },
     { path: '/profile', component: UserProfile }
 ]
 

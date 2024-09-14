@@ -1,26 +1,12 @@
 <script setup>
-import { ref } from 'vue'
-import ChatPanel from '@/components/ChatPanel.vue'
-import StatsPanel from '@/components/StatsPanel.vue'
-import SubmitPanel from '@/components/SubmitPanel.vue'
 
-const show = ref(-1)
 </script>
 
 <template>
   <div class="submission">
-    <SubmitPanel
-        @show-component="(param) => show = param"
-        :style="{ maxHeight: show === 1 ? '90%' : '1%',
-        display: show !== 1 && show !== -1 ? 'none': 'initial' }"></SubmitPanel>
-    <ChatPanel
-        @show-component="(param) => show = param"
-        :style="{ maxHeight: show === 2 ? '90%' : '1%',
-        display: show !== 2 && show !== -1 ? 'none': 'initial' }"></ChatPanel>
-    <StatsPanel
-        @show-component="(param) => show = param"
-        :style="{ maxHeight: show === 3 ? '90%' : '1%',
-        display: show !== 3 && show !== -1 ? 'none': 'initial' }"></StatsPanel>
+    <RouterView></RouterView>
+    <RouterLink to="/submissions/submit" class="additional_links">Sprawdź plik</RouterLink>
+    <RouterLink to="/submissions/chat" class="additional_links">Rozpocznij chat</RouterLink>
   </div>
 </template>
 
@@ -37,5 +23,21 @@ const show = ref(-1)
   flex-direction: column;
   align-items: center;
   justify-content: space-evenly;
+}
+
+.additional_links {
+  margin-top: 20px;
+  color: blue;
+  font-size: 1.2rem;
+  text-decoration: none;
+  padding: 20px;
+  transition: color 0.3s ease;
+  background-color: rgb(248, 249, 250);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.additional_links:hover {
+  color: darkblue;
 }
 </style>
