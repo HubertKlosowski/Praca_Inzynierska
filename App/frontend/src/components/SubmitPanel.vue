@@ -1,13 +1,35 @@
 <script setup>
 import { inject, ref } from 'vue'
+import axios from 'axios'
 
 const $cookies = inject('$cookies')
 
-const model = ref('')
+const llm_model = ref('')
+const file = ref(null)
 const show = ref(false)
+const info = ref('')
+
+const handleFile = (event) => {
+  file.value = event.target.files[0]
+}
 
 const sendFile = async () => {
+  let formData = new FormData()
+  formData.append('file', file.value)
+  formData.append('user', $cookies.get('user')['id'])
+  formData.append('llm_model', llm_model.value)
 
+  try {
+    const response = await axios.post('http://localhost:8000/api/user/send_file', formData)
+    info.value = response.data['success']
+  } catch (error) {
+    const error_response = error.response.data
+    if (typeof error_response['error'] === 'string') {
+      info.value = error_response['error']
+    } else {
+      info.value = error_response['error'].join(' ')
+    }
+  }
 }
 </script>
 
@@ -18,20 +40,20 @@ const sendFile = async () => {
         <h2>Wybierz model językowy</h2>
         <div class="radio_row">
           <div class="radio_item">
-            <input type="radio" id="bert-base" value="bert-base" v-model="model">
+            <input type="radio" id="bert-base" value="bert-base" v-model="llm_model">
             <label for="bert-base">BERT-BASE</label>
           </div>
           <div class="radio_item">
-            <input type="radio" id="bert-large" value="bert-large" v-model="model">
+            <input type="radio" id="bert-large" value="bert-large" v-model="llm_model">
             <label for="bert-large">BERT-LARGE</label>
           </div>
         </div>
         <label for="file">Wybierz plik</label>
-        <input type="file" id="file"/>
+        <input type="file" id="file" @change="handleFile"/>
         <button type="submit">Wyślij</button>
       </form>
     </div>
-    <div class="info" title="Informacje" @click="show = !show">
+    <div class="info_icon" title="Informacje" @click="show = !show">
       &#x1F6C8;
     </div>
   </div>
@@ -48,12 +70,18 @@ const sendFile = async () => {
     😀😀😀😀😀
     <button type="button" id="return" @click="show = !show">Wróć</button>
   </div>
+  <div
+      class="info"
+      :style="{ color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen',
+          display: info.length === 0 ? 'none' : 'initial' }"
+  >
+    {{ info }}
+  </div>
 </template>
 
 <style scoped>
 .submit, .extra_info {
   width: 90%;
-  height: 90%;
   background-color: rgb(248, 249, 250);
   padding: 20px;
   border-radius: 8px;
@@ -65,12 +93,24 @@ const sendFile = async () => {
 }
 
 .submit {
+  height: 90%;
   justify-content: space-between;
 }
 
 .extra_info {
+  height: 70%;
   flex-direction: column;
   justify-content: space-evenly;
+}
+
+.info {
+  width: 50%;
+  margin: 10px;
+  padding: 20px;
+  background-color: rgb(248, 249, 250);
+  border-radius: 8px;
+  font-size: 1.2rem;
+  text-align: center;
 }
 
 .form {
@@ -146,7 +186,7 @@ button[type="submit"]:hover {
   background-color: #2980b9;
 }
 
-.info {
+.info_icon {
   width: 25%;
   text-align: center;
   font-size: 4rem;
@@ -154,7 +194,7 @@ button[type="submit"]:hover {
   cursor: pointer;
 }
 
-.info:hover {
+.info_icon:hover {
   color: #2980b9;
 }
 

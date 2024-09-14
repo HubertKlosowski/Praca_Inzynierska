@@ -167,6 +167,7 @@ button[type="button"] {
   color: #f1f1f1;
   border-radius: 8px;
   border: none;
+  cursor: pointer;
 }
 
 .delete {

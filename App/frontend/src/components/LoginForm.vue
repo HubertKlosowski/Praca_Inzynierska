@@ -13,8 +13,8 @@ const info = ref('')
 
 const loginUser = async () => {
   try {
-    const response = await axios.get('http://localhost:8000/api/user/login',
-        { params: { username: username.value, password: password.value } })
+    const response = await axios.post('http://localhost:8000/api/user/login',
+        { username: username.value, password: password.value })
     $cookies.set('user', response.data['user'])
     info.value = response.data['success']
     await router.push('/profile')

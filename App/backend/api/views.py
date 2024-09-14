@@ -1,12 +1,17 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.contrib.auth.hashers import make_password, check_password
+
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
-from django.contrib.auth.hashers import make_password, check_password
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser
+
 from .models import User
-from .serializer import UserSerializer
+from .serializer import UserSerializer, SubmissionSerializer
 import datetime
+import pandas as pd
 
 
 @api_view(['GET'])
@@ -56,10 +61,10 @@ def get_users(request):
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
 
-@api_view(['GET'])
+@api_view(['POST'])
 def login(request):
-    username = request.GET.get('username')
-    password = request.GET.get('password')
+    username = request.data['username']
+    password = request.data['password']
 
     if len(username) == 0 or len(password) == 0:
         return Response(data={'error': 'BŁĄD!! Żadne pole nie może być puste.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -139,3 +144,24 @@ def renew_submission(request, username):
         return Response(data={'user': UserSerializer(user).data, 'success': 'SUKCES!! Liczba prób została odnowiona.'}, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SendFileView(APIView):
+    serializer = SubmissionSerializer
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        serializer = self.serializer(data=request.data)
+        extension = request.data['file'].name.split('.')[-1]
+        if extension != 'csv':
+            return Response({'error': 'BŁĄD!! Plik musi być w rozszerzeniu .csv.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        df = pd.read_csv(request.data['file'])
+        if ['text', 'depressed'] != df.columns.tolist():
+            return Response({'error': 'BŁĄD!! Plik music zawierać kolumny \"text\", oraz \"depressed\".'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success': 'SUKCES!! Udało się przesłać poprawnie dane.', 'submission': serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
