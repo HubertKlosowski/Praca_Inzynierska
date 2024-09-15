@@ -3,13 +3,12 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password, check_password
 
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, parser_classes
 from rest_framework import status
-from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 
 from .models import User
-from .serializer import UserSerializer, SubmissionSerializer
+from .serializer import UserSerializer, SubmissionFileSerializer, SubmissionChatSerializer
 import datetime
 import pandas as pd
 
@@ -52,8 +51,10 @@ def create_user(request):
 
     if serializer.is_valid():
         serializer.save()
-        return Response(data={'user': serializer.data, 'success': 'SUKCES!! Dodano użytkownika.'}, status=status.HTTP_201_CREATED)
-    return Response(data={'error': 'BŁĄD!! Nie udało się dodać użytkownika.', 'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'user': serializer.data, 'success': 'SUKCES!! Dodano użytkownika.'},
+                        status=status.HTTP_201_CREATED)
+    return Response(data={'error': 'BŁĄD!! Nie udało się dodać użytkownika.', 'details': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def get_users(request):
@@ -76,7 +77,8 @@ def login(request):
     user = User.objects.get(username=username)
 
     if check_password(password, user.password):
-        return Response(data={'user': UserSerializer(user).data, 'success': 'SUKCES!! Udało się zalogować.'}, status=status.HTTP_200_OK)
+        return Response(data={'user': UserSerializer(user).data, 'success': 'SUKCES!! Udało się zalogować.'},
+                        status=status.HTTP_200_OK)
 
     return Response(data={'error': 'BŁĄD!! Niepoprawne hasło.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -118,7 +120,8 @@ def update_user(request, user_id):
 
     if serializer.is_valid():
         serializer.save()
-        return Response(data={'user': UserSerializer(user).data, 'success': 'SUKCES!! Dane użytkownika zostały poprawnie zmienione.'},
+        return Response(data={'user': UserSerializer(user).data,
+                              'success': 'SUKCES!! Dane użytkownika zostały poprawnie zmienione.'},
                         status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -141,27 +144,31 @@ def renew_submission(request, username):
 
     if serializer.is_valid():
         serializer.save()
-        return Response(data={'user': UserSerializer(user).data, 'success': 'SUKCES!! Liczba prób została odnowiona.'}, status=status.HTTP_200_OK)
+        return Response(data={'user': UserSerializer(user).data, 'success': 'SUKCES!! Liczba prób została odnowiona.'},
+                        status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['POST'])
+@parser_classes([MultiPartParser])
+def send_file(request):
+    serializer = SubmissionFileSerializer(data=request.data)
+    extension = request.data['file'].name.split('.')[-1]
 
-class SendFileView(APIView):
-    serializer = SubmissionSerializer
-    parser_classes = [MultiPartParser]
+    if not User.objects.filter(id=request.data['user']).exists():
+        return Response({'error': 'BŁĄD!! Użytkownik nie istnieje.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    def post(self, request):
-        serializer = self.serializer(data=request.data)
-        extension = request.data['file'].name.split('.')[-1]
-        if extension != 'csv':
-            return Response({'error': 'BŁĄD!! Plik musi być w rozszerzeniu .csv.'}, status=status.HTTP_400_BAD_REQUEST)
+    if extension != 'csv':
+        return Response({'error': 'BŁĄD!! Plik musi być w rozszerzeniu .csv.'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
-        df = pd.read_csv(request.data['file'])
-        if ['text', 'depressed'] != df.columns.tolist():
-            return Response({'error': 'BŁĄD!! Plik music zawierać kolumny \"text\", oraz \"depressed\".'},
-                            status=status.HTTP_400_BAD_REQUEST)
+    df = pd.read_csv(request.data['file'])
+    if ['text', 'depressed'] != df.columns.tolist():
+        return Response({'error': 'BŁĄD!! Plik music zawierać kolumny \"text\", oraz \"depressed\".'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'success': 'SUKCES!! Udało się przesłać poprawnie dane.', 'submission': serializer.data}, status=status.HTTP_201_CREATED)
-        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'success': 'SUKCES!! Udało się przesłać dane.', 'submission': serializer.data},
+                        status=status.HTTP_201_CREATED)
+    return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

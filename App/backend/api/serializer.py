@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Submission
+from .models import User, SubmissionFile, SubmissionChat
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -7,7 +7,12 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
 
-class SubmissionSerializer(serializers.ModelSerializer):
+class SubmissionFileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Submission
+        model = SubmissionFile
+        fields = '__all__'
+
+class SubmissionChatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubmissionChat
         fields = '__all__'

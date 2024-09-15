@@ -16,7 +16,7 @@ class User(models.Model):
                 f'created_at: {self.created_at}, submission_num: {self.submission_num}')
 
 
-class Submission(models.Model):
+class SubmissionFile(models.Model):
     LLM_CHOICES = [
         ('bert-base', 'BERT Base'),
         ('bert-large', 'BERT Large'),
@@ -25,7 +25,19 @@ class Submission(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     sent_at = models.DateTimeField(default=timezone.now)
     llm_model = models.CharField(max_length=20, choices=LLM_CHOICES)
-    file = models.FileField(upload_to='files/')
+    file = models.FileField(upload_to='submission_files/')
 
     def __str__(self):
-        return f'{self.user.username} - {self.sent_at} - {self.llm_model}'
+        return (f'Submission info\n User:{self.user.username}, '
+                f'Sent: {self.sent_at}, Model: {self.llm_model}')
+
+
+class SubmissionChat(models.Model):
+    LLM_CHOICES = [
+        ('bert-base', 'BERT Base'),
+        ('bert-large', 'BERT Large'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    llm_model = models.CharField(max_length=20, choices=LLM_CHOICES)
+    file = models.FileField(upload_to='submission_chat/')

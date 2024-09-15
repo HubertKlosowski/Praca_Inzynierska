@@ -31,7 +31,6 @@ const updateUser = async () => {
 
   try {
     const to_update = await axios.patch('http://localhost:8000/api/user/update_user/' + $cookies.get('user')['id'], user_obj)
-    console.log(to_update.data)
     info.value = to_update.data['success']
   } catch (error) {
     const error_response = error.response.data
@@ -59,11 +58,17 @@ const updateUser = async () => {
 
 const deleteUser = async () => {
   try {
-    await axios.delete('http://localhost:8000/api/user/delete_user/' + $cookies.get('user')['username'])
+    const response = await axios.delete('http://localhost:8000/api/user/delete_user/' + $cookies.get('user')['username'])
     $cookies.remove('user')
+    info.value = response.data['success']
     await router.push('/')
   } catch (error) {
-    console.log(error)
+    const error_response = error.response.data
+    if (typeof error_response['error'] === 'string') {
+      info.value = error_response['error']
+    } else {
+      info.value = error_response['error'].join(' ')
+    }
   }
 }
 
