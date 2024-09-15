@@ -163,7 +163,6 @@ div {
 
 button[type="button"] {
   font-size: 1.2rem;
-  font-weight: bold;
   color: #f1f1f1;
   border-radius: 8px;
   border: none;

@@ -72,9 +72,19 @@ const deleteUser = async () => {
   }
 }
 
-const logout = () => {
+const logout = async () => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/user/save_chat', {
+      user: $cookies.get('user')['id'],
+      chat: $cookies.get('chat')
+    })
+    console.log(response)
+  } catch (error) {
+    console.log(error)
+  }
   $cookies.remove('user')
-  router.push('/')
+  $cookies.remove('chat')
+  await router.push('/')
 }
 
 const resetInputs = () => {

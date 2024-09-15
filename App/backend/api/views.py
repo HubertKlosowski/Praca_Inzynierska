@@ -169,6 +169,28 @@ def send_file(request):
 
     if serializer.is_valid():
         serializer.save()
+
+        user = User.objects.get(id=request.data['user'])
+
+        if user.submission_num == 0:
+            return Response({'error': 'BŁĄD!! Użytkownik nie posiada możliwych prób.'},
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+        user.submission_num -= 1
+        user.save()
+
         return Response({'success': 'SUKCES!! Udało się przesłać dane.', 'submission': serializer.data},
                         status=status.HTTP_201_CREATED)
+    return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def get_answer(request):
+    return Response({'answer': 'Idziemy do przodu.'}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def save_chat(request):
+    serializer = SubmissionChatSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'success': 'SUKCES!! Udało się zapisać konwersację.'}, status=status.HTTP_200_OK)
+
     return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

@@ -1,35 +1,46 @@
 <script setup>
-import {ref, inject, onMounted} from 'vue'
+import { ref, inject, onMounted } from 'vue'
+import axios from 'axios'
 
 const $cookies = inject('$cookies')
 
 const question = ref('')
 
-const createMyDiv = (textValue) => {
+const createMyDiv = (textValue, backgroundColor) => {
   const element = document.createElement('div')
-  element.className = 'question'
   element.style.width = '80%'
   element.style.height = '10%'
   element.style.margin = '10px'
   element.style.padding = '10px'
   element.style.borderRadius = '10px'
-  element.style.backgroundColor = 'lightsteelblue'
+  element.style.backgroundColor = backgroundColor
   element.style.color = '#2c3e50'
   element.textContent = textValue
   return element
 }
 
-const sendMessage = () => {
+const sendMessage = async () => {
   if (question.value.length !== 0) {
     const chatHistory = $cookies.get('chat')
-    chatHistory.push({
+    const q_and_a = {
       'sent_at': new Date().toISOString(),
-      'text': question.value,
-    })
+      'question': question.value,
+      'answer': ''
+    }
+    try {
+      const response = await axios.post('http://localhost:8000/api/user/get_answer', q_and_a)
+      q_and_a['answer'] = response.data['answer']
+    } catch (error) {
+      const error_response = error.response.data
+      q_and_a['answer'] = error_response['answer']
+    }
+    chatHistory.push(q_and_a)
     $cookies.set('chat', chatHistory)
 
     const parentElement = document.getElementsByClassName('main_chat')[0]
-    parentElement.append(createMyDiv(question.value))
+    parentElement.append(createMyDiv(q_and_a['question'], 'lightsteelblue'))
+    parentElement.append(createMyDiv(q_and_a['answer'], 'lightblue'))
+    question.value = ''
   }
 }
 
@@ -40,7 +51,8 @@ onMounted(() => {
 
   const parentElement = document.getElementsByClassName('main_chat')[0]
   for (const message of $cookies.get('chat')) {
-    parentElement.append(createMyDiv(message['text']))
+    parentElement.append(createMyDiv(message['question'], 'lightsteelblue'))
+    parentElement.append(createMyDiv(message['answer'], 'lightblue'))
   }
 })
 </script>
@@ -79,16 +91,6 @@ onMounted(() => {
   flex-direction: column;
   max-height: 80%;
   overflow-y: auto;
-}
-
-.question {
-    width: 80%;
-    height: 10%;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    background-color: lightsteelblue;
-    color: #2c3e50;
 }
 
 .message {

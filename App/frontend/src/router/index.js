@@ -42,6 +42,8 @@ router.beforeEach(async (to, from) => {
     const $cookies = inject('$cookies')
     if ((to.path === '/profile' || to.path === '/submissions') && !$cookies.get('user')) {
         return false
+    } else if (to.path === '/submissions/chat' && $cookies.get('user')['usertype'] === 0) {
+        return false
     }
 })
 

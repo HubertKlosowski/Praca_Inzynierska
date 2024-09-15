@@ -1,12 +1,25 @@
 <script setup>
+import { inject } from 'vue'
 
+const $cookies = inject('$cookies')
 </script>
 
 <template>
   <div class="submission">
     <RouterView></RouterView>
-    <RouterLink to="/submissions/submit" class="additional_links">Sprawdź plik</RouterLink>
-    <RouterLink to="/submissions/chat" class="additional_links">Rozpocznij chat</RouterLink>
+    <RouterLink
+        to="/submissions/submit"
+        class="additional_links"
+    >
+      Sprawdź plik
+    </RouterLink>
+    <RouterLink
+        to="/submissions/chat"
+        class="additional_links"
+        v-show="$cookies.get('user')['usertype'] !== 0"
+    >
+      Rozpocznij chat
+    </RouterLink>
   </div>
 </template>
 
