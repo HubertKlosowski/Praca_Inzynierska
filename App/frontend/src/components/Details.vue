@@ -29,8 +29,7 @@
 <style scoped>
 .container {
   width: 80%;
-  height: 60%;
-  max-height: 60%;
+  height: auto;
   align-items: flex-start;
   background-color: lightsteelblue;
   margin: 0 auto;

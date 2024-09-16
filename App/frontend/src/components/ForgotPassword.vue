@@ -28,7 +28,7 @@ const resetPassword = () => {
 .container {
   width: 80%;
   padding: 20px;
-  height: 50%;
+  height: auto;
   margin: 0 auto;
   background-color: lightsteelblue;
   border-radius: 8px;

@@ -82,6 +82,7 @@ const sendFile = async () => {
 <style scoped>
 .submit, .extra_info {
   width: 90%;
+  height: 70%;
   background-color: rgb(248, 249, 250);
   padding: 20px;
   border-radius: 8px;
@@ -93,12 +94,10 @@ const sendFile = async () => {
 }
 
 .submit {
-  height: 90%;
   justify-content: space-between;
 }
 
 .extra_info {
-  height: 70%;
   flex-direction: column;
   justify-content: space-evenly;
 }
@@ -115,7 +114,6 @@ const sendFile = async () => {
 
 .form {
   width: 65%;
-  height: 50%;
 }
 
 h2 {

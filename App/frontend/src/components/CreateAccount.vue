@@ -140,7 +140,7 @@ const createAccount = async () => {
 .container {
   width: 80%;
   padding: 20px;
-  height: 70%;
+  height: auto;
   margin: 0 auto;
   background-color: lightsteelblue;
   border-radius: 8px;

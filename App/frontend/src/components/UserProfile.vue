@@ -20,7 +20,7 @@ const manage_users = ref(false)
 .container {
   width: 80%;
   padding: 20px;
-  height: 80%;
+  height: auto;
   margin: 0 auto;
   background-color: lightsteelblue;
   border-radius: 8px;
