@@ -26,10 +26,10 @@ def limit_length(df: pd.DataFrame, limit_to: int) -> pd.DataFrame:  # usunięcie
 
 
 def standardize_df(df: pd.DataFrame) -> pd.DataFrame:
-    columns = ['text', 'depressed']  # zmiana nazw kolumn
+    columns = ['text', 'label']  # zmiana nazw kolumn
     for i, column in enumerate(df.columns):
         df.rename(columns={column: columns[i]}, inplace=True)
 
     df.dropna(inplace=True)  # usunięcie wartości NaN
-    df['depressed'] = df['depressed'].astype(int)
+    df['label'] = df['label'].astype(int)
     return df

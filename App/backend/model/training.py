@@ -1,4 +1,4 @@
-from model import BERT
+from custom_bert import BERT
 import torch
 import math
 import os
