@@ -9,6 +9,7 @@ from rest_framework.parsers import MultiPartParser
 
 from .models import User
 from .serializer import UserSerializer, SubmissionFileSerializer, SubmissionChatSerializer
+from model.my_model import predict, create_dataset
 import datetime
 import pandas as pd
 
@@ -163,8 +164,8 @@ def send_file(request):
                         status=status.HTTP_400_BAD_REQUEST)
 
     df = pd.read_csv(request.data['file'])
-    if ['text', 'depressed'] != df.columns.tolist():
-        return Response({'error': 'BŁĄD!! Plik music zawierać kolumny \"text\", oraz \"depressed\".'},
+    if ['text', 'label'] != df.columns.tolist():
+        return Response({'error': 'BŁĄD!! Plik music zawierać kolumny \"text\", oraz \"label\".'},
                         status=status.HTTP_400_BAD_REQUEST)
 
     if serializer.is_valid():
@@ -178,8 +179,20 @@ def send_file(request):
         user.submission_num -= 1
         user.save()
 
-        return Response({'success': 'SUKCES!! Udało się przesłać dane.', 'submission': serializer.data},
-                        status=status.HTTP_201_CREATED)
+        try:
+            stats = predict(
+                f'./model/saved-{serializer.data['llm_model']}-uncased/',
+                f'{serializer.data['llm_model']}-uncased',
+                create_dataset(df, split_train_test=False)
+            )
+        except OSError as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({
+            'success': 'SUKCES!! Udało się przesłać dane.',
+            'stats': stats,
+            'submission': serializer.data
+        }, status=status.HTTP_201_CREATED)
     return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
