@@ -165,7 +165,7 @@ def send_file(request):
 
     df = pd.read_csv(request.data['file'])
     if ['text', 'label'] != df.columns.tolist():
-        return Response({'error': 'BŁĄD!! Plik music zawierać kolumny \"text\", oraz \"label\".'},
+        return Response({'error': 'BŁĄD!! Plik musi zawierać kolumny \"text\", oraz \"label\".'},
                         status=status.HTTP_400_BAD_REQUEST)
 
     if serializer.is_valid():
@@ -179,14 +179,16 @@ def send_file(request):
         user.submission_num -= 1
         user.save()
 
+        df.dropna(inplace=True)
+
         try:
             stats = predict(
                 f'./model/saved-{serializer.data['llm_model']}-uncased/',
                 f'{serializer.data['llm_model']}-uncased',
                 create_dataset(df, split_train_test=False)
             )
-        except OSError as e:
-            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'BŁĄD!! {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({
             'success': 'SUKCES!! Udało się przesłać dane.',

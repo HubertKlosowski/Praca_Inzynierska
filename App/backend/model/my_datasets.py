@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
-from .api_keys import public_key, secret_key
+from model.api_keys import public_key, secret_key
 import praw
 from datetime import datetime
 from praw.models import MoreComments
@@ -98,16 +98,6 @@ def limit_length(df: pd.DataFrame, limit_to: int) -> pd.DataFrame:  # usunięcie
     df.drop(index=df.loc[df['len'] > limit_to, :].index, inplace=True)
     df.drop(columns=['len'], inplace=True)
     df.reset_index(drop=True, inplace=True)
-    return df
-
-
-def standardize_df(df: pd.DataFrame) -> pd.DataFrame:
-    columns = ['text', 'label']  # zmiana nazw kolumn
-    for i, column in enumerate(df.columns):
-        df.rename(columns={column: columns[i]}, inplace=True)
-
-    df.dropna(inplace=True)  # usunięcie wartości NaN
-    df['label'] = df['label'].astype(int)
     return df
 
 

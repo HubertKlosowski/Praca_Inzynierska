@@ -8,6 +8,7 @@ const llm_model = ref('')
 const file = ref(null)
 const show = ref(false)
 const info = ref('')
+const stats = ref()
 
 const handleFile = (event) => {
   file.value = event.target.files[0]
@@ -20,8 +21,11 @@ const sendFile = async () => {
   formData.append('llm_model', llm_model.value)
 
   try {
+    info.value = 'Proszę poczekać, przeprowadzane są obliczenia!!'
     const response = await axios.post('http://localhost:8000/api/user/send_file', formData)
     info.value = response.data['success']
+    stats.value = response.data['stats']
+    $cookies.set('stats', response.data['stats'])
   } catch (error) {
     const error_response = error.response.data
     if (typeof error_response['error'] === 'string') {
@@ -72,8 +76,9 @@ const sendFile = async () => {
   </div>
   <div
       class="info"
-      :style="{ color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen',
-          display: info.length === 0 ? 'none' : 'initial' }"
+      :style="{
+    color: info.startsWith('BŁĄD') ? 'darkred' : 'darkgreen',
+    display: info.length === 0 ? 'none' : 'initial' }"
   >
     {{ info }}
   </div>

@@ -10,8 +10,7 @@ from transformers import (AutoModelForSequenceClassification, TextClassification
                           TrainingArguments, Trainer, DataCollatorWithPadding, AutoTokenizer)
 from datasets import Dataset, DatasetDict
 import pandas as pd
-from .my_datasets import standardize_df
-from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
+from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 
 
@@ -25,8 +24,7 @@ def compute_metrics(logits):
     return {'accuracy': accuracy_score(y_true, y_pred)}
 
 
-def create_dataset(df: pd.DataFrame, split_train_test: bool) -> DatasetDict:
-    dataset = standardize_df(df)
+def create_dataset(dataset: pd.DataFrame, split_train_test: bool) -> DatasetDict:
     dt = DatasetDict()
 
     if split_train_test:
@@ -52,12 +50,6 @@ def train(path: str, file: str, model_name: str):
     id2label = { 0: 'non-depressed', 1: 'depressed' }
     label2id = { 'non-depressed': 0, 'depressed': 1 }
 
-    # zbędne warningi z hugging-face
-    loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
-    for logger in loggers:
-        if "transformers" in logger.name.lower():
-            logger.setLevel(logging.ERROR)
-
     model = AutoModelForSequenceClassification.from_pretrained(
         model_name,
         num_labels=2,
@@ -70,13 +62,14 @@ def train(path: str, file: str, model_name: str):
     training_args = TrainingArguments(
         output_dir=f'{model_name}-directory',
         learning_rate=2e-5,
-        per_device_train_batch_size=16,
-        per_device_eval_batch_size=16,
+        per_device_train_batch_size=64,
+        per_device_eval_batch_size=64,
         num_train_epochs=2,
         weight_decay=0.01,
         eval_strategy='epoch',
         save_strategy='epoch',
-        load_best_model_at_end=True
+        load_best_model_at_end=True,
+        log_level='error'
     )
 
     trainer = Trainer(
@@ -91,12 +84,12 @@ def train(path: str, file: str, model_name: str):
 
     trainer.train()
 
-    trainer.save_model(f'model-saved-{model_name}')
+    trainer.save_model(f'saved-{model_name}')
 
 
 def predict(model_path: str, model_name: str, data: DatasetDict) -> dict:
     model = AutoModelForSequenceClassification.from_pretrained(os.path.join(model_path))
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, truncation=True, max_length=512)
 
     pipe = TextClassificationPipeline(
         model=model,
@@ -113,16 +106,20 @@ def predict(model_path: str, model_name: str, data: DatasetDict) -> dict:
     predictions = pd.DataFrame(predictions)
     predictions['label_id'] = predictions['label'].map({ 'non-depressed': 0, 'depressed': 1 })
 
-    choosen_metrics = {
+    metrics = {
         'accuracy': accuracy_score(y_true=data['test']['label'], y_pred=predictions['label_id']),
         'recall': recall_score(y_true=data['test']['label'], y_pred=predictions['label_id']),
         'precision': precision_score(y_true=data['test']['label'], y_pred=predictions['label_id']),
         'f1-score': f1_score(y_true=data['test']['label'], y_pred=predictions['label_id'])
     }
 
-    predictions.drop(columns=['label_id'], inplace=True)
+    matrix = confusion_matrix(y_true=data['test']['label'], y_pred=predictions['label_id'])
 
-    return {'metrics': choosen_metrics, 'predictions': predictions}
+    return {
+        'metrics': metrics,
+        # 'predictions': predictions,
+        'confusion_matrix': matrix
+    }
 
 
 # train('data', 'depression_dataset_reddit_cleaned.csv', 'bert-base-uncased')

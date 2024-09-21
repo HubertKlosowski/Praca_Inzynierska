@@ -73,17 +73,22 @@ const deleteUser = async () => {
 }
 
 const logout = async () => {
-  try {
-    const response = await axios.post('http://localhost:8000/api/user/save_chat', {
-      user: $cookies.get('user')['id'],
-      chat: $cookies.get('chat')
-    })
-    console.log(response)
-  } catch (error) {
-    console.log(error)
+  if ($cookies.isKey('chat')) {
+    try {
+      const response = await axios.post('http://localhost:8000/api/user/save_chat', {
+        user: $cookies.get('user')['id'],
+        chat: $cookies.get('chat')
+      })
+      console.log(response)
+    } catch (error) {
+      console.log(error)
+    }
   }
-  $cookies.remove('user')
-  $cookies.remove('chat')
+  for (const cookie_key of $cookies.keys()) {
+    if ($cookies.get(cookie_key)) {
+      $cookies.remove(cookie_key)
+    }
+  }
   await router.push('/')
 }
 
@@ -130,6 +135,9 @@ const resetInputs = () => {
           </div>
           <div class="usertype">
             <b>Typ konta</b> {{ user_types[$cookies.get('user')['usertype']] }}
+          </div>
+          <div class="submission_num">
+            <b>Liczba prób</b> {{ $cookies.get('user')['submission_num'] }}
           </div>
         </div>
       </div>

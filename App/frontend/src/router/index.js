@@ -10,6 +10,7 @@ import Submission from '@/components/Submission.vue'
 import UserProfile from '@/components/UserProfile.vue'
 import SubmitPanel from '@/components/SubmitPanel.vue'
 import ChatPanel from '@/components/ChatPanel.vue'
+import StatsPanel from '@/components/StatsPanel.vue'
 
 
 const routes = [
@@ -27,6 +28,10 @@ const routes = [
             {
                 path: 'chat',
                 component: ChatPanel
+            },
+            {
+                path: 'stats',
+                component: StatsPanel
             }
         ]
     },

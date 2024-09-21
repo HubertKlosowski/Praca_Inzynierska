@@ -7,19 +7,27 @@ const $cookies = inject('$cookies')
 <template>
   <div class="submission">
     <RouterView></RouterView>
-    <RouterLink
-        to="/submissions/submit"
+    <div class="row">
+      <RouterLink
+          to="/submissions/submit"
+          class="additional_links"
+      >
+        Sprawdź plik
+      </RouterLink>
+      <RouterLink
+          to="/submissions/chat"
+          class="additional_links"
+          v-show="$cookies.get('user')['usertype'] !== 0"
+      >
+        Rozpocznij chat
+      </RouterLink>
+      <RouterLink
+        to="/submissions/stats"
         class="additional_links"
-    >
-      Sprawdź plik
-    </RouterLink>
-    <RouterLink
-        to="/submissions/chat"
-        class="additional_links"
-        v-show="$cookies.get('user')['usertype'] !== 0"
-    >
-      Rozpocznij chat
-    </RouterLink>
+      >
+        Zobacz statystyki
+      </RouterLink>
+    </div>
   </div>
 </template>
 
@@ -34,6 +42,15 @@ const $cookies = inject('$cookies')
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+}
+
+.row {
+  width: 100%;
+  height: 10%;
+  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-evenly;
 }
