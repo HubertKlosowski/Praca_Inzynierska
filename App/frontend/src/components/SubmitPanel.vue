@@ -3,6 +3,8 @@ import { inject, ref } from 'vue'
 import axios from 'axios'
 import PolishSubmitFile from '@/components/SubmitPolishFile.vue'
 import EnglishSubmitFile from '@/components/SubmitEnglishFile.vue'
+import english from '@/assets/angielski.png'
+import polish from '@/assets/polski.png'
 
 const $cookies = inject('$cookies')
 
@@ -44,6 +46,8 @@ const predict = async (llm_model, file) => {
           class="circle"
           @click="change_lang = !change_lang"
           :style="{
+            background: change_lang ? `url(${english}) center` : `url(${polish}) center`,
+            backgroundSize: '100% 100%',
             transform: change_lang ? 'translate(50%)' : 'translate(-50%)'
              }"
       ></div>
@@ -114,8 +118,6 @@ const predict = async (llm_model, file) => {
 .circle {
   width: 35%;
   height: 70%;
-  background: url(@/assets/angielski.png) center;
-  background-size: 100% 100%;
   border-radius: 100%;
 }
 
