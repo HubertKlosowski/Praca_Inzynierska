@@ -81,6 +81,9 @@
   flex-direction: column;
   max-height: 64vh;
   overflow-y: auto;
+  animation-name: appear;
+  animation-duration: 5s;
+  animation-timing-function: ease-in;
 }
 
 .row {

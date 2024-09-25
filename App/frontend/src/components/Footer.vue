@@ -5,47 +5,94 @@
 <template>
   <div class="footer">
     <div class="contact">
-      <p>Kontakt</p>
-      <p>Telefon: 123-321-231</p>
-      <p>Email: a@a.com</p>
+      <h3>Kontakt</h3>
+      <p>Phone: 123-321-231</p>
+      <p>Email: <a href="mailto:a@a.com">hklosowski@interia.com</a></p>
     </div>
     <div class="social_media">
-      <a href="https://www.facebook.com/" target="_blank"><img src="@/assets/facebook.png" alt="Facebook icon"></a>
-      <a href="https://www.reddit.com/?rdt=51348" target="_blank"><img src="@/assets/reddit.png" alt="Reddit icon"></a>
-      <a href="https://x.com/" target="_blank"><img src="@/assets/twitter.png" alt="Twitter icon"></a>
+      <a href="https://www.facebook.com/" target="_blank">
+        <img src="@/assets/facebook.png" alt="Facebook">
+      </a>
+      <a href="https://www.reddit.com/" target="_blank">
+        <img src="@/assets/reddit.png" alt="Reddit">
+      </a>
+      <a href="https://x.com/" target="_blank">
+        <img src="@/assets/twitter.png" alt="Twitter">
+      </a>
     </div>
     <div class="thanks">
-      <h3>Specjalne podziękowania dla https://www.flaticon.com/ za udostępnienie ikon dla mojej strony.</h3>
+      <p>
+        Podziękowania dla strony <a href="https://www.flaticon.com/" target="_blank">Flaticon</a>
+        za udostępnienie ikon.
+      </p>
     </div>
   </div>
 </template>
 
 <style scoped>
 .footer {
-  flex: 0.5;
-  background-color: cornflowerblue;
+  background-color: #1e3a8a;
   color: white;
-  text-align: center;
-  padding: 10px;
+  padding: 20px;
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  border-top: 2px black solid;
+  border-top: 3px solid black;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.footer > * {
+  position: relative;
+  animation-name: toTheTop;
+  animation-duration: 4s;
+  animation-timing-function: linear;
+}
+
+.contact {
+  flex: 1;
+  padding: 10px;
+}
+
+.contact a {
+  color: #f0f0f0;
+  text-decoration: none;
+}
+
+.contact a:hover {
+  text-decoration: underline;
 }
 
 .social_media {
-  flex-shrink: 1.5;
+  flex: 1;
   display: flex;
-  flex-direction: row;
+  justify-content: center;
+  gap: 20px;
+}
+
+.social_media img {
+  width: 40px;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+
+.social_media img:hover {
+  transform: scale(1.1);
 }
 
 .thanks {
-  flex-shrink: 2;
+  flex: 1;
+  font-size: 1.2rem;
+  padding: 10px;
 }
 
-img {
-  width: 30%;
-  height: auto;
+.thanks a {
+  color: #ffd700;
+  text-decoration: none;
+}
+
+.thanks a:hover {
+  text-decoration: underline;
 }
 </style>

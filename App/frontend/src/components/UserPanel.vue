@@ -85,7 +85,7 @@ const logout = async () => {
     }
   }
   for (const cookie_key of $cookies.keys()) {
-    if ($cookies.get(cookie_key)) {
+    if ($cookies.isKey(cookie_key)) {
       $cookies.remove(cookie_key)
     }
   }
@@ -110,17 +110,18 @@ const resetInputs = () => {
           Utworzony: {{ $cookies.get('user')['created_at'].slice(0, 10) }}
         </div>
         <div class="row">
-          <button type="button" @click="edit_user_data = !edit_user_data" class="buttons" id="edit" v-show="!edit_user_data">Edytuj</button>
-          <button type="button" @click="deleteUser" class="buttons" id="delete" v-show="!edit_user_data">Usuń</button>
-          <button type="button" @click="logout" class="buttons" id="logout" v-show="!edit_user_data">Wyloguj</button>
+          <button type="button" @click="edit_user_data = !edit_user_data" class="buttons" id="edit" v-if="!edit_user_data">Edytuj</button>
+          <button type="button" @click="deleteUser" class="buttons" id="delete" v-if="!edit_user_data">Usuń</button>
+          <button type="button" @click="logout" class="buttons" id="logout" v-if="!edit_user_data">Wyloguj</button>
           <button
               type="button"
               @click="$emit('goBack', true)" class="buttons"
-              v-show="!edit_user_data && user_types[$cookies.get('user')['usertype']] === 'Admin'"
-              id="manage">Zarządzaj</button>
+              v-if="!edit_user_data && user_types[$cookies.get('user')['usertype']] === 'Admin'"
+              id="manage"
+          >Zarządzaj</button>
         </div>
       </div>
-      <div class="user_info" v-show="!edit_user_data">
+      <div class="user_info" v-if="!edit_user_data">
         <div class="row user_row">
           <div class="name">
             <b>Imię</b> {{ $cookies.get('user')['name'] }}
@@ -141,7 +142,7 @@ const resetInputs = () => {
           </div>
         </div>
       </div>
-      <div class="form" v-show="edit_user_data">
+      <div class="form" v-else>
         <form @submit.prevent="updateUser">
           <div class="form_row">
             <label for="name">Imię</label>
@@ -165,7 +166,7 @@ const resetInputs = () => {
     </div>
     <div class="row main_row">
       <div class="submission" v-for="n in 3">
-        {{ n }}
+        {{ $cookies.get('stats') }}
       </div>
     </div>
   </div>

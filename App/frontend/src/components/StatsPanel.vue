@@ -1,43 +1,36 @@
 <script setup>
-import {inject, onMounted} from 'vue'
+import { inject, onMounted } from 'vue'
 
 const $cookies = inject('$cookies')
 
 const setColor = () => {
   const elements = document.getElementsByClassName('confusion_matrix_element')
 
-  const values = $cookies.get('stats')['confusion_matrix']
+  const values = $cookies.get('confusion_matrix')
   const class_instances = values.map((row) => row.reduce((a, b) => a + b))
 
   const back_color = values.map((row, i) => row.map((el) => {
     const ratio = el / class_instances[i]
-    const color_value = Math.round(ratio * 255)
-    const hex_color = color_value.toString(16).padStart(2, '0')
-    return `#${hex_color}${hex_color}${hex_color}`
+    const r = Math.round((1 - ratio) * 255)
+    const hex = r.toString(16).padStart(2, '0')
+    return `#${hex}0000`
   })).flat()
-
-  const color = values.map((row, i) => row.map((el) => {
-    const ratio = el / class_instances[i]
-    const color_value = Math.round((1 - ratio) * 255)
-    const hex_color = color_value.toString(16).padStart(2, '0')
-    return `#${hex_color}${hex_color}${hex_color}`
-  })).flat()
-
 
   for (let i = 0; i < elements.length; i++) {
     elements[i].style.backgroundColor = back_color[i]
-    elements[i].style.color = color[i]
+    elements[i].style.color = '#2c3e50'
   }
 }
 
-
-onMounted(() => setColor())
+if ($cookies.isKey('confusion_matrix')) {
+  onMounted(() => setColor())
+}
 </script>
 
 <template>
-  <div class="stats" v-show="$cookies.isKey('stats')">
+  <div class="stats" v-if="$cookies.isKey('confusion_matrix')">
     <div class="confusion_matrix">
-      <div class="matrix_row" v-for="row in $cookies.get('stats')['confusion_matrix']" :key="row">
+      <div class="matrix_row" v-for="row in $cookies.get('confusion_matrix')" :key="row">
         <div
             class="confusion_matrix_element"
             v-for="(el, index) in row" :key="index"
@@ -47,12 +40,12 @@ onMounted(() => setColor())
       </div>
     </div>
     <div class="metrics">
-      <div class="metric" v-for="(value, key) in $cookies.get('stats')['metrics']" :key="key">
+      <div class="metric" v-for="(value, key) in $cookies.get('metrics')" :key="key">
         {{ key }}: {{ value.toFixed(3) }}
       </div>
     </div>
   </div>
-  <div class="stats" v-show="!$cookies.isKey('stats')">
+  <div class="stats" v-else>
     BŁĄD!! Brak statystyk.<br>Nie wysłałeś/aś żadnych plików do sprawdzenia.
   </div>
 </template>
@@ -94,13 +87,11 @@ onMounted(() => setColor())
 }
 
 .confusion_matrix_element {
-  width: 45%;
-  height: 90%;
-  border-radius: 10px;
-  background-color: #ffffff;
+  width: 50%;
+  height: 100%;
+  background-color: white;
   align-content: center;
   text-align: center;
-  border: 2px solid black;
 }
 
 .metric {

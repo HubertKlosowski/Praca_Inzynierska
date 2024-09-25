@@ -9,10 +9,11 @@ const manage_users = ref(false)
 <template>
   <UserPanel
       @go-back="manage_users = true"
-      v-show="!manage_users"></UserPanel>
+      v-if="!manage_users"
+  ></UserPanel>
   <AdminPanel
       @go-back="manage_users = false"
-      v-show="manage_users"
+      v-else
   ></AdminPanel>
 </template>
 

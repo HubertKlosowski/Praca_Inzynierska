@@ -3,7 +3,6 @@ html, body {
   padding: 0;
   height: 100%;
   width: 100%;
-  font-family: "Times New Roman", sans-serif;
 }
 
 ::-webkit-scrollbar {
@@ -25,4 +24,42 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgb(101,105,122);
   background: linear-gradient(0deg, rgba(101,105,122,1) 35%, rgba(0,1,255,1) 100%);
+}
+
+@keyframes toTheLeft {
+  0% { left: 0; opacity: 1 }
+  25% { left: 50px; opacity: 0.75 }
+  50% { left: 100px; opacity: 0.5 }
+  75% { left: 150px; opacity: 0.25 }
+  100% { left: 200px; opacity: 0 }
+}
+
+@keyframes toTheRight {
+  0% { right: 0; opacity: 1 }
+  25% { right: 50px; opacity: 0.75 }
+  50% { right: 100px; opacity: 0.5 }
+  75% { right: 150px; opacity: 0.25 }
+  100% { right: 200px; opacity: 0 }
+}
+
+@keyframes toTheTop {
+  0% { bottom: 40px; opacity: 0 }
+  25% { bottom: 30px; opacity: 0.25 }
+  50% { bottom: 20px; opacity: 0.5 }
+  75% { bottom: 10px; opacity: 0.75 }
+  100% { bottom: 0; opacity: 1 }
+}
+
+@keyframes appear {
+  0% { opacity: 0.5 }
+  10% { opacity: 0.1 }
+  20% { opacity: 0.6 }
+  30% { opacity: 0.2 }
+  40% { opacity: 0.7 }
+  50% { opacity: 0.3 }
+  60% { opacity: 0.8 }
+  70% { opacity: 0.4 }
+  80% { opacity: 0.9 }
+  90% { opacity: 0.5 }
+  100% { opacity: 1 }
 }

@@ -17,7 +17,7 @@ const $cookies = inject('$cookies')
       <RouterLink
           to="/submissions/chat"
           class="additional_links"
-          v-show="$cookies.get('user')['usertype'] !== 0"
+          v-if="$cookies.get('user')['usertype'] !== 0"
       >
         Rozpocznij chat
       </RouterLink>

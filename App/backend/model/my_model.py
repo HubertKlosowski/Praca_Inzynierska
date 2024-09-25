@@ -1,5 +1,4 @@
 # https://huggingface.co/docs/transformers/tasks/sequence_classification
-import logging
 import os
 import numpy as np
 import torch
@@ -42,6 +41,7 @@ def create_dataset(dataset: pd.DataFrame, split_train_test: bool) -> DatasetDict
 
 def train(path: str, file: str, model_name: str):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
+
     dataset = create_dataset(
         pd.read_csv(os.path.join(path, file)),
         split_train_test=True
@@ -89,7 +89,7 @@ def train(path: str, file: str, model_name: str):
 
 def predict(model_path: str, model_name: str, data: DatasetDict) -> dict:
     model = AutoModelForSequenceClassification.from_pretrained(os.path.join(model_path))
-    tokenizer = AutoTokenizer.from_pretrained(model_name, truncation=True, max_length=512)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     pipe = TextClassificationPipeline(
         model=model,
@@ -117,7 +117,7 @@ def predict(model_path: str, model_name: str, data: DatasetDict) -> dict:
 
     return {
         'metrics': metrics,
-        # 'predictions': predictions,
+        'predictions': predictions,
         'confusion_matrix': matrix
     }
 

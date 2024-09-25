@@ -1,9 +1,7 @@
 <script setup>
-import { inject, ref } from 'vue'
+import { inject } from 'vue'
 
 const $cookies = inject('$cookies')
-
-const show_submissions = ref($cookies.isKey('user'))
 </script>
 
 <template>
@@ -13,7 +11,7 @@ const show_submissions = ref($cookies.isKey('user'))
       <h2>Aplikacja do wykrycia depresji</h2>
     </div>
     <div class="links">
-      <RouterLink to="/submissions" v-show="show_submissions">
+      <RouterLink to="/submissions" v-if="$cookies.isKey('user')">
         <img src="@/assets/submit.png" alt="Submission">
       </RouterLink>
       <RouterLink to="/">
@@ -30,13 +28,31 @@ const show_submissions = ref($cookies.isKey('user'))
 </template>
 
 <style scoped>
+.links > * {
+  position: relative;
+  animation-name: toTheRight;
+  animation-duration: 4s;
+  animation-timing-function: ease-out;
+  animation-direction: reverse;
+}
+
 #logo {
   max-width: 100px;
   height: auto;
+  position: relative;
+  animation-name: toTheLeft;
+  animation-duration: 4s;
+  animation-timing-function: ease-out;
+  animation-direction: reverse;
 }
 
 h2 {
   transform: translateY(0.5rem);
+  position: relative;
+  animation-name: toTheLeft;
+  animation-duration: 4s;
+  animation-timing-function: ease-out;
+  animation-direction: reverse;
 }
 
 .header {

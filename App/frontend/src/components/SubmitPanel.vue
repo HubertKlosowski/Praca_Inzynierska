@@ -1,74 +1,88 @@
 <script setup>
 import { inject, ref } from 'vue'
 import axios from 'axios'
+import PolishSubmitFile from '@/components/SubmitPolishFile.vue'
+import EnglishSubmitFile from '@/components/SubmitEnglishFile.vue'
 
 const $cookies = inject('$cookies')
 
-const llm_model = ref('')
-const file = ref(null)
+const change_lang = ref(true)
 const show = ref(false)
 const info = ref('')
-const stats = ref()
 
-const handleFile = (event) => {
-  file.value = event.target.files[0]
-}
-
-const sendFile = async () => {
+const predict = async (llm_model, file) => {
   let formData = new FormData()
-  formData.append('file', file.value)
+  formData.append('file', file)
   formData.append('user', $cookies.get('user')['id'])
-  formData.append('llm_model', llm_model.value)
+  formData.append('llm_model', llm_model)
 
-  try {
-    info.value = 'Proszę poczekać, przeprowadzane są obliczenia!!'
-    const response = await axios.post('http://localhost:8000/api/user/send_file', formData)
-    info.value = response.data['success']
-    stats.value = response.data['stats']
-    $cookies.set('stats', response.data['stats'])
-  } catch (error) {
-    const error_response = error.response.data
-    if (typeof error_response['error'] === 'string') {
-      info.value = error_response['error']
-    } else {
-      info.value = error_response['error'].join(' ')
+  if (file === null || llm_model.length === 0) {
+    info.value = 'BŁĄD!! Nie można wysłać pustych danych formularza.'
+  } else {
+    try {
+      info.value = 'Proszę poczekać, przeprowadzane są obliczenia!!'
+      const response = await axios.post('http://localhost:8000/api/user/send_file', formData)
+      info.value = response.data['success']
+      $cookies.set('confusion_matrix', response.data['stats']['confusion_matrix'])
+      $cookies.set('metrics', response.data['stats']['metrics'])
+    } catch (error) {
+      const error_response = error.response.data
+      if (typeof error_response['error'] === 'string') {
+        info.value = error_response['error']
+      } else {
+        info.value = error_response['error'].join(' ')
+      }
     }
   }
 }
 </script>
 
 <template>
-  <div class="submit" v-show="!show">
-    <div class="form">
-      <form @submit.prevent="sendFile">
-        <h2>Wybierz model językowy</h2>
-        <div class="radio_row">
-          <div class="radio_item">
-            <input type="radio" id="bert-base" value="bert-base" v-model="llm_model">
-            <label for="bert-base">BERT-BASE</label>
-          </div>
-          <div class="radio_item">
-            <input type="radio" id="bert-large" value="bert-large" v-model="llm_model">
-            <label for="bert-large">BERT-LARGE</label>
-          </div>
-        </div>
-        <label for="file">Wybierz plik</label>
-        <input type="file" id="file" @change="handleFile"/>
-        <button type="submit">Wyślij</button>
-      </form>
+  <div class="submit" v-if="!show">
+    <div class="change_lang">
+      <div
+          class="circle"
+          @click="change_lang = !change_lang"
+          :style="{
+            transform: change_lang ? 'translate(50%)' : 'translate(-50%)'
+             }"
+      ></div>
     </div>
-    <div class="info_icon" title="Informacje" @click="show = !show">
-      &#x1F6C8;
+    <div class="content" v-if="change_lang">
+      <EnglishSubmitFile
+          @send-data="([eng_llm_model, eng_file]) => { predict(eng_llm_model, eng_file) }"
+      ></EnglishSubmitFile>
+      <div class="info_icon" title="Informacje" @click="show = !show">
+        &#x1F6C8;
+      </div>
+    </div>
+    <div class="content" v-else>
+      <PolishSubmitFile
+          @send-data="([pl_llm_model, pl_file]) => { predict(pl_llm_model, pl_file) }"
+      ></PolishSubmitFile>
+      <div class="info_icon" title="Informacje" @click="show = !show">
+        &#x1F6C8;
+      </div>
     </div>
   </div>
-  <div class="extra_info" v-show="show">
+  <div class="extra_info" v-else>
     <h2>Jak wykonać klasyfikację pliku?</h2>
+    Na początku wybierz w jakim języku są twoje dane.<br>
+    W zależności od języka pojawią się modele specjalnie do nich przeznaczone<br>
     Wybierz jeden z podanych modeli językowych do klasyfikacji.<br>
-    Podane modele są przetrenowane na danych w języku angielskim.<br>
-    <ul>
-      <li>Model BERT-BASE to podstawowa wersja, z około 110 milionów parametrów.</li>
-      <li>Model BERT-LARGE natomiast posiada około 340 milionów parametrów.</li>
-    </ul>
+    <ol>
+      <li>dla języka angielskiego
+        <ol>
+          <li>Model BERT-BASE to podstawowa wersja, z około 110 milionów parametrów.</li>
+          <li>Model BERT-LARGE natomiast posiada około 340 milionów parametrów.</li>
+        </ol>
+      </li>
+      <li>dla języka polskiego
+        <ol>
+          <li>Jeszcze nie ma</li>
+        </ol>
+      </li>
+    </ol>
     Następnie podaj plik .csv, który spełnia wymagania podane na <a href="/details" target="_blank">stronie</a>.<br>
     Po wykonaniu tych czynności otrzymasz statystyki zbioru, który został przekazany.<br>
     😀😀😀😀😀
@@ -85,6 +99,36 @@ const sendFile = async () => {
 </template>
 
 <style scoped>
+.change_lang {
+  width: 15%;
+  height: 20%;
+  background-color: lightgrey;
+  border-radius: 35%;
+  border: 2px solid black;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.circle {
+  width: 35%;
+  height: 70%;
+  background: url(@/assets/angielski.png) center;
+  background-size: 100% 100%;
+  border-radius: 100%;
+}
+
+.content {
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+}
+
 .submit, .extra_info {
   width: 90%;
   height: 70%;
@@ -99,6 +143,7 @@ const sendFile = async () => {
 }
 
 .submit {
+  flex-direction: column;
   justify-content: space-between;
 }
 
@@ -115,78 +160,6 @@ const sendFile = async () => {
   border-radius: 8px;
   font-size: 1.2rem;
   text-align: center;
-}
-
-.form {
-  width: 65%;
-}
-
-h2 {
-  margin-bottom: 20px;
-  font-size: 1.5rem;
-  color: #2c3e50;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  padding: 20px;
-  background-color: powderblue;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.radio_row {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-}
-
-.radio_item {
-  display: flex;
-  align-items: center;
-}
-
-.radio_item label {
-  margin-left: 10px;
-  font-size: 1rem;
-  color: #2c3e50;
-}
-
-label {
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #2c3e50;
-}
-
-input[type="radio"] {
-  width: 1.2rem;
-  height: 1.2rem;
-  transform: translateY(-0.35em) translateX(0.35rem);
-}
-
-input[type="file"] {
-  margin-top: 10px;
-  padding: 8px;
-  border: 1px solid #bdc3c7;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-button[type="submit"] {
-  padding: 10px;
-  margin-top: 15px;
-  background-color: #3498db;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-button[type="submit"]:hover {
-  background-color: #2980b9;
 }
 
 .info_icon {
@@ -218,5 +191,9 @@ button[type="submit"]:hover {
 
 #return:hover {
   background-color: darkslategrey;
+}
+
+ol, li {
+  padding: 5px;
 }
 </style>
