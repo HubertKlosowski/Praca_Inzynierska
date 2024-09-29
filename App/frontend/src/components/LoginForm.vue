@@ -22,6 +22,8 @@ const loginUser = async () => {
     const error_response = error.response.data
     if (typeof error_response['error'] === 'string') {
       info.value = error_response['error']
+    } else if (typeof error_response['error'] === 'undefined') {
+      info.value = 'BŁĄD!! Nie udało się połączyć z serwerem.'
     } else {
       info.value = error_response['error'].join(' ')
     }

@@ -19,13 +19,13 @@ const $cookies = inject('$cookies')
           class="additional_links"
           v-if="$cookies.get('user')['usertype'] !== 0"
       >
-        Rozpocznij chat
+        Chat
       </RouterLink>
       <RouterLink
         to="/submissions/stats"
         class="additional_links"
       >
-        Zobacz statystyki
+        Statystyki
       </RouterLink>
     </div>
   </div>

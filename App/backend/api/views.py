@@ -1,6 +1,10 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password, check_password
+from django.template import loader
+from django.utils import timezone
+from django.core.mail import EmailMessage
+from django.conf import settings
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, parser_classes
@@ -9,9 +13,10 @@ from rest_framework.parsers import MultiPartParser
 
 from .models import User
 from .serializer import UserSerializer, SubmissionFileSerializer, SubmissionChatSerializer
-from model.my_model import predict, create_dataset
-import datetime
+from model.my_model import predict_file, create_dataset
+
 import pandas as pd
+import smtplib
 
 
 @api_view(['GET'])
@@ -47,11 +52,31 @@ def create_user(request):
 
     # haszowanie hasła
     data['password'] = make_password(data['password'])
-    data['created_at'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    data['created_at'] = timezone.now()
     serializer = UserSerializer(data=data)
 
     if serializer.is_valid():
         serializer.save()
+
+        html_msg = loader.render_to_string(
+            'mails/create_account.html',
+            context={'title': 'Utworzenie konta'}
+        )
+
+        email = EmailMessage(
+            subject='Utworzenie konta',
+            body=html_msg,
+            from_email=settings.EMAIL_HOST_USER,
+            to=[serializer.data['email']],
+        )
+        email.content_subtype = 'html'
+
+        try:
+            email.send()
+        except smtplib.SMTPException as e:
+            return Response(data={'error': 'BŁĄD!! Nie udało się wysłać wiadomości potwierdzającej dodanie konto.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         return Response(data={'user': serializer.data, 'success': 'SUKCES!! Dodano użytkownika.'},
                         status=status.HTTP_201_CREATED)
     return Response(data={'error': 'BŁĄD!! Nie udało się dodać użytkownika.', 'details': serializer.errors},
@@ -89,7 +114,28 @@ def delete_user(request, username):
         return Response(data={'error': f'BŁĄD!! Użytkownik o nazwie {username} nie istnieje.'},
                         status=status.HTTP_404_NOT_FOUND)
 
-    User.objects.filter(username=username).delete()
+    user = User.objects.get(username=username)
+    email = user.email
+    user.delete()
+
+    html_msg = loader.render_to_string(
+        'mails/delete_account.html',
+        context={'title': 'Usunięcie konta'}
+    )
+
+    email = EmailMessage(
+        subject='Usuniecie konta',
+        body=html_msg,
+        from_email=settings.EMAIL_HOST_USER,
+        to=[email],
+    )
+    email.content_subtype = 'html'
+
+    try:
+        email.send()
+    except smtplib.SMTPException as e:
+        return Response(data={'error': 'BŁĄD!! Nie udało się wysłać wiadomości potwierdzającej usunięcie konta.'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     return Response(data={'success': f'SUKCES!! Użytkownik o nazwie {username} został poprawnie usunięty.'},
                     status=status.HTTP_200_OK)
@@ -177,14 +223,14 @@ def send_file(request):
             return Response({'error': 'BŁĄD!! Użytkownik nie posiada możliwych prób.'},
                             status=status.HTTP_406_NOT_ACCEPTABLE)
         user.submission_num -= 1
+        user.last_submission = timezone.now()
         user.save()
 
         df.dropna(inplace=True)
 
         try:
-            stats = predict(
-                f'./model/saved-{serializer.data['llm_model']}-uncased/',
-                f'{serializer.data['llm_model']}-uncased',
+            stats = predict_file(
+                f'./model/{serializer.data['llm_model']}/',
                 create_dataset(df, split_train_test=False)
             )
         except Exception as e:

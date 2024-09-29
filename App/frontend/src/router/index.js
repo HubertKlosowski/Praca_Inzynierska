@@ -45,10 +45,12 @@ const router = createRouter({
 
 router.beforeEach(async (to, from) => {
     const $cookies = inject('$cookies')
-    if ((to.path === '/profile' || to.path === '/submissions') && !$cookies.get('user')) {
-        return false
+    if ((to.path === '/profile' || to.path === '/submissions') && !$cookies.isKey('user')) {
+        return '/'
     } else if (to.path === '/submissions/chat' && $cookies.get('user')['usertype'] === 0) {
-        return false
+        return '/submissions'
+    } else if (to.path === '/login' && $cookies.isKey('user')) {
+        return '/profile'
     }
 })
 

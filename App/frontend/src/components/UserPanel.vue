@@ -36,6 +36,8 @@ const updateUser = async () => {
     const error_response = error.response.data
     if (typeof error_response['error'] === 'string') {
       info.value = error_response['error']
+    } else if (typeof error_response['error'] === 'undefined') {
+      info.value = 'BŁĄD!! Nie udało się połączyć z serwerem.'
     } else {
       info.value = error_response['error'].join(' ')
     }
@@ -66,6 +68,8 @@ const deleteUser = async () => {
     const error_response = error.response.data
     if (typeof error_response['error'] === 'string') {
       info.value = error_response['error']
+    } else if (typeof error_response['error'] === 'undefined') {
+      info.value = 'BŁĄD!! Nie udało się połączyć z serwerem.'
     } else {
       info.value = error_response['error'].join(' ')
     }
@@ -79,9 +83,16 @@ const logout = async () => {
         user: $cookies.get('user')['id'],
         chat: $cookies.get('chat')
       })
-      console.log(response)
+      info.value = 'SUKCES!! Udało się wylogować.'
     } catch (error) {
-      console.log(error)
+      const error_response = error.response.data
+      if (typeof error_response['error'] === 'string') {
+        info.value = error_response['error']
+      } else if (typeof error_response['error'] === 'undefined') {
+        info.value = 'BŁĄD!! Nie udało się połączyć z serwerem.'
+      } else {
+        info.value = error_response['error'].join(' ')
+      }
     }
   }
   for (const cookie_key of $cookies.keys()) {
@@ -166,7 +177,7 @@ const resetInputs = () => {
     </div>
     <div class="row main_row">
       <div class="submission" v-for="n in 3">
-        {{ $cookies.get('stats') }}
+
       </div>
     </div>
   </div>

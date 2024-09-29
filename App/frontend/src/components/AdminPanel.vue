@@ -27,6 +27,8 @@ const deleteUser = async (user) => {
     const error_response = error.response.data
     if (typeof error_response['error'] === 'string') {
       info.value = error_response['error']
+    } else if (typeof error_response['error'] === 'undefined') {
+      info.value = 'BŁĄD!! Nie udało się połączyć z serwerem.'
     } else {
       info.value = error_response['error'].join(' ')
     }
@@ -41,7 +43,13 @@ const renewSubmissions = async (user) => {
     element.textContent = to_update.data['user'].submission_num
   } catch (error) {
     const error_response = error.response.data
-    info.value = error_response['error']
+    if (typeof error_response['error'] === 'string') {
+      info.value = error_response['error']
+    } else if (typeof error_response['error'] === 'undefined') {
+      info.value = 'BŁĄD!! Nie udało się połączyć z serwerem.'
+    } else {
+      info.value = error_response['error'].join(' ')
+    }
   }
 }
 </script>

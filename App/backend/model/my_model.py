@@ -39,7 +39,7 @@ def create_dataset(dataset: pd.DataFrame, split_train_test: bool) -> DatasetDict
     return dt
 
 
-def train(path: str, file: str, model_name: str):
+def fine_tune(path: str, file: str, model_name: str):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     dataset = create_dataset(
@@ -60,7 +60,7 @@ def train(path: str, file: str, model_name: str):
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
     training_args = TrainingArguments(
-        output_dir=f'{model_name}-directory',
+        output_dir=f'{model_name}-finetune',
         learning_rate=2e-5,
         per_device_train_batch_size=64,
         per_device_eval_batch_size=64,
@@ -84,12 +84,12 @@ def train(path: str, file: str, model_name: str):
 
     trainer.train()
 
-    trainer.save_model(f'saved-{model_name}')
+    trainer.save_model(model_name)
 
 
-def predict(model_path: str, model_name: str, data: DatasetDict) -> dict:
+def predict_file(model_path: str, data: DatasetDict) -> dict:
     model = AutoModelForSequenceClassification.from_pretrained(os.path.join(model_path))
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(os.path.join(model_path))
 
     pipe = TextClassificationPipeline(
         model=model,
@@ -117,10 +117,9 @@ def predict(model_path: str, model_name: str, data: DatasetDict) -> dict:
 
     return {
         'metrics': metrics,
-        'predictions': predictions,
         'confusion_matrix': matrix
     }
 
 
-# train('data', 'depression_dataset_reddit_cleaned.csv', 'bert-base-uncased')
-# train('data', 'depression_dataset_reddit_cleaned.csv', 'bert-large-uncased')
+# fine_tune('data', 'depression_dataset_reddit_cleaned.csv', 'bert-base')
+# fine_tune('data', 'depression_dataset_reddit_cleaned.csv', 'bert-large')

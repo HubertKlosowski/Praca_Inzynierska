@@ -162,7 +162,10 @@ cython_debug/
 .idea/
 data/
 api_keys.py
+django_credentials.py
 *.csv
-/App/backend/model/bert-base-uncased-directory/
-/App/backend/model/saved-bert-base-uncased/
+/App/backend/model/bert-base/
+/App/backend/model/bert-base-finetune/
 /App/backend/media/
+/App/backend/model/roberta-base/
+/App/backend/model/roberta-large/

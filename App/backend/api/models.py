@@ -9,6 +9,7 @@ class User(models.Model):
     password = models.CharField(max_length=100)
     created_at = models.DateTimeField(default=timezone.now)
     submission_num = models.IntegerField(default=10, null=False)
+    last_submission = models.DateTimeField(null=True)
 
     def __str__(self):
         return (f'User info\n name: {self.name}, email: {self.email}, '
@@ -20,6 +21,8 @@ class SubmissionFile(models.Model):
     LLM_CHOICES = [
         ('bert-base', 'BERT Base'),
         ('bert-large', 'BERT Large'),
+        ('roberta-base', 'Roberta Base'),
+        ('roberta-large', 'Roberta Large'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
