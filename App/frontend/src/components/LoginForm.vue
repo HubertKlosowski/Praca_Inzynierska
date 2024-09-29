@@ -13,7 +13,7 @@ const info = ref('')
 
 const loginUser = async () => {
   try {
-    const response = await axios.post('http://localhost:8000/api/user/login',
+    const response = await axios.post('http://localhost:8000/api/user/login_user',
         { username: username.value, password: password.value })
     $cookies.set('user', response.data['user'])
     info.value = response.data['success']

@@ -52,6 +52,22 @@ const renewSubmissions = async (user) => {
     }
   }
 }
+
+const verifyUser = async (user) => {
+  try {
+    const to_verify = await axios.patch('http://localhost:8000/api/user/verify_user/' + user['username'])
+    info.value = to_verify.data['success']
+  } catch (error) {
+    const error_response = error.response.data
+    if (typeof error_response['error'] === 'string') {
+      info.value = error_response['error']
+    } else if (typeof error_response['error'] === 'undefined') {
+      info.value = 'BŁĄD!! Nie udało się połączyć z serwerem.'
+    } else {
+      info.value = error_response['error'].join(' ')
+    }
+  }
+}
 </script>
 
 <template>
@@ -63,6 +79,7 @@ const renewSubmissions = async (user) => {
       <div>Liczba prób</div>
       <div>Usuń</div>
       <div>Odnów próby</div>
+      <div>Zweryfikuj</div>
     </div>
     <div class="users">
       <div class="row center" v-for="user in users" :key="user.id" :id="user.id">
@@ -70,9 +87,14 @@ const renewSubmissions = async (user) => {
         <div>{{ user.email }}</div>
         <div>{{ user_types[user.usertype] }}</div>
         <div>{{ user.submission_num }}</div>
-        <button type="button" class="delete" @click="deleteUser(user)">X</button>
+        <button type="button" class="delete" @click="deleteUser(user)">
+          &#10006;
+        </button>
         <button type="button" class="renew" @click="renewSubmissions(user)">
-          &#x21bb;
+          &#8635;
+        </button>
+        <button type="button" class="verify" @click="verifyUser(user)">
+          &#10004;
         </button>
       </div>
     </div>
@@ -143,7 +165,7 @@ const renewSubmissions = async (user) => {
 .row {
   display: flex;
   flex-direction: row;
-  justify-content: space-evenly;
+  justify-content: space-between;
   align-items: center;
   padding: 20px;
   margin: 10px;
@@ -158,15 +180,15 @@ div {
 }
 
 .row > :first-child {
-  width: 35%;
+  width: 30%;
 }
 
 .row > :nth-child(2) {
-  width: 25%;
+  width: 20%;
 }
 
 .row > :nth-child(n + 3) {
-  width: 5%;
+  width: 7%;
 }
 
 button[type="button"] {
@@ -191,5 +213,13 @@ button[type="button"] {
 
 .renew:hover {
   background-color: darkgreen;
+}
+
+.verify {
+  background-color: orange;
+}
+
+.verify:hover {
+  background-color: darkorange;
 }
 </style>

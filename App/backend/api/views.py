@@ -56,6 +56,9 @@ def create_user(request):
     serializer = UserSerializer(data=data)
 
     if serializer.is_valid():
+        if serializer.data['usertype'] == 2:
+            serializer.data['is_verified'] = True
+
         serializer.save()
 
         html_msg = loader.render_to_string(
@@ -89,7 +92,7 @@ def get_users(request):
     return Response(serializer.data)
 
 @api_view(['POST'])
-def login(request):
+def login_user(request):
     username = request.data['username']
     password = request.data['password']
 
@@ -101,6 +104,11 @@ def login(request):
                         status=status.HTTP_404_NOT_FOUND)
 
     user = User.objects.get(username=username)
+
+    if not user.is_verified:
+        return Response(data={'error': f'BŁĄD!! Użytkownik o nazwie {username} nie został zweryfikowany. '
+                                       f'Proszę skontaktować się z administratorem.'},
+                        status=status.HTTP_406_NOT_ACCEPTABLE)
 
     if check_password(password, user.password):
         return Response(data={'user': UserSerializer(user).data, 'success': 'SUKCES!! Udało się zalogować.'},
@@ -170,6 +178,24 @@ def update_user(request, user_id):
         return Response(data={'user': UserSerializer(user).data,
                               'success': 'SUKCES!! Dane użytkownika zostały poprawnie zmienione.'},
                         status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PATCH'])
+def verify_user(request, username):
+    if not User.objects.filter(username=username).exists():
+        return Response(data={'error': 'BŁĄD!! Użytkownik nie istnieje.'}, status=status.HTTP_404_NOT_FOUND)
+
+    user = User.objects.get(username=username)
+
+    user.is_verified = True
+
+    serializer = UserSerializer(user, data={'is_verified': user.is_verified}, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(data={'user': UserSerializer(user).data,
+                              'success': 'SUKCES!! Weryfikacja użytkownika powiodła się.'}, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -176,7 +176,7 @@ const resetInputs = () => {
       </div>
     </div>
     <div class="row main_row">
-      <div class="submission" v-for="n in 3">
+      <div class="submission" v-for="n in 2">
 
       </div>
     </div>
@@ -269,7 +269,7 @@ form {
 }
 
 .submission {
-  width: 25%;
+  width: 40%;
   height: 85%;
   background-color: rgb(248, 249, 250);
   padding: 20px;

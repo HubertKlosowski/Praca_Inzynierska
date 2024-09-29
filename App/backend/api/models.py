@@ -10,11 +10,13 @@ class User(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     submission_num = models.IntegerField(default=10, null=False)
     last_submission = models.DateTimeField(null=True)
+    is_verified = models.BooleanField(default=False)
 
     def __str__(self):
         return (f'User info\n name: {self.name}, email: {self.email}, '
                 f'username: {self.username}, usertype: {self.usertype}, '
-                f'created_at: {self.created_at}, submission_num: {self.submission_num}')
+                f'created_at: {self.created_at}, submission_num: {self.submission_num}'
+                f'last_submission: {self.last_submission}, is_verified: {self.is_verified}')
 
 
 class SubmissionFile(models.Model):
