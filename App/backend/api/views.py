@@ -53,11 +53,13 @@ def create_user(request):
     # haszowanie hasła
     data['password'] = make_password(data['password'])
     data['created_at'] = timezone.now()
+
+    if data['usertype'] == 2:
+        data['is_verified'] = True
+
     serializer = UserSerializer(data=data)
 
     if serializer.is_valid():
-        if serializer.data['usertype'] == 2:
-            serializer.data['is_verified'] = True
 
         serializer.save()
 

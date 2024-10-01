@@ -15,12 +15,12 @@ const handleFile = (event) => {
       <h2>Wybierz model językowy</h2>
       <div class="radio_row">
         <div class="radio_item">
-          <input type="radio" id="bert-base" value="bert-base" v-model="llm_model">
-          <label for="bert-base">BERT-BASE</label>
+          <input type="radio" id="roberta-base" value="roberta-base" v-model="llm_model">
+          <label for="bert-base">RoBERTa-BASE</label>
         </div>
         <div class="radio_item">
-          <input type="radio" id="bert-large" value="bert-large" v-model="llm_model">
-          <label for="bert-large">BERT-LARGE</label>
+          <input type="radio" id="roberta-large" value="roberta-large" v-model="llm_model">
+          <label for="bert-large">RoBERTa-LARGE</label>
         </div>
       </div>
       <label for="file">Wybierz plik</label>

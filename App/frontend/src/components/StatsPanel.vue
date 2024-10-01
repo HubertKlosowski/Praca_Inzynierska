@@ -53,7 +53,7 @@ if ($cookies.isKey('confusion_matrix')) {
 <style scoped>
 .stats {
   width: 90%;
-  height: 70%;
+  height: 100vh;
   background-color: rgb(248, 249, 250);
   padding: 20px;
   border-radius: 8px;
