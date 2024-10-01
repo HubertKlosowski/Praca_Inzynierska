@@ -72,7 +72,7 @@ onMounted(() => {
 <style scoped>
 .chat {
   width: 90%;
-  height: 100vh;
+  height: 70vh;
   background-color: rgb(248, 249, 250);
   padding: 20px;
   border-radius: 8px;

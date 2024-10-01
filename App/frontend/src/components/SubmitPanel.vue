@@ -136,7 +136,7 @@ const predict = async (llm_model, file) => {
 
 .submit, .extra_info {
   width: 90%;
-  height: 100vh;
+  height: 70vh;
   background-color: rgb(248, 249, 250);
   padding: 20px;
   border-radius: 8px;
