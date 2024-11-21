@@ -1,5 +1,5 @@
 <script setup>
-import ModelPhase from "@/components/ModelPhase.vue";
+import Phase from "@/components/Phase.vue";
 import {ref, watch} from "vue";
 
 const global_num_phase = ref(0)
@@ -7,10 +7,10 @@ const phases_elements = document.getElementsByClassName('phase')
 
 const phases = [
   {
-    'title': 'Wstęp',
+    'title': 'Etap początkowy - konfiguracja modelu',
     'description': [
-        'Dane zostały wprowadzone oraz przesłane poprawnie.',
-        'Czas na wybór modelu do wskazania depresji.'
+        'W tym etapie poznasz etapy, które należy przeprowadzić w konfiguracji.',
+        'Na początku należy przygotować model.'
     ]
   },
   {
@@ -28,13 +28,19 @@ const phases = [
     ]
   },
   {
-    'title': 'Zatwierdź',
+    'title': 'Twoja konfiguracja',
     'description': [
         'Konfiguracja modelu przebiegła prawidłowo.',
-        'Model pracuje nad predykcjami',
-        'Proszę czekać, to może potrwać chwilę ...'
+        'Jeszcze tylko dane ...'
     ]
-  }
+  },
+  {
+    'title': 'Etap końcowy - przekaż dane',
+    'description': [
+        'Prześlij dane, na których chcesz przeprowadzić wykrywanie depresji.',
+        'Istnieją dwa możliwe sposoby przekazania danych: z pliku lub jako pojedyńczy tekst.'
+    ]
+  },
 ]
 
 watch(global_num_phase, (newValue, oldValue) => {
@@ -46,9 +52,9 @@ watch(global_num_phase, (newValue, oldValue) => {
 <template>
   <div class="left-part">
     <div class="phases">
-      <div class="phase" v-for="i in 4" :key="i"></div>
+      <div class="phase" v-for="i in 5" :key="i"></div>
     </div>
-    <ModelPhase
+    <Phase
         v-if="phases[global_num_phase]"
         :phase="phases[global_num_phase]"
         :num_phase="global_num_phase"
@@ -57,11 +63,10 @@ watch(global_num_phase, (newValue, oldValue) => {
         }"
         @previousOne="(next_num_phase) => {
           global_num_phase = next_num_phase
-        }"></ModelPhase>
-    <div class="buttons" v-if="global_num_phase === 3">
-      <RouterLink to="/data" class="router-link">Wróć</RouterLink>
-      <RouterLink to="/predict" class="router-link">Dalej</RouterLink>
-    </div>
+        }
+    ">
+
+    </Phase>
   </div>
 </template>
 
@@ -93,14 +98,5 @@ watch(global_num_phase, (newValue, oldValue) => {
 
 .phase:first-child {
   background-color: red;
-}
-
-.buttons {
-  width: 100%;
-  height: 15%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-  align-items: center;
 }
 </style>

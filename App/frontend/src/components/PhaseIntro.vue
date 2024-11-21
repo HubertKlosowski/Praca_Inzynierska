@@ -6,7 +6,7 @@ const props = defineProps(['phase'])
   <div class="model">
     <div class="description">
       <div class="title">
-        {{ props.phase.title }}
+        <h3>{{ props.phase.title }}</h3>
       </div>
       <div class="content">
         <p v-for="line in props.phase.description">{{ line }}</p>
@@ -19,6 +19,16 @@ const props = defineProps(['phase'])
 </template>
 
 <style scoped>
+@media (max-width: 768px) {
+  .model {
+    font-size: 1.5vh;
+  }
+
+  .model * {
+    font-size: 1.5vh !important;
+  }
+}
+
 @keyframes progress-bar {
   0% {
     width: 100%;
@@ -42,7 +52,7 @@ const props = defineProps(['phase'])
 .magic {
   height: 100%;
   border-radius: 1rem;
-  animation: progress-bar 1s ease-in-out;
+  animation: progress-bar 5ms ease-in-out;
   position: relative;
 }
 
@@ -75,5 +85,6 @@ const props = defineProps(['phase'])
 
 .content {
   height: 50%;
+  padding: 1rem;
 }
 </style>

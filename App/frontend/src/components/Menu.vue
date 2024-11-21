@@ -69,4 +69,16 @@ button:hover {
   border: 2px solid mediumpurple;
   margin: 1%;
 }
+
+@media (max-width: 768px) {
+  .right-part {
+    width: 90%;
+    height: 45%;
+    font-size: 1.5vh;
+  }
+
+  .right-part * {
+    font-size: 1.5vh !important;
+  }
+}
 </style>

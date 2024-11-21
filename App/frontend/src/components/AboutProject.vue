@@ -12,5 +12,15 @@
 </template>
 
 <style scoped>
+@media (max-width: 768px) {
+  .left-part {
+    width: 90%;
+    height: 45%;
+    font-size: 1.5vh;
+  }
 
+  .left-part * {
+    font-size: 1.5vh !important;
+  }
+}
 </style>

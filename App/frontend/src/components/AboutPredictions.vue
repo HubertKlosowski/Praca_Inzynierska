@@ -15,7 +15,7 @@
         <h3>Przygotuj dane</h3>
         <p>Analiza depresji wymaga posiadania danych tekstowych.</p>
         <p>Dane możesz wysłać w postaci pliku .csv lub w formie jednego wpisu.</p>
-        <p>Każdy wpis powienien być umieszczony w osobnych wierszach.</p>
+        <p>Każdy wpis powinien być umieszczony w osobnych wierszach.</p>
       </div>
       <div class="phase">
         <h3>Wybierz model</h3>
@@ -35,12 +35,24 @@
       </div>
     </div>
     <div class="links">
-      <RouterLink to="/data" class="router-link">Przygotuj dane</RouterLink>
+      <RouterLink to="/phases" class="router-link">Przygotuj dane</RouterLink>
     </div>
   </div>
 </template>
 
 <style scoped>
+@media (max-width: 768px) {
+  .left-part {
+    width: 90%;
+    height: 45%;
+    font-size: 1.5vh;
+  }
+
+  .left-part * {
+    font-size: 1.5vh !important;
+  }
+}
+
 .info {
   display: flex;
   flex-direction: column;

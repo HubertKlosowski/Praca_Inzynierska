@@ -5,7 +5,6 @@ const choose = ref(true)
 const data = ref(null)
 const is_dragging = ref(false)
 const info = ref('')
-const confirm = ref(false)
 
 const validateData = () => {
   if (typeof data.value === 'object') {
@@ -21,7 +20,6 @@ const validateData = () => {
   } else {
 
   }
-  confirm.value = true
 }
 
 const changeDragging = () => {
@@ -31,12 +29,11 @@ const changeDragging = () => {
 const drop = (event) => {
   changeDragging()
   data.value = event.dataTransfer.files[0]
-  //axios sprawdzenie pliku
 }
 </script>
 
 <template>
-  <div class="left-part">
+  <div class="main">
     <div class="header">
      <div class="choose" @click="choose = !choose">
        <div :class="['circle', { active: choose }]"></div>
@@ -69,14 +66,31 @@ const drop = (event) => {
         </div>
       </form>
     </div>
-    <div class="buttons">
-      <RouterLink to="/" class="router-link">Wróć</RouterLink>
-      <RouterLink to="/models" class="router-link" :style="{visibility: confirm !== true ? 'visible' : 'hidden'}">Dalej</RouterLink>
-    </div>
  </div>
 </template>
 
 <style scoped>
+.main {
+  width: 100%;
+  height: 80%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .main {
+    font-size: 1.5vh;
+  }
+
+  .main * {
+    font-size: 1.5vh !important;
+  }
+}
+
 form {
   height: 100%;
   width: auto;
@@ -111,12 +125,6 @@ form {
 .drag-out {
   background-color: lightgray;
   border: 3px solid black;
-}
-
-.left-part {
-  width: 90%;
-  height: auto;
-  flex-direction: row;
 }
 
 .header {
@@ -156,17 +164,8 @@ form {
 
 .circle.active {
   transform: translateX(7rem);
-  background-color: #4CAF50;
-  border-color: #4CAF50;
-}
-
-.buttons {
-  width: 100%;
-  height: 20%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-  align-items: center;
+  background-color: purple;
+  border-color: purple;
 }
 
 .depression-form {
