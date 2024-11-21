@@ -1,65 +1,112 @@
+/*@font-face {*/
+/*    font-family: 'Rubik';*/
+/*    src: url('../assets/rubik/Rubik-Regular.ttf') format('truetype');*/
+/*    font-weight: normal;*/
+/*    font-style: normal;*/
+/*}*/
+
 html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
+    margin: 0 auto;
+    font-family: "Apple Color Emoji", sans-serif;
 }
 
-::-webkit-scrollbar {
-  width: 20px;
-  height: 20px;
+#app {
+    height: 100svh;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-content: center;
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgb(154,160,193);
-  background: linear-gradient(0deg, rgba(154,160,193,1) 35%, rgba(0,147,255,1) 100%);
-  border-radius: 10px;
+@keyframes slide-up {
+    0% {
+        transform: translateY(10rem);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
+.router-link {
+    text-decoration: none;
+    color: black;
+    text-align: center;
+    align-content: center;
+    width: 30%;
+    height: 80%;
+    margin: 1rem;
+    font-size: 1.35vw;
+    border-radius: 1rem;
+    background-color: lightgrey;
+    transition: 0.4s ease;
+    border: 2px solid black;
+    cursor: pointer;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(101,105,122);
-  background: linear-gradient(0deg, rgba(101,105,122,1) 35%, rgba(0,1,255,1) 100%);
+.router-link:hover {
+    color: white;
+    border: 2px solid white;
+    background-color: darkgrey;
+    box-shadow: 1rem 1rem mediumpurple;
 }
 
-@keyframes toTheLeft {
-  0% { left: 0; opacity: 1 }
-  25% { left: 50px; opacity: 0.75 }
-  50% { left: 100px; opacity: 0.5 }
-  75% { left: 150px; opacity: 0.25 }
-  100% { left: 200px; opacity: 0 }
+.router-link:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    transform: none;
 }
 
-@keyframes toTheRight {
-  0% { right: 0; opacity: 1 }
-  25% { right: 50px; opacity: 0.75 }
-  50% { right: 100px; opacity: 0.5 }
-  75% { right: 150px; opacity: 0.25 }
-  100% { right: 200px; opacity: 0 }
+.links {
+    width: 100%;
+    height: 30%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border-top: 2px solid black;
+    margin-top: 1rem;
 }
 
-@keyframes toTheTop {
-  0% { bottom: 40px; opacity: 0 }
-  25% { bottom: 30px; opacity: 0.25 }
-  50% { bottom: 20px; opacity: 0.5 }
-  75% { bottom: 10px; opacity: 0.75 }
-  100% { bottom: 0; opacity: 1 }
+.left-part {
+    width: 45%;
+    height: 95%;
+    padding: 2rem;
+    font-size: 1.5vw;
+    border-bottom-left-radius: 1rem;
+    border-top-left-radius: 1rem;
+    border: 2px solid mediumpurple;
+    background-color: whitesmoke;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 1%;
+    overflow-y: auto;
 }
 
-@keyframes appear {
-  0% { opacity: 0.5 }
-  10% { opacity: 0.1 }
-  20% { opacity: 0.6 }
-  30% { opacity: 0.2 }
-  40% { opacity: 0.7 }
-  50% { opacity: 0.3 }
-  60% { opacity: 0.8 }
-  70% { opacity: 0.4 }
-  80% { opacity: 0.9 }
-  90% { opacity: 0.5 }
-  100% { opacity: 1 }
+.left-part::-webkit-scrollbar {
+    width: 12px;
+}
+
+.left-part::-webkit-scrollbar-thumb {
+    background-color: red;
+}
+
+.left-part::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+
+.left-part::-webkit-scrollbar-button {
+    display: none;
+}
+
+.left-part > * {
+    animation: slide-up 1s ease-out;
+    opacity: 0;
+    animation-fill-mode: forwards;
+}
+
+.list > * {
+    list-style-type: "✅";
 }
