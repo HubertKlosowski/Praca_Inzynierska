@@ -55,8 +55,6 @@ def fine_tune(model_name: str):
     id2label = { 0: 'non-depressed', 1: 'depressed' }
     label2id = { 'non-depressed': 0, 'depressed': 1 }
 
-    print(tokenized_dataset)
-
     model = AutoModelForSequenceClassification.from_pretrained(
         f'{model_name}-uncased',
         num_labels=2,
@@ -69,8 +67,8 @@ def fine_tune(model_name: str):
     training_args = TrainingArguments(
         output_dir=f'{model_name}-training-arguments',
         learning_rate=2e-5,
-        per_device_train_batch_size=128,
-        per_device_eval_batch_size=128,
+        per_device_train_batch_size=64,
+        per_device_eval_batch_size=64,
         num_train_epochs=2,
         weight_decay=0.01,
         eval_strategy='epoch',
@@ -115,5 +113,5 @@ def predict_file(model_path: str, data: DatasetDict) -> pd.DataFrame:
     return predictions
 
 
-fine_tune('bert-base')
+# fine_tune('bert-base')
 # fine_tune('bert-large')
