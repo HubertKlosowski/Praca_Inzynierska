@@ -1,54 +1,21 @@
 import os
+
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import json
 from model.api_keys import public_key, secret_key
 import praw
 from datetime import datetime
 from praw.models import MoreComments
 from langdetect import detect, DetectorFactory
 
+import nltk
+import string
+import emoji  # do wykrycia emotek
+import re
+from nltk.stem import PorterStemmer  # stemming dla języka angielskiego
+from pystempel import Stemmer  # stemming dla języka polskiego
+
 DetectorFactory.seed = 0
-
-
-# Dla zbioru danych MDDL z githuba
-def get_path_to_mddl() -> str:
-    path = os.getcwd()
-    while 'Dataset' not in os.listdir(path):
-        path = os.path.join(path, '..')
-        if path == os.path.abspath(os.path.join(path, '..')):
-            raise FileNotFoundError("Nie znaleziono katalogu 'Dataset' w żadnym z nadrzędnych katalogów.")
-    return os.path.join(path, 'Dataset')
-
-
-def get_dataframe_twitter(path: str) -> pd.DataFrame:
-    tweets = []
-    with ThreadPoolExecutor(max_workers=20) as executor:
-        res = [executor.submit(read_json_tweet, os.path.join(path, f), 0) for f in os.listdir(path)]
-        for f in as_completed(res):
-            tweets.append(f.result())
-    df = pd.DataFrame(tweets)
-    return df
-
-
-def read_json_tweet(filename: str, label: int) -> dict:
-    file = open(filename)
-    data = json.load(file)
-    file.close()
-    return {
-        'user_id': data['user']['id_str'],
-        'tweet_id': data['id_str'],
-        'in_reply_to_status_id': data['in_reply_to_status_id'],
-        'in_reply_to_user_id': data['in_reply_to_user_id'],
-        'created_at': data['created_at'],
-        'text': data['text'],
-        'retweet_count': data['retweet_count'],
-        'favorite_count': data['favorite_count'],
-        'favorited': data['favorited'],
-        'retweeted': data['retweeted'],
-        'lang': data['lang'],
-        'depresed': label,
-    }
 
 
 # Dla wpisów z języka polskiego z Reddita
@@ -81,9 +48,6 @@ def read_reddit_post(sub: praw.reddit.Submission) -> dict:
     }
 
 
-# nltk.download('punkt')
-# nltk.download('stopwords')
-
 def limit_lang(df: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:  # usunięcie wpisów nie w wybranym języku
     if 'lang' not in df.columns:
         df['lang'] = df['text'].apply(lambda x: detect(x))
@@ -101,9 +65,78 @@ def limit_length(df: pd.DataFrame, limit_to: int) -> pd.DataFrame:  # usunięcie
     return df
 
 
-# Przykłady użycia:
-# dataframe1 = get_dataframe_twitter(os.path.join(get_path_to_mddl(), 'unlabeled', 'tweet'))
-# dataframe2 = get_dataframe_twitter(os.path.join(path_to_dataset, 'unlabeled', 'positive', 'tweet'))
+def extract_comments() -> pd.DataFrame:
+    comments = pd.read_csv(os.path.join('data', 'pl', 'polish_reddit_posts.csv'))['comments'].to_frame()
+    comments['comments'] = comments['comments'].apply(lambda x: eval(x))  # konwersja listy w stringu do prawdziwej listy
+    comments = comments.explode('comments')
+    comments.rename(columns={'comments': 'text'}, inplace=True)
+    comments.reset_index(drop=True, inplace=True)
+    comments.to_csv(os.path.join('data', 'pl', 'polish_reddit_comments.csv'), index=False)
+    return comments
+
+
+# Połączenie wielu zbiorów w jeden + ujednolicenie nazewnictwa kolumn
+def merge_datasets(lang = 'pl', for_train = False) -> pd.DataFrame:
+    merged = pd.DataFrame()
+    columns = ['text', 'label'] if for_train and lang == 'en' else ['text']
+
+    for d in os.listdir(os.path.join('data', lang)):
+        dataset = pd.read_csv(os.path.join('data', lang, d))
+
+        if lang == 'pl' and d == 'polish_reddit_posts.csv':
+            dataset['text'] = dataset['title'] + ' ' + dataset['text']
+            dataset = dataset[columns]
+
+        dataset.dropna(inplace=True)
+
+        for i, source_col in enumerate(dataset.columns):  # ujednolicenie nazewnictwa
+            dataset.rename(columns={source_col: columns[i]}, inplace=True)
+
+        dataset = dataset[columns].reset_index(drop=True)
+
+        merged = pd.concat([merged, dataset], axis=0)
+
+    return merged
+
+
+# Funkcja odpowiedzialna jest za przygotowanie zbiorów:
+# usunięcie adresów URL
+# zmiana emotek na ich znaczenie (tylko dla języka angielskiego)
+# usunięcie nadmiarowych spacji
+# usuniecie znaków interpunkcyjnych
+# usuniecie stop-words
+# stemming
+def preprocess_dataset(lang = 'pl', for_train = False) -> pd.DataFrame:
+    dataset = merge_datasets(lang, for_train)
+
+    stemmer = PorterStemmer() if lang == 'en' else Stemmer.polimorf()
+
+    url_pattern = r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?'  # GOTOWIEC Z INTERNETU
+    dataset['text'] = dataset['text'].apply(lambda sentence: re.sub(url_pattern, '', sentence))
+
+    if lang == 'en':
+        dataset['text'] = dataset['text'].apply(lambda sentence: emoji.demojize(sentence))
+
+    dataset['text'] = dataset['text'].apply(lambda sentence: sentence.strip())
+    dataset['text'] = dataset['text'].apply(lambda sentence: nltk.word_tokenize(sentence))
+    dataset['text'] = dataset['text'].apply(
+        lambda tokens: [token for token in tokens if token not in string.punctuation])
+    dataset['text'] = dataset['text'].apply(
+        lambda tokens: [token for token in tokens if token.lower() not in nltk.corpus.stopwords.words('polish' if lang == 'pl' else 'english')])
+
+    if lang == 'pl':
+        dataset['text'] = dataset['text'].apply(lambda tokens: [stemmer(token) for token in tokens])
+    else:
+        dataset['text'] = dataset['text'].apply(lambda tokens: [stemmer.stem(token) for token in tokens])
+
+    dataset['text'] = dataset['text'].apply(
+        lambda tokens: ' '.join([str(token) for token in tokens if token is not None])
+    )
+
+    dataset.dropna(inplace=True)
+
+    return dataset
+
 
 # lista wszystkich polskich subredditów: https://www.reddit.com/r/Polska/wiki/subreddity/
 
@@ -111,7 +144,11 @@ def limit_length(df: pd.DataFrame, limit_to: int) -> pd.DataFrame:  # usunięcie
 #                   'samobójstwo', 'żałoba', 'depresja']
 # final = pd.DataFrame()
 # for topic in similar_topics:
-#     df = save_dataframe_reddit(topic)
-#     final = pd.concat([final, df])
+#     dataframe = save_dataframe_reddit(topic)
+#     final = pd.concat([final, dataframe])
 # final.drop_duplicates(subset=['title', 'text'], keep='first', inplace=True)
-# final.to_csv(os.path.join('..', 'data', 'polish_reddit_posts.csv'), index=False)
+# final.to_csv(os.path.join('data', 'polish_reddit_posts_1.csv'), index=False)
+
+# preprocess_dataset(lang='en', for_train=True).to_csv(os.path.join('data', 'final', 'preprocessed_english_dataset.csv'), index=False)
+# preprocess_dataset(lang='pl', for_train=False).to_csv(os.path.join('data', 'final', 'preprocessed_polish_dataset.csv'), index=False)
+# extract_comments()

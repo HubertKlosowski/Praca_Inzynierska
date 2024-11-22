@@ -9,16 +9,18 @@ const emits = defineEmits(['confirm'])
 const setLanguage = (param) => {
   emits('confirm', 1)
   $cookies.set('model_language', param)
-  param === 'polish' ? $cookies.set('model', 'roberta') : $cookies.set('model', 'bert')
+  param === 'pl' ? $cookies.set('model', 'roberta') : $cookies.set('model', 'bert')
 
-  const activeElement = document.getElementsByClassName(param)[0]
-  const inactiveElement = param === 'polish'
+  const activeElement = param === 'pl'
+      ? document.getElementsByClassName('polish')[0]
+      : document.getElementsByClassName('english')[0]
+  const inactiveElement = param === 'pl'
       ? document.getElementsByClassName('english')[0]
       : document.getElementsByClassName('polish')[0]
 
   activeElement.style.border = '2px solid black'
   activeElement.style.backgroundImage = `url(${
-    param === 'polish' ? polish : english
+    param === 'pl' ? polish : english
   })`
   activeElement.style.backgroundRepeat = 'no-repeat'
   activeElement.style.backgroundSize = 'cover'
@@ -39,7 +41,7 @@ const setLanguage = (param) => {
 
 <template>
   <div class="main">
-    <div class="polish" @click="setLanguage('polish')">
+    <div class="polish" @click="setLanguage('pl')">
       <p>
         Wszystkie języki różnią się od siebie.
         Gramatyka, słownictwo, sposób zapisu zdań ma gigantyczny wpływ na wskazanie emocji w tekście.
@@ -49,7 +51,7 @@ const setLanguage = (param) => {
         Jeśli nauczą się jednego języka, np. polskiego nie są w stanie bez wcześniejszego przygotowania rozumieć słów w innym języku.
       </p>
     </div>
-    <div class="english" @click="setLanguage('english')">
+    <div class="english" @click="setLanguage('en')">
       <p>
         Nieprawidłowo wybrany język może spowodować otrzymanie błędnych wyników w predykcjach.
         Dlatego tak ważnym jest wybranie modelu pod języku przekazanych danych.

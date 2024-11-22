@@ -1,12 +1,18 @@
 <script setup>
-import {ref} from "vue";
+import {inject, ref} from "vue";
+import { useRouter } from "vue-router";
+import axios from "axios";
 
 const choose = ref(true)
 const data = ref(null)
 const is_dragging = ref(false)
 const info = ref('')
+const $cookies = inject('$cookies')
 
-const validateData = () => {
+const router = useRouter()
+
+const makePredictions = async () => {
+  let form_data = new FormData()
   if (typeof data.value === 'object') {
     if (data.value.type !== 'text/csv') {
       info.value = 'BŁĄD!! Plik musi być w rozszerzeniu .csv.'
@@ -15,10 +21,29 @@ const validateData = () => {
       info.value = 'BŁĄD!! Plik musi mniejszy od 20KB.'
       data.value = null
     }
+    form_data.append('file', data.value)
+    form_data.append('entry', null)
   } else if (typeof data.value === 'string') {
+    form_data.append('file', null)
+    form_data.append('entry', data.value)
+  }
 
-  } else {
+  await router.push('/predict')
+  form_data.append('language', $cookies.get('model_language'))
+  form_data.append('model', $cookies.get('model') + '-' + $cookies.get('model_version'))
+  form_data.append('user', 1)
 
+  try {
+    const response = await axios.post('http://localhost:8000/api/user/make_submission', form_data)
+  } catch (error) {
+    const error_response = error.response.data
+    if (typeof error_response['error'] === 'string') {
+
+    } else if (typeof error_response['error'] === 'undefined') {
+
+    } else {
+
+    }
   }
 }
 
@@ -40,7 +65,7 @@ const drop = (event) => {
      </div>
     </div>
     <div class="depression-form" v-if="choose">
-      <form @submit.prevent="validateData">
+      <form @submit.prevent="makePredictions">
         <div class="form-row">
           <label for="data" class="text-label">Wpisz tekst do klasyfikacji depresji</label>
           <textarea id="data" v-model="data" placeholder="Tekst" class="form-textarea"></textarea>
@@ -49,7 +74,7 @@ const drop = (event) => {
       </form>
     </div>
     <div class="depression-form" v-else>
-      <form @submit.prevent="validateData">
+      <form @submit.prevent="makePredictions">
         <div class="form-row">
           <div
             @dragenter.prevent="changeDragging"

@@ -9,11 +9,13 @@ from transformers import (AutoModelForSequenceClassification, TextClassification
                           TrainingArguments, Trainer, DataCollatorWithPadding, AutoTokenizer)
 from datasets import Dataset, DatasetDict
 import pandas as pd
-from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
+from model.my_datasets import preprocess_dataset
 
-def preprocess(tokenizer, row):
+
+def apply_tokenizer(tokenizer, row):
     return tokenizer(row['text'], truncation=True)
 
 
@@ -25,6 +27,7 @@ def compute_metrics(logits):
 
 def create_dataset(dataset: pd.DataFrame, split_train_test: bool) -> DatasetDict:
     dt = DatasetDict()
+    dataset['label'] = dataset['label'].astype(int)
 
     if split_train_test:
         x_train, x_test = train_test_split(dataset, test_size=0.3, random_state=4)
@@ -39,19 +42,23 @@ def create_dataset(dataset: pd.DataFrame, split_train_test: bool) -> DatasetDict
     return dt
 
 
-def fine_tune(path: str, file: str, model_name: str):
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+def fine_tune(model_name: str):
+    tokenizer = AutoTokenizer.from_pretrained(f'{model_name}-uncased')
 
     dataset = create_dataset(
-        pd.read_csv(os.path.join(path, file)),
+        preprocess_dataset(lang='en', for_train=True)
+        if model_name == 'bert-base' or model_name == 'bert-large' else preprocess_dataset(lang='pl', for_train=True),
         split_train_test=True
     )
-    tokenized_dataset = dataset.map(lambda x: preprocess(tokenizer, x), batched=True)
+
+    tokenized_dataset = dataset.map(lambda x: apply_tokenizer(tokenizer, x), batched=True)
     id2label = { 0: 'non-depressed', 1: 'depressed' }
     label2id = { 'non-depressed': 0, 'depressed': 1 }
 
+    print(tokenized_dataset)
+
     model = AutoModelForSequenceClassification.from_pretrained(
-        model_name,
+        f'{model_name}-uncased',
         num_labels=2,
         id2label=id2label,
         label2id=label2id
@@ -60,10 +67,10 @@ def fine_tune(path: str, file: str, model_name: str):
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
     training_args = TrainingArguments(
-        output_dir=f'{model_name}-finetune',
+        output_dir=f'{model_name}-training-arguments',
         learning_rate=2e-5,
-        per_device_train_batch_size=64,
-        per_device_eval_batch_size=64,
+        per_device_train_batch_size=128,
+        per_device_eval_batch_size=128,
         num_train_epochs=2,
         weight_decay=0.01,
         eval_strategy='epoch',
@@ -87,7 +94,7 @@ def fine_tune(path: str, file: str, model_name: str):
     trainer.save_model(model_name)
 
 
-def predict_file(model_path: str, data: DatasetDict) -> dict:
+def predict_file(model_path: str, data: DatasetDict) -> pd.DataFrame:
     model = AutoModelForSequenceClassification.from_pretrained(os.path.join(model_path))
     tokenizer = AutoTokenizer.from_pretrained(os.path.join(model_path))
 
@@ -104,22 +111,9 @@ def predict_file(model_path: str, data: DatasetDict) -> dict:
         predictions[i] = max(row, key=lambda x: x['score'])
 
     predictions = pd.DataFrame(predictions)
-    predictions['label_id'] = predictions['label'].map({ 'non-depressed': 0, 'depressed': 1 })
 
-    metrics = {
-        'accuracy': accuracy_score(y_true=data['test']['label'], y_pred=predictions['label_id']),
-        'recall': recall_score(y_true=data['test']['label'], y_pred=predictions['label_id']),
-        'precision': precision_score(y_true=data['test']['label'], y_pred=predictions['label_id']),
-        'f1-score': f1_score(y_true=data['test']['label'], y_pred=predictions['label_id'])
-    }
-
-    matrix = confusion_matrix(y_true=data['test']['label'], y_pred=predictions['label_id'])
-
-    return {
-        'metrics': metrics,
-        'confusion_matrix': matrix
-    }
+    return predictions
 
 
-# fine_tune('data', 'depression_dataset_reddit_cleaned.csv', 'bert-base')
-# fine_tune('data', 'depression_dataset_reddit_cleaned.csv', 'bert-large')
+fine_tune('bert-base')
+# fine_tune('bert-large')

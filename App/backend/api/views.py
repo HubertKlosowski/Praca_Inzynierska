@@ -12,8 +12,9 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 
 from .models import User
-from .serializer import UserSerializer, SubmissionFileSerializer, SubmissionChatSerializer
+from .serializer import UserSerializer, SubmissionSerializer
 from model.my_model import predict_file, create_dataset
+from model.my_datasets import preprocess_dataset
 
 import pandas as pd
 import smtplib
@@ -226,60 +227,48 @@ def renew_submission(request, username):
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
-def send_file(request):
-    serializer = SubmissionFileSerializer(data=request.data)
-    extension = request.data['file'].name.split('.')[-1]
+def make_submission(request):
+    serializer = SubmissionSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+    else:
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-    if not User.objects.filter(id=request.data['user']).exists():
+    extension = serializer.data['file'].name.split('.')[-1]
+
+    if not User.objects.filter(id=serializer.data['user']).exists():
         return Response({'error': 'BŁĄD!! Użytkownik nie istnieje.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     if extension != 'csv':
         return Response({'error': 'BŁĄD!! Plik musi być w rozszerzeniu .csv.'},
                         status=status.HTTP_400_BAD_REQUEST)
 
-    df = pd.read_csv(request.data['file'])
+    df = pd.read_csv(serializer.data['file'])
     if ['text', 'label'] != df.columns.tolist():
         return Response({'error': 'BŁĄD!! Plik musi zawierać kolumny \"text\", oraz \"label\".'},
                         status=status.HTTP_400_BAD_REQUEST)
 
-    if serializer.is_valid():
-        serializer.save()
+    user = User.objects.get(id=request.data['user'])
 
-        user = User.objects.get(id=request.data['user'])
+    if user.submission_num == 0:
+        return Response({'error': 'BŁĄD!! Użytkownik nie posiada możliwych prób.'},
+                        status=status.HTTP_406_NOT_ACCEPTABLE)
+    user.submission_num -= 1
+    user.last_submission = timezone.now()
+    user.save()
 
-        if user.submission_num == 0:
-            return Response({'error': 'BŁĄD!! Użytkownik nie posiada możliwych prób.'},
-                            status=status.HTTP_406_NOT_ACCEPTABLE)
-        user.submission_num -= 1
-        user.last_submission = timezone.now()
-        user.save()
+    df = preprocess_dataset(lang=serializer.data['language'], for_train=False)
 
-        df.dropna(inplace=True)
+    try:
+        stats = predict_file(
+            f'./model/{serializer.data['llm_model']}/',
+            create_dataset(df, split_train_test=False)
+        )
+    except Exception as e:
+        return Response({'error': f'BŁĄD!! {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            stats = predict_file(
-                f'./model/{serializer.data['llm_model']}/',
-                create_dataset(df, split_train_test=False)
-            )
-        except Exception as e:
-            return Response({'error': f'BŁĄD!! {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
-
-        return Response({
-            'success': 'SUKCES!! Udało się przesłać dane.',
-            'stats': stats,
-            'submission': serializer.data
-        }, status=status.HTTP_201_CREATED)
-    return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['POST'])
-def get_answer(request):
-    return Response({'answer': 'Idziemy do przodu.'}, status=status.HTTP_200_OK)
-
-@api_view(['POST'])
-def save_chat(request):
-    serializer = SubmissionChatSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response({'success': 'SUKCES!! Udało się zapisać konwersację.'}, status=status.HTTP_200_OK)
-
-    return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    return Response({
+        'success': 'SUKCES!! Udało się przesłać dane.',
+        'stats': stats,
+        'submission': serializer.data
+    }, status=status.HTTP_201_CREATED)

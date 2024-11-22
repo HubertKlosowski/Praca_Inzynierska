@@ -19,24 +19,25 @@ class User(models.Model):
                 f'last_submission: {self.last_submission}, is_verified: {self.is_verified}')
 
 
-class SubmissionFile(models.Model):
+class Submission(models.Model):
     LLM_CHOICES = [
         ('bert-base', 'BERT Base'),
         ('bert-large', 'BERT Large'),
         ('roberta-base', 'Roberta Base'),
         ('roberta-large', 'Roberta Large'),
     ]
+    LANGUAGE_CHOICES = [
+        ('en', 'english'),
+        ('pl', 'polish')
+    ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    language = models.CharField(choices=LANGUAGE_CHOICES, max_length=10)
     sent_at = models.DateTimeField(default=timezone.now)
     llm_model = models.CharField(max_length=20, choices=LLM_CHOICES)
-    file = models.FileField(upload_to='submission_files/')
+    file = models.FileField(upload_to='submission_files/', null=True, blank=True)
+    entry = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return (f'Submission info\n User:{self.user.username}, '
                 f'Sent: {self.sent_at}, Model: {self.llm_model}')
-
-
-class SubmissionChat(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    chat = models.JSONField(default=list)

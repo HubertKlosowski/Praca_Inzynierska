@@ -165,7 +165,10 @@ api_keys.py
 django_credentials.py
 *.csv
 /App/backend/model/bert-base/
-/App/backend/model/bert-base-finetune/
+/App/backend/model/bert-base-training-arguments/
+/App/backend/model/bert-large-training-arguments/
+/App/backend/model/roberta-base-training-arguments/
+/App/backend/model/roberta-large-training-arguments/
 /App/backend/media/
 /App/backend/model/roberta-base/
 /App/backend/model/roberta-large/

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, SubmissionFile, SubmissionChat
+from .models import User, Submission
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -8,12 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'password': { 'write_only': True }}
 
-class SubmissionFileSerializer(serializers.ModelSerializer):
+class SubmissionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SubmissionFile
-        fields = '__all__'
-
-class SubmissionChatSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SubmissionChat
+        model = Submission
         fields = '__all__'

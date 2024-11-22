@@ -5,7 +5,7 @@ import os
 import pandas as pd
 from torch import nn, optim, Tensor
 from transformers import BertTokenizer
-from prepare import limit_lang, standardize_df, limit_length
+from my_datasets import limit_lang, limit_length
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from time import perf_counter
@@ -122,8 +122,7 @@ if __name__ == '__main__':
     )
     criterion = nn.CrossEntropyLoss()
 
-    training_dataset = pd.read_csv(os.path.join('..', 'data', 'depression_dataset_reddit_cleaned.csv'))
-    training_dataset = standardize_df(training_dataset)
+    training_dataset = pd.read_csv(os.path.join('data', 'depression_dataset_reddit_cleaned.csv'))
     training_dataset = limit_length(training_dataset, seq_length)
     # training_dataset = limit_lang(training_dataset)
 
@@ -138,6 +137,6 @@ if __name__ == '__main__':
 
     bert_train(train_input_ids, train_token_type_ids, train_attention_mask, train_label_proba)
 
-    torch.save(model.state_dict(), os.path.join('..', 'data', 'custom-bert-base.pt'))
+    torch.save(model.state_dict(), os.path.join('data', 'custom-bert-base.pt'))
 
     bert_test(test_input_ids, test_token_type_ids, test_attention_mask, torch.tensor(y_test.values))
