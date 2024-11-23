@@ -30,8 +30,12 @@ const makePredictions = async () => {
   form_data.append('llm_model', $cookies.get('model') + '-' + $cookies.get('model_version'))
   form_data.append('user', 1)
 
+  if ($cookies.isKey('stats'))
+    $cookies.remove('stats')
+  if ($cookies.isKey('text'))
+    $cookies.remove('text')
   if ($cookies.isKey('submission'))
-      $cookies.remove('submission')
+    $cookies.remove('submission')
 
   try {
     const response = await axios.post('http://localhost:8000/api/user/make_submission', form_data, {
@@ -39,7 +43,9 @@ const makePredictions = async () => {
         'Content-Type': 'multipart/form-data'
       }
     })
-    $cookies.set('submission', response.data)
+    $cookies.set('stats', response.data['stats'])
+    $cookies.set('text', response.data['text'])
+    $cookies.set('submission', response.data['submission'])
     await router.push('/predict')
   } catch (error) {
     const error_response = error.response.data

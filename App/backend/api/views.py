@@ -228,10 +228,9 @@ def renew_submission(request, username):
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
 def make_submission(request):
+    time_start = timezone.now()
     serializer = SubmissionSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-    else:
+    if not serializer.is_valid():
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     if not User.objects.filter(id=serializer.data['user']).exists():
@@ -279,8 +278,16 @@ def make_submission(request):
 
     user.save()
 
+    after_sub = serializer.data
+    after_sub['time_taken'] = (timezone.now() - time_start).total_seconds()
+
+    serializer = SubmissionSerializer(data=after_sub)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+
     return Response({
         'success': 'SUKCES!! Udało się przesłać dane.',
         'stats': stats,
-        'text': df['text']
+        'text': df['text'],
+        'submission': serializer.data
     }, status=status.HTTP_201_CREATED)

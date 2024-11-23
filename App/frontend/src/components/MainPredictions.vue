@@ -1,71 +1,35 @@
 <script setup>
-import {inject, onMounted, ref} from "vue";
+import {inject, ref} from "vue";
+import Results from "@/components/Results.vue";
+import ResultsPlot from "@/components/ResultsPlot.vue";
+import ResultsOverview from "@/components/ResultsOverview.vue";
 
 const inc = ref(1)
-const show = ref(false)
 const $cookies = inject('$cookies')
 
-const generateProgressBar = () => {
-  const results = $cookies.get('submission')['stats']['depressed']
-  const progress_bars = document.getElementsByClassName('bar')
-  for (let i = 0; i < progress_bars.length; i++) {
-    progress_bars[i].style.width = results[i] * 100 + '%'
-  }
-}
-
 const changeSection = (param) => {
-  if (inc.value === 3 && param === -1) {
+  const limit_up = $cookies.get('submission')['file'] !== null ? 3 : 2
+  if (inc.value === limit_up && param === -1) {
     inc.value = 1
   } else if (inc.value === 1 && param === 1) {
-    inc.value = 3
+    inc.value = $cookies.get('submission')['file'] !== null ? 3 : 2
   } else {
     inc.value -= param
   }
 }
-
-onMounted(() => {
-  generateProgressBar()
-})
 </script>
 
 <template>
  <div class="left-part">
    <div class="main">
      <div class="content">
-       <div class="predictions" v-if="inc === 1">
-         <div class="header">
-           <div class="title-text" :style="{width: show ? '20%' : '80%'}">
-             <div
-               class="different-sizes"
-               @click="show = !show"
-               :style="{backgroundColor: !show ? 'green' : 'red'}"
-             >
 
-             </div>
-             <span>Wpis</span>
-           </div>
-           <div class="title-proba" :style="{width: !show ? '20%' : '80%'}">
-             <span>Stopień depresji</span>
-           </div>
-         </div>
-         <div class="row" v-for="(item, index) in $cookies.get('submission')['text']" :key="index">
-           <div class="text" :style="{width: show ? '20%' : '80%', opacity: show ? '0.3' : '1'}">
-             {{ item }}
-           </div>
-           <div class="propability" :style="{width: !show ? '20%' : '80%', opacity: !show ? '0.3' : '1'}">
-             <div class="progress">
-               <div class="bar"></div>
-             </div>
-           </div>
-         </div>
-       </div>
+       <Results v-if="inc === 1"></Results>
 
-       <div class="general-info" v-if="inc === 2">
+       <ResultsOverview v-if="inc === 2"></ResultsOverview>
 
-       </div>
-       <div class="plot" v-if="inc === 3">
+       <ResultsPlot v-if="inc === 3 && $cookies.get('submission')['file'] !== null"></ResultsPlot>
 
-       </div>
      </div>
    </div>
    <div class="buttons">
@@ -90,105 +54,6 @@ onMounted(() => {
     flex-direction: column;
     font-size: 1.5vh !important;
   }
-
-  .text {
-    font-size: 1.5vh !important;
-  }
-}
-
-.bar {
-  width: 0;
-  height: 100%;
-  margin: 0 1rem 0 0;
-  background-color: red;
-}
-
-.title-text, .title-proba {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2rem 0 2rem;
-}
-
-.header:nth-child(2) {
-  border-left: 2px solid black;
-}
-
-.title-text, .title-proba, .propability, .text {
-  width: 50%;
-  height: 50px;
-  transition: all 0.3s ease-in-out;
-}
-
-.different-sizes {
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  background-color: #007BFF;
-  cursor: pointer;
-  transition: transform 0.3s ease-in-out, background-color 0.3s ease-in-out;
-}
-
-.different-sizes:hover {
-  transform: scale(1.2);
-}
-
-.header {
-  height: 50px;
-  margin: 1rem;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background-color: gray;
-}
-
-.propability {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-}
-
-.progress {
-  width: 90%;
-  height: 50%;
-  border: 2px solid black;
-  margin-right: 0.5rem;
-}
-
-.text {
-  overflow-x: auto;
-  padding: 1rem;
-  font-size: 1.2vw;
-}
-
-.emotion {
-  width: 50px;
-  height: 50px;
-}
-
-.row {
-  height: 50px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  align-items: center;
-  margin: 1rem;
-  padding: 1rem 0 1rem 0;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
-  background-color: #f5f5f5;
-}
-
-.predictions {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
 }
 
 .content {

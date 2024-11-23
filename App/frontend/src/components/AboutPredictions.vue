@@ -1,5 +1,7 @@
 <script setup>
+import {inject} from "vue";
 
+const $cookies = inject('$cookies')
 </script>
 
 <template>
@@ -36,6 +38,7 @@
     </div>
     <div class="links">
       <RouterLink to="/phases" class="router-link">Przygotuj dane</RouterLink>
+      <RouterLink to="/predict" class="router-link" v-if="$cookies.isKey('stats') && $cookies.isKey('text')">Zobacz predykcje</RouterLink>
     </div>
   </div>
 </template>
