@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-from model.my_datasets import preprocess_dataset
+from model.my_datasets import preprocess_dataset, merge_datasets
 
 
 def apply_tokenizer(tokenizer, row):
@@ -27,9 +27,10 @@ def compute_metrics(logits):
 
 def create_dataset(dataset: pd.DataFrame, split_train_test: bool) -> DatasetDict:
     dt = DatasetDict()
-    dataset['label'] = dataset['label'].astype(int)
 
     if split_train_test:
+        dataset['label'] = dataset['label'].astype(int)
+
         x_train, x_test = train_test_split(dataset, test_size=0.3, random_state=4)
         training = pd.DataFrame(x_train, columns=dataset.columns).reset_index(drop=True)
         testing = pd.DataFrame(x_test, columns=dataset.columns).reset_index(drop=True)
@@ -46,8 +47,9 @@ def fine_tune(model_name: str):
     tokenizer = AutoTokenizer.from_pretrained(f'{model_name}-uncased')
 
     dataset = create_dataset(
-        preprocess_dataset(lang='en', for_train=True)
-        if model_name == 'bert-base' or model_name == 'bert-large' else preprocess_dataset(lang='pl', for_train=True),
+        preprocess_dataset(merge_datasets(lang='en', for_train=True), lang='en')
+        if model_name == 'bert-base' or model_name == 'bert-large'
+        else preprocess_dataset(merge_datasets(lang='en', for_train=True), lang='pl'),
         split_train_test=True
     )
 
@@ -100,18 +102,17 @@ def predict_file(model_path: str, data: DatasetDict) -> pd.DataFrame:
         model=model,
         tokenizer=tokenizer,
         top_k=None,
-        device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     )
 
     predictions = pipe(data['test']['text'])
 
-    for i, row in enumerate(predictions):
-        predictions[i] = max(row, key=lambda x: x['score'])
-
-    predictions = pd.DataFrame(predictions)
+    predictions = pd.DataFrame([{pair['label']: pair['score'] for pair in row} for row in predictions])
 
     return predictions
 
 
 # fine_tune('bert-base')
 # fine_tune('bert-large')
+
+# predict_file('bert-base', create_dataset(pd.read_csv('data/test.csv'), split_train_test=False))

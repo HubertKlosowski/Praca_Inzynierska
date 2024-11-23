@@ -73,7 +73,7 @@ const setLanguage = (param) => {
   align-items: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .main {
     flex-direction: column;
     font-size: 1.5vh;
@@ -85,7 +85,9 @@ const setLanguage = (param) => {
 
   .polish, .english {
     width: 80% !important;
-    height: 40% !important;
+    height: 30% !important;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
   }
 }
 

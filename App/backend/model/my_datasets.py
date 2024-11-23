@@ -106,9 +106,7 @@ def merge_datasets(lang = 'pl', for_train = False) -> pd.DataFrame:
 # usuniecie znaków interpunkcyjnych
 # usuniecie stop-words
 # stemming
-def preprocess_dataset(lang = 'pl', for_train = False) -> pd.DataFrame:
-    dataset = merge_datasets(lang, for_train)
-
+def preprocess_dataset(dataset: pd.DataFrame, lang = 'pl') -> pd.DataFrame:
     stemmer = PorterStemmer() if lang == 'en' else Stemmer.polimorf()
 
     url_pattern = r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?'  # GOTOWIEC Z INTERNETU
@@ -149,6 +147,10 @@ def preprocess_dataset(lang = 'pl', for_train = False) -> pd.DataFrame:
 # final.drop_duplicates(subset=['title', 'text'], keep='first', inplace=True)
 # final.to_csv(os.path.join('data', 'polish_reddit_posts_1.csv'), index=False)
 
-# preprocess_dataset(lang='en', for_train=True).to_csv(os.path.join('data', 'final', 'preprocessed_english_dataset.csv'), index=False)
-# preprocess_dataset(lang='pl', for_train=False).to_csv(os.path.join('data', 'final', 'preprocessed_polish_dataset.csv'), index=False)
+# Przetworzone wpisy w obu językach
+# preprocess_dataset(merge_datasets(lang='en', for_train=True), lang='en').to_csv(os.path.join('data', 'final', 'preprocessed_english_dataset.csv'), index=False)
+# preprocess_dataset(merge_datasets(lang='pl', for_train=False), lang='pl').to_csv(os.path.join('data', 'final', 'preprocessed_polish_dataset.csv'), index=False)
 # extract_comments()
+
+# Nie przetworzone wpisy w języku polskim
+# merge_datasets(lang='pl', for_train=True).to_csv(os.path.join('data', 'final', 'polish_dataset.csv'), index=False)

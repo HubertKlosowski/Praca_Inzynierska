@@ -18,6 +18,7 @@ from model.my_datasets import preprocess_dataset
 
 import pandas as pd
 import smtplib
+import io
 
 
 @api_view(['GET'])
@@ -234,30 +235,38 @@ def make_submission(request):
     else:
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-    extension = serializer.data['file'].name.split('.')[-1]
-
     if not User.objects.filter(id=serializer.data['user']).exists():
         return Response({'error': 'BŁĄD!! Użytkownik nie istnieje.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-    if extension != 'csv':
-        return Response({'error': 'BŁĄD!! Plik musi być w rozszerzeniu .csv.'},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    df = pd.read_csv(serializer.data['file'])
-    if ['text', 'label'] != df.columns.tolist():
-        return Response({'error': 'BŁĄD!! Plik musi zawierać kolumny \"text\", oraz \"label\".'},
-                        status=status.HTTP_400_BAD_REQUEST)
 
     user = User.objects.get(id=request.data['user'])
 
     if user.submission_num == 0:
         return Response({'error': 'BŁĄD!! Użytkownik nie posiada możliwych prób.'},
                         status=status.HTTP_406_NOT_ACCEPTABLE)
-    user.submission_num -= 1
-    user.last_submission = timezone.now()
-    user.save()
 
-    df = preprocess_dataset(lang=serializer.data['language'], for_train=False)
+    if serializer.data['file'] is not None:
+        extension = serializer.data['file'].split('.')[-1]
+
+        if extension != 'csv':
+            return Response({'error': 'BŁĄD!! Plik musi być w rozszerzeniu .csv.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        df = pd.read_csv(serializer.data['file'])
+
+        print(df.info())
+        print(df.head())
+
+        if ['text', 'label'] != df.columns.tolist():
+            return Response({'error': 'BŁĄD!! Plik musi zawierać kolumny \"text\", oraz \"label\".'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # user.submission_num -= 1
+        # user.last_submission = timezone.now()
+
+    else:
+        df = pd.DataFrame(data={'text': [serializer.data['entry']]})
+
+    df = preprocess_dataset(df, lang=serializer.data['language'])
 
     try:
         stats = predict_file(
@@ -266,6 +275,8 @@ def make_submission(request):
         )
     except Exception as e:
         return Response({'error': f'BŁĄD!! {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
+
+    # user.save()
 
     return Response({
         'success': 'SUKCES!! Udało się przesłać dane.',

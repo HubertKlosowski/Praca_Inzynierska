@@ -1,6 +1,6 @@
 <script setup>
 import {inject, ref} from "vue";
-import { useRouter } from "vue-router";
+import {useRouter} from "vue-router";
 import axios from "axios";
 
 const choose = ref(true)
@@ -22,19 +22,20 @@ const makePredictions = async () => {
       data.value = null
     }
     form_data.append('file', data.value)
-    form_data.append('entry', null)
-  } else if (typeof data.value === 'string') {
-    form_data.append('file', null)
+  } else {
     form_data.append('entry', data.value)
   }
 
   await router.push('/predict')
   form_data.append('language', $cookies.get('model_language'))
-  form_data.append('model', $cookies.get('model') + '-' + $cookies.get('model_version'))
+  form_data.append('llm_model', $cookies.get('model') + '-' + $cookies.get('model_version'))
   form_data.append('user', 1)
 
   try {
     const response = await axios.post('http://localhost:8000/api/user/make_submission', form_data)
+    if ($cookies.isKey('submission'))
+      $cookies.remove('submission')
+    $cookies.set('submission', response.data)
   } catch (error) {
     const error_response = error.response.data
     if (typeof error_response['error'] === 'string') {

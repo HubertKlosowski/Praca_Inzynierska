@@ -19,11 +19,11 @@ html, body {
     align-content: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     #app {
         flex-direction: column;
         justify-content: center;
-        align-content: center;
+        align-items: center;
     }
 
     .router-link {
@@ -98,19 +98,19 @@ html, body {
     overflow-y: auto;
 }
 
-.left-part::-webkit-scrollbar {
+::-webkit-scrollbar {
     width: 12px;
 }
 
-.left-part::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
     background-color: red;
 }
 
-.left-part::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
     background-color: #f1f1f1;
 }
 
-.left-part::-webkit-scrollbar-button {
+::-webkit-scrollbar-button {
     display: none;
 }
 

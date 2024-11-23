@@ -35,7 +35,7 @@
   align-items: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .main {
     flex-direction: column;
     font-size: 1.5vh;
@@ -47,10 +47,13 @@
 
   .phases, .phases-description {
     width: 80% !important;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
   }
 
   .phases {
-    height: 20% !important;
+    height: 30% !important;
+    overflow-y: hidden;
   }
 
   .phases-description {
@@ -68,23 +71,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem;
+  padding: 0.5rem;
   overflow-y: auto;
-}
-
-.phases-description::-webkit-scrollbar {
-    width: 12px;
-}
-
-.phases-description::-webkit-scrollbar-thumb {
-    background-color: red;
-}
-
-.phases-description::-webkit-scrollbar-track {
-    background-color: #f1f1f1;
-}
-
-.phases-description::-webkit-scrollbar-button {
-    display: none;
 }
 </style>
