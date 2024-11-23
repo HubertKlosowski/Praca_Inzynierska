@@ -48,10 +48,9 @@ onMounted(() => {
              <span>Stopień depresji</span>
            </div>
          </div>
-
-         <div class="row">
+         <div class="row" v-for="(item, index) in $cookies.get('submission')['text']" :key="index">
            <div class="text" :style="{width: show ? '20%' : '80%', opacity: show ? '0.3' : '1'}">
-             {{ $cookies.get('submission')['submission']['entry'] }}
+             {{ item }}
            </div>
            <div class="propability" :style="{width: !show ? '20%' : '80%', opacity: !show ? '0.3' : '1'}">
              <div class="progress">

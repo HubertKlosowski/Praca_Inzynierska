@@ -26,16 +26,21 @@ const makePredictions = async () => {
     form_data.append('entry', data.value)
   }
 
-  await router.push('/predict')
   form_data.append('language', $cookies.get('model_language'))
   form_data.append('llm_model', $cookies.get('model') + '-' + $cookies.get('model_version'))
   form_data.append('user', 1)
 
-  try {
-    const response = await axios.post('http://localhost:8000/api/user/make_submission', form_data)
-    if ($cookies.isKey('submission'))
+  if ($cookies.isKey('submission'))
       $cookies.remove('submission')
+
+  try {
+    const response = await axios.post('http://localhost:8000/api/user/make_submission', form_data, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
     $cookies.set('submission', response.data)
+    await router.push('/predict')
   } catch (error) {
     const error_response = error.response.data
     if (typeof error_response['error'] === 'string') {
@@ -55,6 +60,10 @@ const changeDragging = () => {
 const drop = (event) => {
   changeDragging()
   data.value = event.dataTransfer.files[0]
+}
+
+const getFile = () => {
+  data.value = document.getElementById('data').files[0]
 }
 </script>
 
@@ -86,7 +95,7 @@ const drop = (event) => {
               <span>Upuść plik</span>
               <span>albo</span>
               <label for="data" class="file-label">Wybierz plik</label>
-              <input type="file" id="data" :style="{display: 'none'}">
+              <input type="file" id="data" @change="getFile" :style="{display: 'none'}">
           </div>
           <button type="submit" class="confirm">Zatwierdź</button>
         </div>

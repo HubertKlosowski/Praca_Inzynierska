@@ -18,7 +18,6 @@ from model.my_datasets import preprocess_dataset
 
 import pandas as pd
 import smtplib
-import io
 
 
 @api_view(['GET'])
@@ -245,41 +244,43 @@ def make_submission(request):
                         status=status.HTTP_406_NOT_ACCEPTABLE)
 
     if serializer.data['file'] is not None:
-        extension = serializer.data['file'].split('.')[-1]
+        extension = request.data['file'].name.split('.')[-1]
 
         if extension != 'csv':
             return Response({'error': 'BŁĄD!! Plik musi być w rozszerzeniu .csv.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        df = pd.read_csv(serializer.data['file'])
+        # BARDZO WAŻNE !!!!!!!!!!!!!!!!!!!!!!
+        my_file = request.FILES['file'].file
+        my_file.seek(0)
 
-        print(df.info())
-        print(df.head())
+        df = pd.read_csv(my_file)
 
-        if ['text', 'label'] != df.columns.tolist():
-            return Response({'error': 'BŁĄD!! Plik musi zawierać kolumny \"text\", oraz \"label\".'},
+        if ['text'] != df.columns.tolist():
+            return Response({'error': 'BŁĄD!! Plik musi zawierać kolumnę \"text\".'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # user.submission_num -= 1
-        # user.last_submission = timezone.now()
+        user.submission_num -= 1
+        user.last_submission = timezone.now()
 
     else:
         df = pd.DataFrame(data={'text': [serializer.data['entry']]})
 
-    df = preprocess_dataset(df, lang=serializer.data['language'])
-
     try:
         stats = predict_file(
             f'./model/{serializer.data['llm_model']}/',
-            create_dataset(df, split_train_test=False)
+            create_dataset(
+                preprocess_dataset(
+                    df, lang=serializer.data['language']
+                ), split_train_test=False)
         )
     except Exception as e:
         return Response({'error': f'BŁĄD!! {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
 
-    # user.save()
+    user.save()
 
     return Response({
         'success': 'SUKCES!! Udało się przesłać dane.',
         'stats': stats,
-        'submission': serializer.data
+        'text': df['text']
     }, status=status.HTTP_201_CREATED)
