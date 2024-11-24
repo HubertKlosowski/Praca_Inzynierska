@@ -1,21 +1,22 @@
 <script setup>
-import {inject, ref} from "vue";
+import {ref} from "vue";
 import Results from "@/components/Results.vue";
 import ResultsPlot from "@/components/ResultsPlot.vue";
 import ResultsOverview from "@/components/ResultsOverview.vue";
 
 const inc = ref(1)
-const $cookies = inject('$cookies')
+const text = ref(JSON.parse(localStorage.getItem('text')))
 
 const changeSection = (param) => {
-  const limit_up = $cookies.get('submission')['file'] !== null ? 3 : 2
+  const limit_up = text.value.length > 1 ? 3 : 2
   if (inc.value === limit_up && param === -1) {
     inc.value = 1
   } else if (inc.value === 1 && param === 1) {
-    inc.value = $cookies.get('submission')['file'] !== null ? 3 : 2
+    inc.value = text.value.length > 1 ? 3 : 2
   } else {
     inc.value -= param
   }
+  console.log(inc.value)
 }
 </script>
 
@@ -28,20 +29,20 @@ const changeSection = (param) => {
 
        <ResultsOverview v-if="inc === 2"></ResultsOverview>
 
-       <ResultsPlot v-if="inc === 3 && $cookies.get('submission')['file'] !== null"></ResultsPlot>
+       <ResultsPlot v-if="inc === 3 && text.length > 1"></ResultsPlot>
 
      </div>
    </div>
    <div class="buttons">
-     <div class="go-back" @click="changeSection(-1)">
-      <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-arrow-left-circle" viewBox="0 0 16 16">
-        <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5z"/>
+     <div class="move" @click="changeSection(1)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <path d="M512 256A256 256 0 1 0 0 256a256 256 0 1 0 512 0zM215 127c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-71 71L392 232c13.3 0 24 10.7 24 24s-10.7 24-24 24l-214.1 0 71 71c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0L103 273c-9.4-9.4-9.4-24.6 0-33.9L215 127z"/>
       </svg>
      </div>
      <RouterLink to="/" class="router-link">Powrót do strony głównej</RouterLink>
-     <div class="go-next" @click="changeSection(1)">
-      <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-arrow-left-circle" viewBox="0 0 16 16">
-        <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0M4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5z"/>
+     <div class="move" @click="changeSection(-1)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <path d="M0 256a256 256 0 1 0 512 0A256 256 0 1 0 0 256zM297 385c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l71-71L120 280c-13.3 0-24-10.7-24-24s10.7-24 24-24l214.1 0-71-71c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0L409 239c9.4 9.4 9.4 24.6 0 33.9L297 385z"/>
       </svg>
      </div>
     </div>
@@ -54,6 +55,18 @@ const changeSection = (param) => {
     flex-direction: column;
     font-size: 1.5vh !important;
   }
+
+  svg {
+    width: 5vw;
+    height: auto;
+  }
+}
+
+@media (max-height: 950px) {
+  svg {
+    width: 15vh;
+    height: auto;
+  }
 }
 
 .content {
@@ -61,9 +74,9 @@ const changeSection = (param) => {
   height: 100%;
 }
 
-.go-back, .go-next {
+.move {
   width: 15%;
-  height: auto;
+  height: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -72,7 +85,7 @@ const changeSection = (param) => {
 
 .main {
   width: 100%;
-  height: 70%;
+  height: 80%;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -85,6 +98,7 @@ const changeSection = (param) => {
 }
 
 .buttons {
+  border-top: 2px solid black;
   width: 100%;
   height: 20%;
   display: flex;

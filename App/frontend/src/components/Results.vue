@@ -1,11 +1,16 @@
 <script setup>
-import {inject, onMounted, ref} from "vue";
+import {onMounted, ref} from "vue";
+import _ from "lodash";
 
-const $cookies = inject('$cookies')
+
 const show = ref(false)
+const sort = ref(0)
+const text = ref(JSON.parse(localStorage.getItem('text')))
+const stats = ref(JSON.parse(localStorage.getItem('stats'))['depressed'])
+
 
 const generateProgressBar = () => {
-  const results = $cookies.get('stats')['depressed']
+  const results = stats.value
   const bars = document.querySelectorAll('.bar')
 
   for (let i = 0; i < bars.length; i++) {
@@ -13,38 +18,77 @@ const generateProgressBar = () => {
   }
 }
 
+const sortByValue = () => {
+  let concated = _.zip(text.value, stats.value)  // łączenie po kolumnach
+
+  if (sort.value === 0) {
+    concated = _.orderBy(concated, (row) => row[1], ['asc'])  // sortowanie po wartości depresji rosnąco
+  } else if (sort.value === 1) {
+    concated = _.orderBy(concated, (row) => row[1], ['desc'])
+  } else {
+    concated = _.zip(JSON.parse(localStorage.getItem('text')), JSON.parse(localStorage.getItem('stats'))['depressed'])
+  }
+
+  concated = _.unzip(concated)
+  text.value = concated[0]
+  stats.value = concated[1]
+
+  generateProgressBar()
+
+  sort.value += 1
+  if (sort.value === 3) {
+    sort.value = 0
+  }
+}
+
 onMounted(() => {
   generateProgressBar()
 })
+
 </script>
 
 <template>
-  <div class="predictions">
-   <div class="header">
-     <div class="title-text" :style="{width: show ? '20%' : '80%'}">
-       <div
-         class="different-sizes"
-         @click="show = !show"
-         :style="{backgroundColor: !show ? 'green' : 'red'}"
-       >
+  <div class="header">
+   <div class="title-text" :style="{width: show ? '20%' : '80%'}">
+     <div
+       class="different-sizes"
+       @click="show = !show"
+       :style="{backgroundColor: !show ? 'green' : 'red'}"
+     >
 
-       </div>
-       <span>Wpis</span>
      </div>
-     <div class="title-proba" :style="{width: !show ? '20%' : '80%'}">
-       <span>Stopień depresji</span>
-     </div>
+     <span>Wpis</span>
    </div>
-   <div class="row" v-for="(item, index) in $cookies.get('text')" :key="index">
+   <div class="title-proba" :style="{width: !show ? '20%' : '80%'}">
+     <div class="move" v-if="sort === 0" @click="sortByValue()">
+       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+         <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM385 215c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-71-71L280 392c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-214.1-71 71c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9L239 103c9.4-9.4 24.6-9.4 33.9 0L385 215z"/>
+       </svg>
+     </div>
+     <div class="move" v-if="sort === 1" @click="sortByValue()">
+       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+         <path d="M256 0a256 256 0 1 0 0 512A256 256 0 1 0 256 0zM127 297c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l71 71L232 120c0-13.3 10.7-24 24-24s24 10.7 24 24l0 214.1 71-71c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9L273 409c-9.4 9.4-24.6 9.4-33.9 0L127 297z"/>
+       </svg>
+     </div>
+     <div class="move" v-if="sort === 2" @click="sortByValue()">
+       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
+         <path d="M137.4 502.6c12.5 12.5 32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 402.7 192 288l352 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0 0-114.7 41.4 41.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-96-96c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L384 109.3 384 224l-192 0-64 0-96 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0 0 114.7L86.6 361.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l96 96zM128 192l64 0 0-128c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 128zM448 320l-64 0 0 128c0 17.7 14.3 32 32 32s32-14.3 32-32l0-128z"/>
+       </svg>
+     </div>
+     <span>Stopień depresji</span>
+   </div>
+  </div>
+  <div class="predictions">
+   <div class="row" v-for="(item, index) in text" :key="index">
      <div class="text" :style="{width: show ? '20%' : '80%', opacity: show ? '0.3' : '1'}">
        {{ item }}
      </div>
      <div class="propability" :style="{width: !show ? '20%' : '80%', opacity: !show ? '0.3' : '1'}">
        <div class="progress" :style="{
-         color: ($cookies.get('stats')['depressed'][index] * 100).toFixed(2) >= 25 ? 'white' : 'black',
+         color: (stats[index] * 100).toFixed(2) >= 50 ? 'white' : 'black',
          textAlign: 'center'
        }">
-         {{ ($cookies.get('stats')['depressed'][index] * 100).toFixed(2) }}
+         {{ (stats[index] * 100).toFixed(2) }}
          <div class="bar"></div>
        </div>
      </div>
@@ -75,7 +119,7 @@ onMounted(() => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  justify-content: start;
   padding: 0 2rem 0 2rem;
 }
 
@@ -89,11 +133,19 @@ onMounted(() => {
   transition: all 0.3s ease-in-out;
 }
 
+.move {
+  width: 25px;
+  height: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
 .different-sizes {
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  background-color: #007BFF;
   cursor: pointer;
   transition: transform 0.3s ease-in-out, background-color 0.3s ease-in-out;
 }
@@ -150,7 +202,7 @@ onMounted(() => {
 
 .predictions {
   width: 100%;
-  height: 100%;
+  height: 80%;
   display: flex;
   flex-direction: column;
   overflow-y: auto;

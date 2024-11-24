@@ -3,7 +3,7 @@ import {inject, onMounted, ref} from "vue";
 
 const $cookies = inject('$cookies')
 const model_text = ref([])
-const show = ref(false)
+const show = ref(true)
 const emits = defineEmits(['confirm'])
 
 const modelConfigDescription = () => {

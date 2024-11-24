@@ -228,10 +228,16 @@ def renew_submission(request, username):
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
 def make_submission(request):
+    # Pola file i entry muszą być w request, ale nie muszą mieć wartości
+    if 'file' not in request.data.keys() and 'entry' not in request.data.keys():
+        return Response({'error': 'BŁĄD!! Pola \"file\" i \"entry\" muszą być podane.'}, status=status.HTTP_400_BAD_REQUEST)
+
     time_start = timezone.now()
     serializer = SubmissionSerializer(data=request.data)
+
     if not serializer.is_valid():
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
 
     if not User.objects.filter(id=serializer.data['user']).exists():
         return Response({'error': 'BŁĄD!! Użytkownik nie istnieje.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -242,20 +248,21 @@ def make_submission(request):
         return Response({'error': 'BŁĄD!! Użytkownik nie posiada możliwych prób.'},
                         status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    if serializer.data['file'] is not None:
-        extension = request.data['file'].name.split('.')[-1]
+    if request.FILES:
 
-        if extension != 'csv':
-            return Response({'error': 'BŁĄD!! Plik musi być w rozszerzeniu .csv.'},
+        extension = request.FILES['file'].name.split('.')[-1]
+
+        if extension != 'csv' and extension != 'json':
+            return Response({'error': 'BŁĄD!! Plik musi być w rozszerzeniu csv lub json.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # BARDZO WAŻNE !!!!!!!!!!!!!!!!!!!!!!
         my_file = request.FILES['file'].file
         my_file.seek(0)
 
-        df = pd.read_csv(my_file)
+        df = pd.read_csv(my_file) if extension == 'csv' else pd.read_json(my_file)
 
-        if ['text'] != df.columns.tolist():
+        if 'text' not in df.columns.tolist():
             return Response({'error': 'BŁĄD!! Plik musi zawierać kolumnę \"text\".'},
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -263,15 +270,15 @@ def make_submission(request):
         user.last_submission = timezone.now()
 
     else:
-        df = pd.DataFrame(data={'text': [serializer.data['entry']]})
+        df = pd.DataFrame(data={'text': [request.data['entry']]})
+
+    df = preprocess_dataset(df, lang=serializer.data['language'])
 
     try:
         stats = predict_file(
             f'./model/{serializer.data['llm_model']}/',
             create_dataset(
-                preprocess_dataset(
-                    df, lang=serializer.data['language']
-                ), split_train_test=False)
+                df, split_train_test=False)
         )
     except Exception as e:
         return Response({'error': f'BŁĄD!! {str(e)}'}, status=status.HTTP_404_NOT_FOUND)

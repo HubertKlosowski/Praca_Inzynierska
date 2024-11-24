@@ -35,8 +35,8 @@ class Submission(models.Model):
     language = models.CharField(choices=LANGUAGE_CHOICES, max_length=10)
     time_taken = models.FloatField(default=0)
     llm_model = models.CharField(max_length=20, choices=LLM_CHOICES)
-    file = models.FileField(upload_to='submission_files/', null=True, blank=True)
-    entry = models.TextField(null=True, blank=True)
+    # file = models.FileField(upload_to='submission_files/', null=True, blank=True)
+    # entry = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return (f'Submission info\n User:{self.user.username}, '

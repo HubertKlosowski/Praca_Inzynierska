@@ -7,38 +7,32 @@ const $cookies = inject('$cookies')
 <template>
   <div class="left-part">
     <div class="predict-content">
-      <h3>Twoje predykcje</h3>
-      <p>Predykcje wykonane jako gość nie będą zapisywane w bazie danych.</p>
-      <p>Jeśli chcesz mieć możliwość powrotu do wyników w przyszłości, zalecane jest utworzenie konta.</p>
+      <h3>Twoje wyniki</h3>
+      <p>Wyniki przedstawią wykryte stopnie depresji w przekazanych danych. Ułatwi</p>
+      <p>Bez konta nie będą zapisywane w bazie danych uzyskane wyniki.</p>
+      <p>Jeśli chcesz mieć możliwość powrotu do wcześniejszych wyników w przyszłości, zalecane jest utworzenie konta.</p>
       <p>Pozwoli na pełny wgląd w historię predykcji.</p>
     </div>
     <div class="info">
       <div class="phase">
-        <h3>Przygotuj dane</h3>
-        <p>Analiza depresji wymaga posiadania danych tekstowych.</p>
-        <p>Dane możesz wysłać w postaci pliku .csv lub w formie jednego wpisu.</p>
-        <p>Każdy wpis powinien być umieszczony w osobnych wierszach.</p>
+        <h3>Wybierz model</h3>
+        <p>W tej części należy wybrać model, który wykryje depresję w przygotowanych danych.</p>
       </div>
       <div class="phase">
-        <h3>Wybierz model</h3>
-        <p>W tym etapie należy wybrać model wykonujący predykcje na przygotowanych danych.</p>
-        <p>Są dostępne 2 modele, każdy w 2 wersjach:</p>
-        <ul>
-          <li>BERT BASE / LARGE (dla języka angielskiego)</li>
-          <li>RoBERTa BASE / LARGE (dla języka polskiego)</li>
-        </ul>
-        <p>Wersja LARGE posiada lepszą dokładność, niż BASE &#128077;.</p>
-        <p>Zaletą BASE jest szybszy czas wykonania &#128077;.</p>
+        <h3>Przygotuj dane</h3>
+        <p>Analiza depresji wymaga posiadania danych tekstowych.</p>
+        <p>Dane możesz wysłać w postaci pliku w rozszerzeniu "csv", "json" lub w formie pojedyńczego wpisu.</p>
+        <p>Każdy wpis powinien być umieszczony w osobnych wierszach.</p>
       </div>
       <div class="phase">
         <h3>Przeanalizuj wyniki</h3>
         <p>Wyniki będą przypisane każdemu przesłanemu wpisowi.</p>
-        <p></p>
+        <p>Dodatkowo, osoby posiadające konto otrzymają rozbudowane wyniki</p>
       </div>
     </div>
     <div class="links">
       <RouterLink to="/phases" class="router-link">Przygotuj dane</RouterLink>
-      <RouterLink to="/predict" class="router-link" v-if="$cookies.isKey('stats') && $cookies.isKey('text')">Zobacz predykcje</RouterLink>
+      <RouterLink to="/predict" class="router-link" v-if="$cookies.isKey('submission')">Zobacz predykcje</RouterLink>
     </div>
   </div>
 </template>

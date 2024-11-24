@@ -26,7 +26,7 @@
         <h4>Pro</h4>
         <ul>
           <li>liczba dziennych prób: 30</li>
-          <li>analiza zbiorcza wpisów</li>
+          <li>ogólne statystyki dla plików</li>
           <li>max. wielkość pliku: do 100KB</li>
         </ul>
       </div>
@@ -34,7 +34,7 @@
         <h4>Admin</h4>
         <ul>
           <li>liczba dziennych prób: 100</li>
-          <li>to co wersja Pro</li>
+          <li>wykresy dotyczące danych</li>
           <li>max. wielkość pliku: do 1 000KB</li>
         </ul>
       </div>

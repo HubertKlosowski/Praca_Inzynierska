@@ -6,7 +6,6 @@ import axios from "axios";
 const choose = ref(true)
 const data = ref(null)
 const is_dragging = ref(false)
-const info = ref('')
 const $cookies = inject('$cookies')
 
 const router = useRouter()
@@ -14,11 +13,12 @@ const router = useRouter()
 const makePredictions = async () => {
   let form_data = new FormData()
   if (typeof data.value === 'object') {
-    if (data.value.type !== 'text/csv') {
-      info.value = 'BŁĄD!! Plik musi być w rozszerzeniu .csv.'
+    const extension = data.value.name.split('.')[1]
+    if (extension !== 'csv' && extension !== 'json') {
+      console.log('BŁĄD!! Plik musi być w rozszerzeniu csv lub json.')
       data.value = null
-    } else if (data.value.size > 20000) {
-      info.value = 'BŁĄD!! Plik musi mniejszy od 20KB.'
+    } else if (data.value.size > 200000) {
+      console.log('BŁĄD!! Plik musi mniejszy od 200KB.')
       data.value = null
     }
     form_data.append('file', data.value)
@@ -30,32 +30,21 @@ const makePredictions = async () => {
   form_data.append('llm_model', $cookies.get('model') + '-' + $cookies.get('model_version'))
   form_data.append('user', 1)
 
-  if ($cookies.isKey('stats'))
-    $cookies.remove('stats')
-  if ($cookies.isKey('text'))
-    $cookies.remove('text')
-  if ($cookies.isKey('submission'))
-    $cookies.remove('submission')
-
   try {
     const response = await axios.post('http://localhost:8000/api/user/make_submission', form_data, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
-    $cookies.set('stats', response.data['stats'])
-    $cookies.set('text', response.data['text'])
-    $cookies.set('submission', response.data['submission'])
+    localStorage.setItem('stats', JSON.stringify(response.data['stats']))
+    localStorage.setItem('text', JSON.stringify(response.data['text']))
+    localStorage.setItem('submission', JSON.stringify(response.data['submission']))
+
+    $cookies.set('submission', true)
+
     await router.push('/predict')
   } catch (error) {
-    const error_response = error.response.data
-    if (typeof error_response['error'] === 'string') {
-
-    } else if (typeof error_response['error'] === 'undefined') {
-
-    } else {
-
-    }
+    // await router.push({ path: '/predict_errors', query: error.response.data.error })
   }
 }
 
