@@ -44,7 +44,7 @@ const setLanguage = (param) => {
     <div class="polish" @click="setLanguage('pl')">
       <p>
         Wszystkie języki różnią się od siebie.
-        Gramatyka, słownictwo, sposób zapisu zdań ma gigantyczny wpływ na wskazanie emocji w tekście.
+        Gramatyka, słownictwo, sposób zapisu zdań ma wpływ na wskazanie emocji w tekście.
       </p>
       <p>
         Modele podobnie jak my ludzie muszą się nauczyć języka aby móc go "rozumieć".

@@ -272,13 +272,13 @@ def make_submission(request):
     else:
         df = pd.DataFrame(data={'text': [request.data['entry']]})
 
-    df = preprocess_dataset(df, lang=serializer.data['language'])
-
     try:
         stats = predict_file(
             f'./model/{serializer.data['llm_model']}/',
             create_dataset(
-                df, split_train_test=False)
+                preprocess_dataset(
+                    df, lang=serializer.data['language']
+                ), split_train_test=False)
         )
     except Exception as e:
         return Response({'error': f'BŁĄD!! {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
