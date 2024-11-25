@@ -7,6 +7,7 @@ import praw
 from datetime import datetime
 from praw.models import MoreComments
 from langdetect import detect, DetectorFactory
+from transformers import AutoTokenizer
 
 import nltk
 import string
@@ -33,6 +34,19 @@ def save_dataframe_reddit(search_by: str) -> pd.DataFrame:
             posts.append(f.result())
 
     return pd.DataFrame(posts)
+# Przykład użycia
+"""
+    lista wszystkich polskich subredditów: https://www.reddit.com/r/Polska/wiki/subreddity/
+
+    similar_topics = ['stan depresyjny', 'stan depresji', 'alkoholizm', 'stany lękowe', 'samotność', 'samookaleczanie',
+                      'samobójstwo', 'żałoba', 'depresja']
+    final = pd.DataFrame()
+    for topic in similar_topics:
+        dataframe = save_dataframe_reddit(topic)
+        final = pd.concat([final, dataframe])
+    final.drop_duplicates(subset=['title', 'text'], keep='first', inplace=True)
+    final.to_csv(os.path.join('data', 'polish_reddit_posts_1.csv'), index=False)
+"""
 
 
 def read_reddit_post(sub: praw.reddit.Submission) -> dict:
@@ -136,16 +150,37 @@ def preprocess_dataset(dataset: pd.DataFrame, lang = 'pl') -> pd.DataFrame:
     return dataset
 
 
-# lista wszystkich polskich subredditów: https://www.reddit.com/r/Polska/wiki/subreddity/
+# funkcja sluzaca do podzialu zbyt dlugich sekwencji tokenow na mniejsze czesci o dlugosci limitu tokenizatora
+def slice_too_long(tokens, limit) -> list:
+    return [tokens[limit * i:limit * (i + 1)] for i in range(len(tokens) // limit + 1)]
 
-# similar_topics = ['stan depresyjny', 'stan depresji', 'alkoholizm', 'stany lękowe', 'samotność', 'samookaleczanie',
-#                   'samobójstwo', 'żałoba', 'depresja']
-# final = pd.DataFrame()
-# for topic in similar_topics:
-#     dataframe = save_dataframe_reddit(topic)
-#     final = pd.concat([final, dataframe])
-# final.drop_duplicates(subset=['title', 'text'], keep='first', inplace=True)
-# final.to_csv(os.path.join('data', 'polish_reddit_posts_1.csv'), index=False)
+
+# obsluga zbyt dlugich wpisow
+def manage_too_long(df: pd.DataFrame, tokenizer) -> tuple[pd.DataFrame, pd.DataFrame]:
+    limit = 256
+
+    df['text'] = df['text'].apply(lambda x: tokenizer.tokenize(x))  # tokenizacja zdań
+    df['len'] = df['text'].apply(lambda x: len(x))
+    over_limit = df.loc[df['len'] > limit, ['text']].reset_index(drop=True)  # wpisy zbyt dlugie
+    under_limit = df.loc[df['len'] <= limit, ['text']].reset_index(drop=True)
+
+    over_limit['text'] = over_limit['text'].apply(lambda row: slice_too_long(row, limit))  # podzial wpisow na krotsze czesci
+    over_limit = over_limit.explode(column='text')  # rozbicie df po kolumnie 'text'
+    over_limit['text'] = over_limit['text'].apply(lambda row: tokenizer.convert_tokens_to_string(row))  # konwersja tokenow na string
+    under_limit['text'] = under_limit['text'].apply(lambda row: tokenizer.convert_tokens_to_string(row))
+
+    return over_limit, under_limit
+# Przykład użycia
+"""
+    long = manage_too_long(
+        pd.read_csv('data/test_too_long.csv'),
+        AutoTokenizer.from_pretrained('bert-base-uncased')
+    )
+
+    print(long)
+"""
+
+
 
 # Przetworzone wpisy w obu językach
 # preprocess_dataset(merge_datasets(lang='en', for_train=True), lang='en').to_csv(os.path.join('data', 'final', 'preprocessed_english_dataset.csv'), index=False)

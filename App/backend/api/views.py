@@ -262,6 +262,8 @@ def make_submission(request):
 
         df = pd.read_csv(my_file) if extension == 'csv' else pd.read_json(my_file)
 
+        print(df['text'])
+
         if 'text' not in df.columns.tolist():
             return Response({'error': 'BŁĄD!! Plik musi zawierać kolumnę \"text\".'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -272,14 +274,12 @@ def make_submission(request):
     else:
         df = pd.DataFrame(data={'text': [request.data['entry']]})
 
+    prepared = preprocess_dataset(df.copy(deep=True), lang=serializer.data['language'])
+
+    model_path = f'./model/{serializer.data['llm_model']}/'
+
     try:
-        stats = predict_file(
-            f'./model/{serializer.data['llm_model']}/',
-            create_dataset(
-                preprocess_dataset(
-                    df, lang=serializer.data['language']
-                ), split_train_test=False)
-        )
+        stats = predict_file(model_path, prepared)
     except Exception as e:
         return Response({'error': f'BŁĄD!! {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
 

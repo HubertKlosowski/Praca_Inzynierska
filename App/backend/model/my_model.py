@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-from model.my_datasets import preprocess_dataset, merge_datasets
+from model.my_datasets import preprocess_dataset, merge_datasets, manage_too_long
 
 
 def apply_tokenizer(tokenizer, row):
@@ -94,7 +94,7 @@ def fine_tune(model_name: str):
     trainer.save_model(model_name)
 
 
-def predict_file(model_path: str, data: DatasetDict) -> pd.DataFrame:
+def predict_file(model_path: str, df: pd.DataFrame) -> pd.DataFrame:
     model = AutoModelForSequenceClassification.from_pretrained(os.path.join(model_path))
     tokenizer = AutoTokenizer.from_pretrained(os.path.join(model_path))
 
@@ -105,43 +105,37 @@ def predict_file(model_path: str, data: DatasetDict) -> pd.DataFrame:
         device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     )
 
-    predictions = pipe(data['test']['text'])
+    try:
+        dataset = create_dataset(df, split_train_test=False)
+        predictions = prepare_predictions(pipe(dataset['test']['text']))
 
-    predictions = pd.DataFrame([{pair['label']: pair['score'] for pair in row} for row in predictions])
+    except RuntimeError as e:
+        over_limit, under_limit = manage_too_long(df, tokenizer)
+
+        dataset_over_limit, dataset_under_limit = create_dataset(
+            over_limit, split_train_test=False
+        ), create_dataset(
+            under_limit, split_train_test=False
+        )
+
+        predictions_over_limit, predictions_under_limit = prepare_predictions(
+            pipe(dataset_over_limit['test']['text'])
+        ), prepare_predictions(
+            pipe(dataset_under_limit['test']['text'])
+        )
+
+        over_limit.reset_index(inplace=True)
+        predictions_over_limit = pd.concat([over_limit, predictions_over_limit], axis=1).groupby(['index']).mean(numeric_only=True)
+        predictions = pd.concat([predictions_under_limit, predictions_over_limit], axis=0)
 
     return predictions
+
+
+def prepare_predictions(predictions) -> pd.DataFrame:
+    return pd.DataFrame([{pair['label']: pair['score'] for pair in row} for row in predictions])
 
 
 # fine_tune('bert-base')
 # fine_tune('bert-large')
 
-# funkcja sluzaca do podzialu zbyt dlugich sekwencji tokenow na mniejsze czesci o dlugosci limitu tokenizatora
-def slice_too_long(tokens, limit) -> list:
-    return [tokens[limit * i:limit * (i + 1)] for i in range(len(tokens) // limit + 1)]
-
-# obsluga zbyt dlugich wpisow
-def manage_too_long(df: pd.DataFrame, tokenizer) -> pd.DataFrame:
-    limit = 256
-
-    df['text'] = df['text'].apply(lambda x: tokenizer.tokenize(x))  # tokenizacja zdań
-    df['len'] = df['text'].apply(lambda x: len(x))
-    too_long = df.loc[df['len'] > limit, ['text']].reset_index(drop=True)  # wpisy zbyt dlugie
-
-    too_long['text'] = too_long['text'].apply(lambda row: slice_too_long(row, limit))  # podzial wpisow na krotsze czesci
-    too_long = too_long.explode(column='text')  # rozbicie df po kolumnie 'text'
-    too_long['text'] = too_long['text'].apply(lambda row: tokenizer.convert_tokens_to_string(row))  # konwersja tokenow na string
-
-    results = predict_file('bert-base', create_dataset(too_long, split_train_test=False))  # rezultaty dla czesci wpisow
-
-    too_long.reset_index(inplace=True)  # reset indexu, bez usuwania (z indeksów czesci na (0, n), gdzie n to liczba czesci
-
-    # polaczenie wynikow predykcji z czesciami wpisow
-    return pd.concat([too_long, results], axis=1).groupby(['index']).mean(numeric_only=True)
-
-
-# long = manage_too_long(
-#     pd.read_csv('data/test_too_long.csv'),
-#     AutoTokenizer.from_pretrained('bert-base-uncased')
-# )
-#
-# print(long)
+# predict_file('bert-base', pd.read_csv('data/test_too_long.csv'))

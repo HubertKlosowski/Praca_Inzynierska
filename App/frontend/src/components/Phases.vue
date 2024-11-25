@@ -23,7 +23,7 @@ const phases = [
   {
     'title': 'Wersja modelu',
     'description': [
-        'Wersja BASE jest szybsza od LARGE, natomiast model LARGE zwróci lepsze wyniki.',
+        'Wersja rozbudowana osiąga większą dokładność od wersji podstawowej.',
         'Wybierz pasującą dla Ciebie wersję.'
     ]
   },
