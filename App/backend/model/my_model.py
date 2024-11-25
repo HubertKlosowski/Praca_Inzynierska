@@ -115,4 +115,33 @@ def predict_file(model_path: str, data: DatasetDict) -> pd.DataFrame:
 # fine_tune('bert-base')
 # fine_tune('bert-large')
 
-# predict_file('bert-base', create_dataset(pd.read_csv('data/test.csv'), split_train_test=False))
+# funkcja sluzaca do podzialu zbyt dlugich sekwencji tokenow na mniejsze czesci o dlugosci limitu tokenizatora
+def slice_too_long(tokens, limit) -> list:
+    return [tokens[limit * i:limit * (i + 1)] for i in range(len(tokens) // limit + 1)]
+
+# obsluga zbyt dlugich wpisow
+def manage_too_long(df: pd.DataFrame, tokenizer) -> pd.DataFrame:
+    limit = 256
+
+    df['text'] = df['text'].apply(lambda x: tokenizer.tokenize(x))  # tokenizacja zdań
+    df['len'] = df['text'].apply(lambda x: len(x))
+    too_long = df.loc[df['len'] > limit, ['text']].reset_index(drop=True)  # wpisy zbyt dlugie
+
+    too_long['text'] = too_long['text'].apply(lambda row: slice_too_long(row, limit))  # podzial wpisow na krotsze czesci
+    too_long = too_long.explode(column='text')  # rozbicie df po kolumnie 'text'
+    too_long['text'] = too_long['text'].apply(lambda row: tokenizer.convert_tokens_to_string(row))  # konwersja tokenow na string
+
+    results = predict_file('bert-base', create_dataset(too_long, split_train_test=False))  # rezultaty dla czesci wpisow
+
+    too_long.reset_index(inplace=True)  # reset indexu, bez usuwania (z indeksów czesci na (0, n), gdzie n to liczba czesci
+
+    # polaczenie wynikow predykcji z czesciami wpisow
+    return pd.concat([too_long, results], axis=1).groupby(['index']).mean(numeric_only=True)
+
+
+# long = manage_too_long(
+#     pd.read_csv('data/test_too_long.csv'),
+#     AutoTokenizer.from_pretrained('bert-base-uncased')
+# )
+#
+# print(long)
