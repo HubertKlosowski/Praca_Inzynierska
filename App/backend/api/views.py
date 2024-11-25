@@ -262,8 +262,6 @@ def make_submission(request):
 
         df = pd.read_csv(my_file) if extension == 'csv' else pd.read_json(my_file)
 
-        print(df['text'])
-
         if 'text' not in df.columns.tolist():
             return Response({'error': 'BŁĄD!! Plik musi zawierać kolumnę \"text\".'},
                             status=status.HTTP_400_BAD_REQUEST)

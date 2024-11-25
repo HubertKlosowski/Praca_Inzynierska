@@ -5,7 +5,6 @@ import os
 import pandas as pd
 from torch import nn, optim, Tensor
 from transformers import BertTokenizer
-from my_datasets import limit_lang, limit_length
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from time import perf_counter
@@ -123,8 +122,6 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
 
     training_dataset = pd.read_csv(os.path.join('data', 'depression_dataset_reddit_cleaned.csv'))
-    training_dataset = limit_length(training_dataset, seq_length)
-    # training_dataset = limit_lang(training_dataset)
 
     X, y = training_dataset.drop(columns=['depressed'], axis=1), training_dataset['depressed']
 

@@ -7,7 +7,6 @@ import praw
 from datetime import datetime
 from praw.models import MoreComments
 from langdetect import detect, DetectorFactory
-from transformers import AutoTokenizer
 
 import nltk
 import string
@@ -62,19 +61,12 @@ def read_reddit_post(sub: praw.reddit.Submission) -> dict:
     }
 
 
-def limit_lang(df: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:  # usunięcie wpisów nie w wybranym języku
+def limit_lang(df: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:  # pozostawienie tylko wpisow w danym jezyku
+    df['text'] = df['text'].apply(lambda x: x.strip())
     if 'lang' not in df.columns:
         df['lang'] = df['text'].apply(lambda x: detect(x))
     df.drop(index=df.loc[(df['lang'] != lang), :].index, inplace=True)
     df.drop(columns=['lang'], inplace=True)
-    df.reset_index(drop=True, inplace=True)
-    return df
-
-
-def limit_length(df: pd.DataFrame, limit_to: int) -> pd.DataFrame:  # usunięcie wpisów zbyt długich
-    df['len'] = df['text'].apply(lambda x: len(x.split()))
-    df.drop(index=df.loc[df['len'] > limit_to, :].index, inplace=True)
-    df.drop(columns=['len'], inplace=True)
     df.reset_index(drop=True, inplace=True)
     return df
 
@@ -109,6 +101,31 @@ def merge_datasets(lang = 'pl', for_train = False) -> pd.DataFrame:
         dataset = dataset[columns].reset_index(drop=True)
 
         merged = pd.concat([merged, dataset], axis=0)
+
+    merged.drop_duplicates(subset=['text'], keep='first', inplace=True)  # usuniecie duplikatow
+    merged.dropna(inplace=True)  # usuniecie wartosci NaN
+    merged['len'] = merged['text'].apply(lambda x: len(x.split()))
+    merged.drop(merged.loc[
+                    (merged['len'] < merged['len'].quantile(0.05)) |
+                    (merged['len'] >= merged['len'].quantile(0.95))].index, inplace=True)
+
+    merged = limit_lang(merged, lang=lang)  # pozostawienie tylko wpisow w danym jezyku
+
+    if for_train:
+        merged['label'] = merged['label'].astype(int)
+        counts = merged['label'].value_counts()
+
+        if counts[0] > counts[1]:
+            sample = counts[0] - counts[1]
+            merged.drop(index=merged.loc[merged['label'] == 0].sample(n=sample).index, inplace=True)
+        else:
+            sample = counts[1] - counts[0]
+            merged.drop(merged.loc[merged['label'] == 1].sample(n=sample).index, inplace=True)
+
+        merged = merged.sample(frac=1)  # shuffle
+
+    merged.drop(columns=['len'], inplace=True)
+    merged.reset_index(drop=True, inplace=True)
 
     return merged
 
@@ -181,11 +198,11 @@ def manage_too_long(df: pd.DataFrame, tokenizer) -> tuple[pd.DataFrame, pd.DataF
 """
 
 
-
 # Przetworzone wpisy w obu językach
 # preprocess_dataset(merge_datasets(lang='en', for_train=True), lang='en').to_csv(os.path.join('data', 'final', 'preprocessed_english_dataset.csv'), index=False)
 # preprocess_dataset(merge_datasets(lang='pl', for_train=False), lang='pl').to_csv(os.path.join('data', 'final', 'preprocessed_polish_dataset.csv'), index=False)
 # extract_comments()
 
 # Nie przetworzone wpisy w języku polskim
-# merge_datasets(lang='pl', for_train=True).to_csv(os.path.join('data', 'final', 'polish_dataset.csv'), index=False)
+# merge_datasets(lang='pl', for_train=False).to_csv(os.path.join('data', 'final', 'polish_dataset.csv'), index=False)
+# merge_datasets(lang='en', for_train=True).to_csv(os.path.join('data', 'final', 'english_dataset.csv'), index=False)
