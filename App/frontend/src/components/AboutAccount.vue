@@ -8,8 +8,8 @@
     <p>Utworzenie konta umożliwia uzyskanie dostępu do nowych możliwości:</p>
     <ol class="list">
       <li>zapisanie wyników twoich analiz</li>
-      <li>rozbudowanie o ogólne statystyki dla wszystkich wpisów</li>
-      <li>wykorzystanie dodatkowych cech w określeniu depresji</li>
+      <li>udostępnienie ogólnych statystyk i wykresów do wyników</li>
+      <li>kreator plików w przypadku problemów z ich stworzeniem</li>
     </ol>
     <p>Korzystanie z konta jest proste, oraz w pełni przejrzyste &#128522;.</p>
     <p>Poniżej znajdują się trzy dostępne typy kont:</p>
@@ -51,11 +51,11 @@
   .left-part {
     width: 90%;
     height: 45%;
-    font-size: 1.5vh;
+    font-size: 2vh;
   }
 
   .left-part * {
-    font-size: 1.5vh !important;
+    font-size: 2vh !important;
   }
 }
 

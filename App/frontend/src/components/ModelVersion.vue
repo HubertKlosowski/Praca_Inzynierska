@@ -69,11 +69,11 @@ const setVersion = (param) => {
 @media (max-width: 900px) {
   .main {
     flex-direction: column;
-    font-size: 1.5vh;
+    font-size: 3vh;
   }
 
   .main * {
-    font-size: 1.5vh !important;
+    font-size: 2vh !important;
   }
 
   .base, .large {

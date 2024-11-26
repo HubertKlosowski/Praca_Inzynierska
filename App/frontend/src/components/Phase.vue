@@ -100,7 +100,7 @@ onMounted(() => {
 }
 
 .model {
-  height: 70%;
+  height: auto;
   width: 100%;
   display: flex;
   flex-direction: column;

@@ -16,11 +16,11 @@
   .left-part {
     width: 90%;
     height: 45%;
-    font-size: 1.5vh;
+    font-size: 2vh;
   }
 
   .left-part * {
-    font-size: 1.5vh !important;
+    font-size: 2vh !important;
   }
 }
 </style>

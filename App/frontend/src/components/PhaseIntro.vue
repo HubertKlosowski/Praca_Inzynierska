@@ -48,11 +48,11 @@ svg {
 
 @media (max-width: 768px) {
   .model {
-    font-size: 1.5vh;
+    font-size: 2vh;
   }
 
   .model * {
-    font-size: 1.5vh !important;
+    font-size: 2vh !important;
   }
 }
 
@@ -79,7 +79,7 @@ svg {
 .magic {
   height: 100%;
   border-radius: 1rem;
-  animation: progress-bar 5s ease-in-out;
+  animation: progress-bar 5ms ease-in-out;
   position: relative;
 }
 

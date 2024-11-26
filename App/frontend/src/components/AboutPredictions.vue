@@ -31,25 +31,13 @@ const $cookies = inject('$cookies')
       </div>
     </div>
     <div class="links">
-      <RouterLink to="/phases" class="router-link">Przygotuj dane</RouterLink>
+      <RouterLink to="/phases" class="router-link">Sprawdź posty</RouterLink>
       <RouterLink to="/predict" class="router-link" v-if="$cookies.isKey('submission')">Zobacz predykcje</RouterLink>
     </div>
   </div>
 </template>
 
 <style scoped>
-@media (max-width: 768px) {
-  .left-part {
-    width: 90%;
-    height: 45%;
-    font-size: 1.5vh;
-  }
-
-  .left-part * {
-    font-size: 1.5vh !important;
-  }
-}
-
 .info {
   display: flex;
   flex-direction: column;
@@ -78,5 +66,17 @@ const $cookies = inject('$cookies')
 
 ul {
   display: inline-block;
+}
+
+@media (max-width: 768px) {
+  .left-part {
+    width: 90%;
+    height: 45%;
+    font-size: 2vh;
+  }
+
+  .left-part * {
+    font-size: 2vh !important;
+  }
 }
 </style>

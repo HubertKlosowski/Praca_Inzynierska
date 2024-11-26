@@ -76,18 +76,20 @@ const setLanguage = (param) => {
 @media (max-width: 900px) {
   .main {
     flex-direction: column;
-    font-size: 1.5vh;
+    font-size: 2vh;
   }
 
   .main * {
-    font-size: 1.5vh !important;
+    font-size: 2vh !important;
   }
 
   .polish, .english {
     width: 80% !important;
-    height: 30% !important;
+    height: 50%;
     margin-top: 1rem;
     margin-bottom: 0.5rem;
+    justify-content: center;
+    align-items: start;
   }
 }
 
@@ -103,12 +105,15 @@ const setLanguage = (param) => {
   justify-content: center;
   align-items: center;
   padding: 1.5rem;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 
 .polish:hover, .english:hover {
   background-repeat: no-repeat;
   background-size: cover;
-  background-position: top;
+  background-position: center;
 }
 
 .polish:hover > *, .english:hover > * {

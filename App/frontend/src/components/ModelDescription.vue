@@ -38,26 +38,25 @@
 @media (max-width: 900px) {
   .main {
     flex-direction: column;
-    font-size: 1.5vh;
+    font-size: 2vh;
   }
 
   .main * {
-    font-size: 1.5vh !important;
+    font-size: 2vh !important;
   }
 
   .phases, .phases-description {
     width: 80% !important;
+    height: 50%;
     margin-top: 1rem;
     margin-bottom: 0.5rem;
   }
 
   .phases {
-    height: 30% !important;
     overflow-y: hidden;
   }
 
   .phases-description {
-    height: 60% !important;
     overflow-y: auto;
   }
 }
