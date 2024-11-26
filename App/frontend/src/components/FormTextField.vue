@@ -1,19 +1,16 @@
 <script setup>
-import {ref, watch} from "vue";
-
-const props = defineProps(['label_info', 'label_name'])
-const emits = defineEmits(['update_variable'])
-const variable = ref('')
-
-watch(variable, () => {
-  emits('update_variable', variable.value)
-})
+const props = defineProps(['label_info', 'label_name', 'reset'])
+const model = defineModel()
 </script>
 
 <template>
   <div class="form-row">
-    <label :for="label_name">{{ label_info }}</label>
-    <input type="text" :id="label_name" v-model="variable" :placeholder="label_info"/>
+    <label :for="props.label_name">{{ props.label_info }}</label>
+    <input
+        v-model="model"
+        type="text"
+        :id="props.label_name"
+        :placeholder="props.label_info"/>
   </div>
 </template>
 
@@ -35,14 +32,14 @@ watch(variable, () => {
 label {
   width: 70%;
   height: 45%;
-  font-size: 1.75vw;
+  font-size: 1.5vw;
   padding: 1rem;
 }
 
 input[type="text"] {
   width: 70%;
   height: 45%;
-  font-size: 1.75vw;
+  font-size: 1.5vw;
   box-sizing: border-box;
   padding: 1rem;
   border-radius: 0.75rem;

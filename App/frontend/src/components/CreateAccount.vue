@@ -24,6 +24,7 @@ const resetInputs = () => {
   name.value = ''
   username.value = ''
   email.value = ''
+  password.value = ''
   usertype.value = 0
 }
 </script>
@@ -38,30 +39,34 @@ const resetInputs = () => {
       <form @submit.prevent="createAccount">
 
         <FormTextField
+            v-model="name"
             :label_info="'Imie i nazwisko'"
             :label_name="'name'"
-            @update_variable="(variable) => {name = variable}"></FormTextField>
+        ></FormTextField>
 
         <FormTextField
+            v-model="username"
             :label_info="'Nazwa użytkownika'"
             :label_name="'username'"
-            @update_variable="(variable) => {username = variable}"></FormTextField>
+        ></FormTextField>
 
         <FormTextField
+            v-model="email"
             :label_info="'Email'"
             :label_name="'email'"
-            @update_variable="(variable) => {email = variable}"></FormTextField>
+        ></FormTextField>
 
         <FormTextField
+            v-model="password"
             :label_info="'Hasło'"
             :label_name="'password'"
-            @update_variable="(variable) => {password = variable}"></FormTextField>
+        ></FormTextField>
 
-        <FormRadioField @update_variable="(variable) => {usertype = variable}"></FormRadioField>
+        <FormRadioField v-model="usertype"></FormRadioField>
 
         <div class="buttons" style="border: none; height: 100px">
           <button type="submit" class="router-link">Wyślij</button>
-          <button type="submit" class="router-link" @click="resetInputs()">Wyczyść</button>
+          <button type="button" class="router-link" @click="resetInputs()">Wyczyść</button>
         </div>
       </form>
     </div>
@@ -80,7 +85,7 @@ const resetInputs = () => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  font-size: 2vw;
+  font-size: 1.5vw;
 }
 
 .left-part {
@@ -116,7 +121,7 @@ form {
 }
 
 .buttons > * {
-  font-size: 2vw;
+  font-size: 1.5vw;
 }
 
 @media (max-width: 900px) {

@@ -1,14 +1,5 @@
 <script setup>
-import {ref, watch} from "vue";
-
-const props = defineProps(['label_info', 'label_name'])
-const emits = defineEmits(['update_variable'])
-
-const variable = ref('')
-
-watch(variable, () => {
-  emits('update_variable', variable.value)
-})
+const model = defineModel()
 </script>
 
 <template>
@@ -23,9 +14,9 @@ watch(variable, () => {
         <label for="normal">Administrator</label>
       </div>
       <div class="radio-row">
-        <input type="radio" id="normal" value="0" v-model="variable">
-        <input type="radio" id="pro" value="1" v-model="variable">
-        <input type="radio" id="admin" value="2" v-model="variable">
+        <input type="radio" id="normal" value="0" v-model="model" checked="checked">
+        <input type="radio" id="pro" value="1" v-model="model">
+        <input type="radio" id="admin" value="2" v-model="model">
       </div>
     </div>
   </div>
@@ -33,7 +24,7 @@ watch(variable, () => {
 
 <style scoped>
 label, span {
-  font-size: 1.75vw;
+  font-size: 1.5vw;
 }
 
 .radio-row {
