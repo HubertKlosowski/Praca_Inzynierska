@@ -2,6 +2,7 @@
 import {ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import FormRadioField from "@/components/FormRadioField.vue";
+import axios from "axios";
 
 const name = ref('')
 const username = ref('')
@@ -9,15 +10,33 @@ const email = ref('')
 const password = ref('')
 const usertype = ref(0)
 
-const createAccount = () => {
-  let formData = new FormData()
+const error = ref('')
 
-  formData.append('name', name.value)
-  formData.append('username', username.value)
-  formData.append('email', email.value)
-  formData.append('password', password.value)
-  formData.append('usertype', usertype.value)
+const createAccount = async () => {
+  const sub_num = [10, 30, 100][+usertype.value] || 10
+  try {
+    const response = await axios.post('http://localhost:8000/api/user/create_user', {
+      name: name.value,
+      email: email.value,
+      username: username.value,
+      usertype: +usertype.value,
+      password: password.value,
+      submission_num: sub_num
+    })
 
+    resetInputs()
+  } catch (e) {
+    const error_response = e.response.data
+    console.log(error_response)
+    if (typeof error_response['error'] === 'string') {
+      error.value = error_response['error']
+    } else if (typeof error_response['error'] === 'undefined') {
+      error.value = 'BŁĄD!! Nie udało się połączyć z serwerem.'
+    } else {
+      error.value = error_response['error'].join(' ')
+    }
+    console.log(error.value)
+  }
 }
 
 const resetInputs = () => {
@@ -33,14 +52,18 @@ const resetInputs = () => {
   <div class="left-part">
     <div class="header">
       <h3>Utwórz konto</h3>
-      <p>Poniżej znajduje się formularz, w którym należy podać własne dane osobowe. </p>
+      <ul>
+        <li>Poniżej znajduje się formularz, w którym należy podać własne dane osobowe.</li>
+        <li>Wszystkie pola muszą być wypełnione aby móc utworzyć konto.</li>
+        <li>Konto służy do przechowywania wyników analiz.</li>
+      </ul>
     </div>
     <div class="form">
       <form @submit.prevent="createAccount">
 
         <FormTextField
             v-model="name"
-            :label_info="'Imie i nazwisko'"
+            :label_info="'Imię i nazwisko'"
             :label_name="'name'"
         ></FormTextField>
 
@@ -77,11 +100,13 @@ const resetInputs = () => {
 </template>
 
 <style scoped>
+li {
+  list-style-type: '👉';
+}
+
 .header {
   height: 20%;
   width: 80%;
-  padding: 1rem;
-  margin: 1rem;
   display: flex;
   flex-direction: column;
   justify-content: center;

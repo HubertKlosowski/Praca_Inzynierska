@@ -1,12 +1,13 @@
 from django.db import models
 from django.utils import timezone
 
+
 class User(models.Model):
     name = models.CharField(max_length=100)
-    email = models.EmailField(max_length=100)
-    username = models.CharField(max_length=100)
+    email = models.CharField(max_length=50)
+    username = models.CharField(max_length=50)
     usertype = models.IntegerField(default=0)
-    password = models.CharField(max_length=100)
+    password = models.CharField()
     created_at = models.DateTimeField(default=timezone.now)
     submission_num = models.IntegerField(default=10, null=False)
     last_submission = models.DateTimeField(null=True)

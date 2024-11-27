@@ -44,7 +44,7 @@ const makePredictions = async () => {
 
     await router.push('/predict')
   } catch (error) {
-    // await router.push({ path: '/predict_errors', query: error.response.data.error })
+
   }
 }
 

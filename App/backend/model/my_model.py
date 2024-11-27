@@ -9,10 +9,12 @@ from transformers import (AutoModelForSequenceClassification, TextClassification
                           TrainingArguments, Trainer, DataCollatorWithPadding, AutoTokenizer)
 from datasets import Dataset, DatasetDict
 import pandas as pd
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
 
 from model.my_datasets import preprocess_dataset, merge_datasets, manage_too_long
+from model.api_keys import save_model_token
+from huggingface_hub import login, logout
 
 
 def apply_tokenizer(tokenizer, row):
@@ -22,7 +24,12 @@ def apply_tokenizer(tokenizer, row):
 def compute_metrics(logits):
     y_pred, y_true = logits
     y_pred = np.argmax(y_pred, axis=1)
-    return {'accuracy': accuracy_score(y_true, y_pred)}
+    return {
+        'accuracy': accuracy_score(y_true, y_pred),
+        'precision': precision_score(y_true, y_pred),
+        'recall': recall_score(y_true, y_pred),
+        'f1': f1_score(y_true, y_pred),
+    }
 
 
 def create_dataset(dataset: pd.DataFrame, split_train_test: bool) -> DatasetDict:
@@ -44,12 +51,14 @@ def create_dataset(dataset: pd.DataFrame, split_train_test: bool) -> DatasetDict
 
 
 def fine_tune(model_name: str):
+    login(token=save_model_token)
+
     tokenizer = AutoTokenizer.from_pretrained(f'{model_name}-uncased')
 
     dataset = create_dataset(
-        preprocess_dataset(merge_datasets(lang='en', for_train=True), lang='en')
+        preprocess_dataset(pd.read_csv(os.path.join('data', 'final', 'english_dataset.csv')), lang='en')
         if model_name == 'bert-base' or model_name == 'bert-large'
-        else preprocess_dataset(merge_datasets(lang='en', for_train=True), lang='pl'),
+        else preprocess_dataset(merge_datasets(lang='pl', for_train=True), lang='pl'),
         split_train_test=True
     )
 
@@ -67,16 +76,17 @@ def fine_tune(model_name: str):
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
     training_args = TrainingArguments(
-        output_dir=f'{model_name}-training-arguments',
+        output_dir=f'{model_name}',
         learning_rate=2e-5,
-        per_device_train_batch_size=64,
+        per_device_train_batch_size=32,  # 32 dla bert-large, 64 dla bert-base
         per_device_eval_batch_size=64,
-        num_train_epochs=2,
+        num_train_epochs=10,
         weight_decay=0.01,
         eval_strategy='epoch',
         save_strategy='epoch',
         load_best_model_at_end=True,
-        log_level='error'
+        log_level='error',
+        push_to_hub=True,
     )
 
     trainer = Trainer(
@@ -91,12 +101,14 @@ def fine_tune(model_name: str):
 
     trainer.train()
 
-    trainer.save_model(model_name)
+    trainer.push_to_hub()
+
+    logout()
 
 
 def predict_file(model_path: str, df: pd.DataFrame) -> pd.DataFrame:
-    model = AutoModelForSequenceClassification.from_pretrained(os.path.join(model_path))
-    tokenizer = AutoTokenizer.from_pretrained(os.path.join(model_path))
+    tokenizer = AutoTokenizer.from_pretrained(f'depression-detect/{model_path}')
+    model = AutoModelForSequenceClassification.from_pretrained(f'depression-detect/{model_path}')
 
     pipe = TextClassificationPipeline(
         model=model,

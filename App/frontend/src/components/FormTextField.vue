@@ -1,11 +1,14 @@
 <script setup>
-const props = defineProps(['label_info', 'label_name', 'reset'])
+const props = defineProps(['label_info', 'label_name', 'reset', 'error'])
 const model = defineModel()
 </script>
 
 <template>
   <div class="form-row">
-    <label :for="props.label_name">{{ props.label_info }}</label>
+    <div class="row">
+      <label :for="props.label_name">Podaj {{ props.label_info.toLowerCase() }}</label>
+      <div class="error"></div>
+    </div>
     <input
         v-model="model"
         type="text"
@@ -17,7 +20,6 @@ const model = defineModel()
 <style scoped>
 .form-row {
   width: 70%;
-  height: 100px;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
@@ -29,16 +31,25 @@ const model = defineModel()
   padding: 1rem;
 }
 
+.error {
+  width: 50%;
+  background-color: red;
+}
+
 label {
-  width: 70%;
+  background-color: #cccccc;
+}
+
+.row {
+  width: 100%;
   height: 45%;
   font-size: 1.5vw;
   padding: 1rem;
 }
 
 input[type="text"] {
-  width: 70%;
-  height: 45%;
+  width: 100%;
+  height: 70%;
   font-size: 1.5vw;
   box-sizing: border-box;
   padding: 1rem;

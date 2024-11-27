@@ -93,7 +93,7 @@ DATABASES = {
         "HOST": "localhost",
         "PORT": "5432",
         "OPTIONS": {
-            "isolation_level": IsolationLevel.READ_UNCOMMITTED,
+            "isolation_level": IsolationLevel.READ_COMMITTED,
         },
     }
 }

@@ -13,7 +13,7 @@ from rest_framework.parsers import MultiPartParser
 
 from .models import User
 from .serializer import UserSerializer, SubmissionSerializer
-from model.my_model import predict_file, create_dataset
+from model.my_model import predict_file
 from model.my_datasets import preprocess_dataset
 
 import pandas as pd
@@ -27,6 +27,7 @@ def get_user(request):
 
     user = User.objects.get(**request.GET.dict())
     return Response(UserSerializer(user).data)
+
 
 @api_view(['POST'])
 def create_user(request):
@@ -53,15 +54,18 @@ def create_user(request):
 
     # haszowanie hasła
     data['password'] = make_password(data['password'])
-    data['created_at'] = timezone.now()
 
-    if data['usertype'] == 2:
+    if data['usertype'] == 0:
+        data['submission_num'] = 10
+    elif data['usertype'] == 1:
+        data['submission_num'] = 30
+    else:
+        data['submission_num'] = 100
         data['is_verified'] = True
 
     serializer = UserSerializer(data=data)
 
     if serializer.is_valid():
-
         serializer.save()
 
         html_msg = loader.render_to_string(
@@ -88,11 +92,13 @@ def create_user(request):
     return Response(data={'error': 'BŁĄD!! Nie udało się dodać użytkownika.', 'details': serializer.errors},
                     status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['GET'])
 def get_users(request):
     users = User.objects.all()
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 def login_user(request):
@@ -118,6 +124,7 @@ def login_user(request):
                         status=status.HTTP_200_OK)
 
     return Response(data={'error': 'BŁĄD!! Niepoprawne hasło.'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['DELETE'])
 def delete_user(request, username):
@@ -150,6 +157,7 @@ def delete_user(request, username):
 
     return Response(data={'success': f'SUKCES!! Użytkownik o nazwie {username} został poprawnie usunięty.'},
                     status=status.HTTP_200_OK)
+
 
 @api_view(['PATCH'])
 def update_user(request, user_id):
@@ -184,6 +192,7 @@ def update_user(request, user_id):
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['PATCH'])
 def verify_user(request, username):
     if not User.objects.filter(username=username).exists():
@@ -201,6 +210,7 @@ def verify_user(request, username):
                               'success': 'SUKCES!! Weryfikacja użytkownika powiodła się.'}, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['PATCH'])
 def renew_submission(request, username):
@@ -224,6 +234,7 @@ def renew_submission(request, username):
                         status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
@@ -274,10 +285,8 @@ def make_submission(request):
 
     prepared = preprocess_dataset(df.copy(deep=True), lang=serializer.data['language'])
 
-    model_path = f'./model/{serializer.data['llm_model']}/'
-
     try:
-        stats = predict_file(model_path, prepared)
+        stats = predict_file(serializer.data['llm_model'], prepared)
     except Exception as e:
         return Response({'error': f'BŁĄD!! {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
 
