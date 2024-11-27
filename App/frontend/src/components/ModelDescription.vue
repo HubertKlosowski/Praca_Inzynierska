@@ -35,7 +35,7 @@
   align-items: center;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .main {
     flex-direction: column;
     font-size: 1.75vh;

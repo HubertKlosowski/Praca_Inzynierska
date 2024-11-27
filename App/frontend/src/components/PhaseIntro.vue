@@ -46,16 +46,6 @@ svg {
   align-items: center;
 }
 
-@media (max-width: 768px) {
-  .model {
-    font-size: 1.75vh;
-  }
-
-  .model * {
-    font-size: 1.75vh !important;
-  }
-}
-
 @keyframes progress-bar {
   0% {
     width: 100%;
@@ -63,7 +53,7 @@ svg {
   }
   50% {
     width: 50%;
-    background-color: #FFEA00;
+    background-color: yellow;
   }
   100% {
     width: 0;
@@ -79,7 +69,7 @@ svg {
 .magic {
   height: 100%;
   border-radius: 1rem;
-  animation: progress-bar 5ms ease-in-out;
+  animation: progress-bar 5s ease-in-out;
   position: relative;
 }
 
@@ -113,5 +103,15 @@ svg {
 .content {
   height: 50%;
   padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .model {
+    font-size: 1.75vh;
+  }
+
+  .model * {
+    font-size: 1.75vh !important;
+  }
 }
 </style>

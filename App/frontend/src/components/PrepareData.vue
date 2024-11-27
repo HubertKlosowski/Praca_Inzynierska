@@ -28,7 +28,7 @@ const makePredictions = async () => {
 
   form_data.append('language', $cookies.get('model_language'))
   form_data.append('llm_model', $cookies.get('model') + '-' + $cookies.get('model_version'))
-  form_data.append('user', 1)
+  // form_data.append('user', 1)
 
   try {
     const response = await axios.post('http://localhost:8000/api/user/make_submission', form_data, {

@@ -43,19 +43,11 @@ const setLanguage = (param) => {
   <div class="main">
     <div class="polish" @click="setLanguage('pl')">
       <p>
-        Wszystkie języki różnią się od siebie.
-        Gramatyka, słownictwo, sposób zapisu zdań ma wpływ na wskazanie emocji w tekście.
-      </p>
-      <p>
-        Modele podobnie jak my ludzie muszą się nauczyć języka aby móc go "rozumieć".
-        Jeśli nauczą się jednego języka, np. polskiego nie są w stanie bez wcześniejszego przygotowania rozumieć słów w innym języku.
+        Nieprawidłowo wybrany język może spowodować otrzymanie błędnych wyników w predykcjach.
+        Dlatego ważnym jest wybranie modelu pod języku przekazanych danych.
       </p>
     </div>
     <div class="english" @click="setLanguage('en')">
-      <p>
-        Nieprawidłowo wybrany język może spowodować otrzymanie błędnych wyników w predykcjach.
-        Dlatego tak ważnym jest wybranie modelu pod języku przekazanych danych.
-      </p>
       <p style="font-weight: bold">
         Kliknij w jeden z tych przycisków aby wybrać język polski (po lewej) albo język angielski (po prawej).
       </p>
@@ -73,7 +65,7 @@ const setLanguage = (param) => {
   align-items: center;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .main {
     flex-direction: column;
     font-size: 1.75vh;
@@ -85,7 +77,7 @@ const setLanguage = (param) => {
 
   .polish, .english {
     width: 80% !important;
-    height: 50%;
+    height: 20%;
     margin-top: 1rem;
     margin-bottom: 0.5rem;
     justify-content: center;

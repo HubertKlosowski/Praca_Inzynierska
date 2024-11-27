@@ -95,14 +95,21 @@ onMounted(() => {
 
 .icon {
   width: 10%;
-  font-size: 300%;
+  font-size: 4vw;
+  margin-right: 1rem;
   text-align: center;
 }
 
 .model {
-  height: auto;
+  height: 70%;
   width: 100%;
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .icon {
+    font-size: 4vh;
+  }
 }
 </style>

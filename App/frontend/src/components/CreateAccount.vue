@@ -153,7 +153,7 @@ form {
   font-size: 1.5vw;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .buttons > * {
     width: 100%;
   }

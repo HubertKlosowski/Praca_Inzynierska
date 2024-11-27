@@ -239,28 +239,14 @@ def renew_submission(request, username):
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
 def make_submission(request):
+    data = request.data.copy()
     # Pola file i entry muszą być w request, ale nie muszą mieć wartości
-    if 'file' not in request.data.keys() and 'entry' not in request.data.keys():
+    if 'file' not in data.keys() and 'entry' not in data.keys():
         return Response({'error': 'BŁĄD!! Pola \"file\" i \"entry\" muszą być podane.'}, status=status.HTTP_400_BAD_REQUEST)
 
     time_start = timezone.now()
-    serializer = SubmissionSerializer(data=request.data)
-
-    if not serializer.is_valid():
-        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-    if not User.objects.filter(id=serializer.data['user']).exists():
-        return Response({'error': 'BŁĄD!! Użytkownik nie istnieje.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-    user = User.objects.get(id=request.data['user'])
-
-    if user.submission_num == 0:
-        return Response({'error': 'BŁĄD!! Użytkownik nie posiada możliwych prób.'},
-                        status=status.HTTP_406_NOT_ACCEPTABLE)
 
     if request.FILES:
-
         extension = request.FILES['file'].name.split('.')[-1]
 
         if extension != 'csv' and extension != 'json':
@@ -277,31 +263,46 @@ def make_submission(request):
             return Response({'error': 'BŁĄD!! Plik musi zawierać kolumnę \"text\".'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        user.submission_num -= 1
-        user.last_submission = timezone.now()
-
     else:
         df = pd.DataFrame(data={'text': [request.data['entry']]})
 
-    prepared = preprocess_dataset(df.copy(deep=True), lang=serializer.data['language'])
+    prepared = preprocess_dataset(df.copy(deep=True), lang=data['language'])
 
     try:
-        stats = predict_file(serializer.data['llm_model'], prepared)
+        stats = predict_file(data['llm_model'], prepared)
+        data['time_taken'] = (timezone.now() - time_start).total_seconds()
     except Exception as e:
         return Response({'error': f'BŁĄD!! {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
 
-    user.save()
+    if 'user' in data.keys():
+        serializer = SubmissionSerializer(data=data)
 
-    after_sub = serializer.data
-    after_sub['time_taken'] = (timezone.now() - time_start).total_seconds()
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-    serializer = SubmissionSerializer(data=after_sub)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
+        if not User.objects.filter(id=serializer.data['user']).exists():
+            return Response({'error': 'BŁĄD!! Użytkownik nie istnieje.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        user = User.objects.get(id=request.data['user'])
+
+        if user.submission_num == 0:
+            return Response({'error': 'BŁĄD!! Użytkownik nie posiada możliwych prób.'},
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        user.submission_num -= 1
+        user.last_submission = timezone.now()
+        user.save()
+
+        serializer = SubmissionSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+    data.pop('file', None)
+    data.pop('entry', None)
 
     return Response({
         'success': 'SUKCES!! Udało się przesłać dane.',
         'stats': stats,
         'text': df['text'],
-        'submission': serializer.data
+        'submission': data
     }, status=status.HTTP_201_CREATED)
