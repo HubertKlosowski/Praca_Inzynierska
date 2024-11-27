@@ -76,11 +76,11 @@ const setLanguage = (param) => {
 @media (max-width: 900px) {
   .main {
     flex-direction: column;
-    font-size: 2vh;
+    font-size: 1.75vh;
   }
 
   .main * {
-    font-size: 2vh !important;
+    font-size: 1.75vh !important;
   }
 
   .polish, .english {

@@ -38,6 +38,10 @@ const $cookies = inject('$cookies')
 </template>
 
 <style scoped>
+.router-link {
+  width: 50%;
+}
+
 .info {
   display: flex;
   flex-direction: column;
@@ -72,11 +76,11 @@ ul {
   .left-part {
     width: 90%;
     height: 45%;
-    font-size: 2vh;
+    font-size: 1.75vh;
   }
 
   .left-part * {
-    font-size: 2vh !important;
+    font-size: 1.75vh !important;
   }
 }
 </style>

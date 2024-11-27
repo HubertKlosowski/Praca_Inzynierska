@@ -73,7 +73,7 @@ const setVersion = (param) => {
   }
 
   .main * {
-    font-size: 2vh !important;
+    font-size: 1.75vh !important;
   }
 
   .base, .large {

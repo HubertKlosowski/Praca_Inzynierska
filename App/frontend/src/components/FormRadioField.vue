@@ -72,7 +72,7 @@ input[type="radio"] {
 
 @media (max-width: 768px) {
   label, span {
-    font-size: 2vh;
+    font-size: 1.75vh;
   }
 }
 </style>

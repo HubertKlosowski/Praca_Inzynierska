@@ -48,11 +48,11 @@ svg {
 
 @media (max-width: 768px) {
   .model {
-    font-size: 2vh;
+    font-size: 1.75vh;
   }
 
   .model * {
-    font-size: 2vh !important;
+    font-size: 1.75vh !important;
   }
 }
 

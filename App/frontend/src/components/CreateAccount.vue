@@ -1,8 +1,9 @@
 <script setup>
-import {ref} from "vue";
+import {ref, watch} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import FormRadioField from "@/components/FormRadioField.vue";
 import axios from "axios";
+import Error from "@/components/Error.vue";
 
 const name = ref('')
 const username = ref('')
@@ -10,7 +11,7 @@ const email = ref('')
 const password = ref('')
 const usertype = ref(0)
 
-const error = ref('')
+const errors = ref([])
 
 const createAccount = async () => {
   const sub_num = [10, 30, 100][+usertype.value] || 10
@@ -27,15 +28,13 @@ const createAccount = async () => {
     resetInputs()
   } catch (e) {
     const error_response = e.response.data
-    console.log(error_response)
     if (typeof error_response['error'] === 'string') {
-      error.value = error_response['error']
+      errors.value = [error_response['error']]
     } else if (typeof error_response['error'] === 'undefined') {
-      error.value = 'BŁĄD!! Nie udało się połączyć z serwerem.'
+      errors.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
     } else {
-      error.value = error_response['error'].join(' ')
+      errors.value = error_response['error']
     }
-    console.log(error.value)
   }
 }
 
@@ -49,13 +48,17 @@ const resetInputs = () => {
 </script>
 
 <template>
-  <div class="left-part">
+  <Error v-model="errors" v-if="errors.length !== 0"></Error>
+  <div class="left-part" :style="{
+    opacity: errors.length === 0 ? '1' : '0.3',
+    pointerEvents: errors.length === 0 ? 'auto' : 'none'
+  }">
     <div class="header">
       <h3>Utwórz konto</h3>
       <ul>
         <li>Poniżej znajduje się formularz, w którym należy podać własne dane osobowe.</li>
         <li>Wszystkie pola muszą być wypełnione aby móc utworzyć konto.</li>
-        <li>Konto służy do przechowywania wyników analiz.</li>
+        <li>Konto służy do przechowywania wyników analiz i zarządzania.</li>
       </ul>
     </div>
     <div class="form">
@@ -106,7 +109,7 @@ li {
 
 .header {
   height: 20%;
-  width: 80%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -128,11 +131,12 @@ li {
 form {
   border-top: 2px solid black;
   width: 100%;
-  height: 100%;
+  height: 60%;
   margin: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-y: auto;
 }
 
 .buttons {
@@ -154,8 +158,8 @@ form {
     width: 100%;
   }
 
-  .header {
-    font-size: 2vh;
+  .header, .error {
+    font-size: 1.75vh;
   }
 }
 </style>

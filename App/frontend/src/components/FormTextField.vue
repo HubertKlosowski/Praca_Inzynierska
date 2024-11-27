@@ -7,7 +7,6 @@ const model = defineModel()
   <div class="form-row">
     <div class="row">
       <label :for="props.label_name">Podaj {{ props.label_info.toLowerCase() }}</label>
-      <div class="error"></div>
     </div>
     <input
         v-model="model"
@@ -31,20 +30,15 @@ const model = defineModel()
   padding: 1rem;
 }
 
-.error {
-  width: 50%;
-  background-color: red;
-}
-
-label {
-  background-color: #cccccc;
-}
-
 .row {
   width: 100%;
   height: 45%;
   font-size: 1.5vw;
   padding: 1rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
 
 input[type="text"] {
@@ -67,10 +61,10 @@ input[type="text"] {
   input[type="text"] {
     height: 70%;
     width: 100%;
-    font-size: 2vh;
+    font-size: 1.75vh;
   }
 
-  label {
+  .row {
     display: none;
   }
 }
