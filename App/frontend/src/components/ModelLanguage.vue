@@ -24,7 +24,7 @@ const setLanguage = (param) => {
   })`
   activeElement.style.backgroundRepeat = 'no-repeat'
   activeElement.style.backgroundSize = 'cover'
-  activeElement.style.backgroundPosition = 'top'
+  activeElement.style.backgroundPosition = 'center'
 
   Array.from(activeElement.children).forEach(
     (child) => (child.style.display = 'none')
@@ -65,26 +65,6 @@ const setLanguage = (param) => {
   align-items: center;
 }
 
-@media (max-width: 768px) {
-  .main {
-    flex-direction: column;
-    font-size: 1.75vh;
-  }
-
-  .main * {
-    font-size: 1.75vh !important;
-  }
-
-  .polish, .english {
-    width: 80% !important;
-    height: 20%;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    justify-content: center;
-    align-items: start;
-  }
-}
-
 .polish, .english {
   width: 40%;
   height: 80%;
@@ -97,9 +77,6 @@ const setLanguage = (param) => {
   justify-content: center;
   align-items: center;
   padding: 1.5rem;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
 }
 
 .polish:hover, .english:hover {
@@ -118,5 +95,25 @@ const setLanguage = (param) => {
 
 .english:hover {
   background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url("/src/assets/angielski.png");
+}
+
+@media (max-width: 768px) {
+  .main {
+    flex-direction: column;
+    font-size: 1.75vh;
+  }
+
+  .main * {
+    font-size: 1.75vh !important;
+  }
+
+  .polish, .english {
+    width: 80% !important;
+    height: 20%;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    justify-content: center;
+    align-items: start;
+  }
 }
 </style>

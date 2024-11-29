@@ -1,9 +1,9 @@
 <script setup>
-import {ref, watch} from "vue";
+import {ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import FormRadioField from "@/components/FormRadioField.vue";
+import ResponseOutput from "@/components/ResponseOutput.vue";
 import axios from "axios";
-import Error from "@/components/Error.vue";
 
 const name = ref('')
 const username = ref('')
@@ -11,7 +11,9 @@ const email = ref('')
 const password = ref('')
 const usertype = ref(0)
 
-const errors = ref([])
+const after_create = ref({})
+const title = ref('')
+const response_status = ref(0)
 
 const createAccount = async () => {
   const sub_num = [10, 30, 100][+usertype.value] || 10
@@ -25,15 +27,22 @@ const createAccount = async () => {
       submission_num: sub_num
     })
 
+    after_create.value = response.data.user
+    title.value = response.data.success
+    response_status.value = response.status
+
     resetInputs()
   } catch (e) {
+    title.value = 'Problem z podanymi danymi'
+    response_status.value = e.response.status
+
     const error_response = e.response.data
     if (typeof error_response['error'] === 'string') {
-      errors.value = [error_response['error']]
+      after_create.value = error_response['error']
     } else if (typeof error_response['error'] === 'undefined') {
-      errors.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
     } else {
-      errors.value = error_response['error']
+      after_create.value = error_response['error']
     }
   }
 }
@@ -48,10 +57,17 @@ const resetInputs = () => {
 </script>
 
 <template>
-  <Error v-model="errors" v-if="errors.length !== 0"></Error>
+
+  <ResponseOutput
+      v-model:response_status="response_status"
+      v-model:after_create="after_create"
+      v-if="response_status > 300"
+      :title="title"
+  ></ResponseOutput>
+
   <div class="left-part" :style="{
-    opacity: errors.length === 0 ? '1' : '0.3',
-    pointerEvents: errors.length === 0 ? 'auto' : 'none'
+    opacity: response_status >= 200 && response_status <= 299 || response_status === 0 ? '1' : '0.3',
+    pointerEvents: response_status >= 200 && response_status <= 299 || response_status === 0 ? 'auto' : 'none'
   }">
     <div class="header">
       <h3>Utwórz konto</h3>
@@ -114,6 +130,7 @@ li {
   flex-direction: column;
   justify-content: center;
   font-size: 1.5vw;
+  padding-bottom: 1rem;
 }
 
 .left-part {
@@ -122,6 +139,7 @@ li {
 
 .form {
   width: 100%;
+  height: 60%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -129,9 +147,8 @@ li {
 }
 
 form {
-  border-top: 2px solid black;
   width: 100%;
-  height: 60%;
+  height: 100%;
   margin: 1rem;
   display: flex;
   flex-direction: column;
@@ -142,7 +159,7 @@ form {
 .buttons {
   border-top: 2px solid black;
   width: 100%;
-  height: 20%;
+  height: 15%;
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
@@ -155,10 +172,11 @@ form {
 
 @media (max-width: 768px) {
   .buttons > * {
-    width: 100%;
+    width: 70%;
+    font-size: 1.75vh;
   }
 
-  .header, .error {
+  .header {
     font-size: 1.75vh;
   }
 }

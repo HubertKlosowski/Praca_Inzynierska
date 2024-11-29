@@ -16,7 +16,6 @@ const changeSection = (param) => {
   } else {
     inc.value -= param
   }
-  console.log(inc.value)
 }
 </script>
 

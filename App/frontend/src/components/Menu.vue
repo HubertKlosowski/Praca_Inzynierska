@@ -54,7 +54,7 @@ button {
 
 button:hover {
   background-color: darkgrey;
-  box-shadow: 1rem 1rem mediumpurple;
+  box-shadow: 1rem 1rem dodgerblue;
 }
 
 .right-part {
@@ -66,7 +66,7 @@ button:hover {
   align-items: center;
   border-bottom-left-radius: 1rem;
   border-top-left-radius: 1rem;
-  border: 2px solid mediumpurple;
+  border: 2px solid dodgerblue;
   margin: 1%;
 }
 

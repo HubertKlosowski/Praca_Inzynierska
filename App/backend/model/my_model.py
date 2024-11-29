@@ -107,8 +107,10 @@ def fine_tune(model_name: str):
 
 
 def predict_file(model_path: str, df: pd.DataFrame) -> pd.DataFrame:
-    tokenizer = AutoTokenizer.from_pretrained(f'depression-detect/{model_path}')
-    model = AutoModelForSequenceClassification.from_pretrained(f'depression-detect/{model_path}')
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    model = AutoModelForSequenceClassification.from_pretrained(model_path)
+    # tokenizer = AutoTokenizer.from_pretrained(f'depression-detect/{model_path}')
+    # model = AutoModelForSequenceClassification.from_pretrained(f'depression-detect/{model_path}')
 
     pipe = TextClassificationPipeline(
         model=model,
@@ -121,7 +123,7 @@ def predict_file(model_path: str, df: pd.DataFrame) -> pd.DataFrame:
         dataset = create_dataset(df, split_train_test=False)
         predictions = prepare_predictions(pipe(dataset['test']['text']))
 
-    except RuntimeError as e:
+    except RuntimeError:
         over_limit, under_limit = manage_too_long(df, tokenizer)
 
         dataset_over_limit, dataset_under_limit = create_dataset(

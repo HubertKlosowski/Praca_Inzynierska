@@ -1,5 +1,7 @@
 <script setup>
+import {inject} from "vue";
 
+const $cookies = inject('$cookies')
 </script>
 
 <template>
@@ -40,8 +42,9 @@
       </div>
     </div>
     <div class="links">
-      <RouterLink to="/create_account" class="router-link">Utwórz konto</RouterLink>
-      <RouterLink to="/login" class="router-link">Zaloguj się</RouterLink>
+      <RouterLink to="/create_account" class="router-link" v-if="!$cookies.isKey('user')">Utwórz konto</RouterLink>
+      <RouterLink to="/login" class="router-link" v-if="!$cookies.isKey('user')">Zaloguj się</RouterLink>
+      <RouterLink to="/profile" class="router-link" v-else>Twoje konto</RouterLink>
     </div>
   </div>
 </template>
@@ -57,6 +60,10 @@
   .left-part * {
     font-size: 1.75vh !important;
   }
+}
+
+li {
+  font-size: 1.5vw;
 }
 
 .router-link {
@@ -89,7 +96,7 @@
   color: black;
   border: 2px solid white;
   background-color: #FF8C00;
-  box-shadow: 1rem 1rem mediumpurple;
+  box-shadow: 1rem 1rem dodgerblue;
 }
 
 .account h4 {

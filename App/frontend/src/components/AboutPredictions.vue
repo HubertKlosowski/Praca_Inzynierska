@@ -2,13 +2,17 @@
 import {inject} from "vue";
 
 const $cookies = inject('$cookies')
+
+const checkUser = () => {
+  return !(!$cookies.isKey('user') && $cookies.isKey('submission'))
+}
 </script>
 
 <template>
   <div class="left-part">
     <div class="predict-content">
       <h3>Twoje wyniki</h3>
-      <p>Wyniki przedstawią wykryte stopnie depresji w przekazanych danych. Ułatwi</p>
+      <p>Wyniki przedstawią wykryte stopnie depresji w przekazanych danych.</p>
       <p>Bez konta nie będą zapisywane w bazie danych uzyskane wyniki.</p>
       <p>Jeśli chcesz mieć możliwość powrotu do wcześniejszych wyników w przyszłości, zalecane jest utworzenie konta.</p>
       <p>Pozwoli na pełny wgląd w historię predykcji.</p>
@@ -31,7 +35,7 @@ const $cookies = inject('$cookies')
       </div>
     </div>
     <div class="links">
-      <RouterLink to="/phases" class="router-link">Sprawdź posty</RouterLink>
+      <RouterLink to="/phases" class="router-link" v-if="checkUser()">Sprawdź posty</RouterLink>
       <RouterLink to="/predict" class="router-link" v-if="$cookies.isKey('submission')">Zobacz predykcje</RouterLink>
     </div>
   </div>
@@ -50,7 +54,7 @@ const $cookies = inject('$cookies')
 }
 
 .phase {
-  font-size: 1.25vw;
+  font-size: 1.5vw;
   width: 90%;
   padding: 1rem;
   background-color: #FFDAB9;
@@ -65,7 +69,7 @@ const $cookies = inject('$cookies')
   color: black;
   border: 2px solid white;
   background-color: #FF8C00;
-  box-shadow: 1rem 1rem mediumpurple;
+  box-shadow: 1rem 1rem dodgerblue;
 }
 
 ul {

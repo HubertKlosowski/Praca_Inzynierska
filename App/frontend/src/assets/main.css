@@ -1,13 +1,13 @@
-/*@font-face {*/
-/*    font-family: 'Rubik';*/
-/*    src: url('../assets/rubik/Rubik-Regular.ttf') format('truetype');*/
-/*    font-weight: normal;*/
-/*    font-style: normal;*/
-/*}*/
+@font-face {
+    font-family: 'Rubik';
+    src: url('../assets/rubik/Rubik-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
 
 html, body {
     margin: 0 auto;
-    font-family: "Apple Color Emoji", sans-serif;
+    font-family: Rubik, sans-serif;
 }
 
 #app {
@@ -19,7 +19,7 @@ html, body {
     align-content: center;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
     #app {
         flex-direction: column;
         justify-content: center;
@@ -62,7 +62,7 @@ html, body {
     color: white;
     border: 2px solid white;
     background-color: darkgrey;
-    box-shadow: 1rem 1rem mediumpurple;
+    box-shadow: 1rem 1rem dodgerblue;
 }
 
 .router-link:disabled {
@@ -89,7 +89,7 @@ html, body {
     font-size: 1.5vw;
     border-bottom-left-radius: 1rem;
     border-top-left-radius: 1rem;
-    border: 2px solid mediumpurple;
+    border: 2px solid dodgerblue;
     background-color: whitesmoke;
     align-items: center;
     justify-content: center;

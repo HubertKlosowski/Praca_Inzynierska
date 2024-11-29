@@ -66,24 +66,6 @@ const setVersion = (param) => {
   align-items: center;
 }
 
-@media (max-width: 768px) {
-  .main {
-    flex-direction: column;
-    font-size: 3vh;
-  }
-
-  .main * {
-    font-size: 1.75vh !important;
-  }
-
-  .base, .large {
-    width: 80% !important;
-    height: 30% !important;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-  }
-}
-
 .base, .large {
   width: 40%;
   height: 80%;
@@ -104,11 +86,33 @@ const setVersion = (param) => {
   background-position: top;
 }
 
+.base:hover > *, .large:hover > * {
+  display: none;
+}
+
 .base:hover {
   background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url("/src/assets/base.png");
 }
 
 .large:hover {
   background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url("/src/assets/large.png");
+}
+
+@media (max-width: 768px) {
+  .main {
+    flex-direction: column;
+    font-size: 3vh;
+  }
+
+  .main * {
+    font-size: 1.75vh !important;
+  }
+
+  .base, .large {
+    width: 80% !important;
+    height: 30% !important;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
 }
 </style>

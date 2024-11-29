@@ -1,9 +1,7 @@
 <script setup>
-import {ref} from "vue";
-
 const props = defineProps(['phase'])
 
-const pause = ref(false)
+const show_intro = defineModel()
 </script>
 
 <template>
@@ -16,24 +14,28 @@ const pause = ref(false)
         <p v-for="line in props.phase.description">{{ line }}</p>
       </div>
     </div>
-    <div class="bar">
-      <div class="magic" :style="{animationPlayState: !pause ? 'running' : 'paused'}"></div>
-    </div>
     <div class="pause">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" @click="pause = !pause" v-if="pause">
-        <path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
-      </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" @click="pause = !pause" v-else>
-        <path d="M48 64C21.5 64 0 85.5 0 112L0 400c0 26.5 21.5 48 48 48l32 0c26.5 0 48-21.5 48-48l0-288c0-26.5-21.5-48-48-48L48 64zm192 0c-26.5 0-48 21.5-48 48l0 288c0 26.5 21.5 48 48 48l32 0c26.5 0 48-21.5 48-48l0-288c0-26.5-21.5-48-48-48l-32 0z"/>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" @click="show_intro = !show_intro">
+        <path d="M512 76v360c0 6.6-5.4 12-12 12h-40c-6.6 0-12-5.4-12-12V284.1L276.5 440.6c-20.6 17.2-52.5 2.8-52.5-24.6V284.1L52.5 440.6C31.9 457.8 0 443.4 0 416V96c0-27.4 31.9-41.7 52.5-24.6L224 226.8V96c0-27.4 31.9-41.7 52.5-24.6L448 226.8V76c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12z"/>
       </svg>
     </div>
   </div>
 </template>
 
 <style scoped>
+.model {
+  height: 70%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 svg {
   height: 9vh;
   width: 9vw;
+  padding: 0 1rem 0 1rem;
   border: 2px solid black;
 }
 
@@ -42,7 +44,7 @@ svg {
   width: 100%;
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-evenly;
   align-items: center;
 }
 
@@ -61,18 +63,6 @@ svg {
   }
 }
 
-.bar {
-  height: 10%;
-  width: 100%;
-}
-
-.magic {
-  height: 100%;
-  border-radius: 1rem;
-  animation: progress-bar 5s ease-in-out;
-  position: relative;
-}
-
 .description {
   height: 80%;
   width: 100%;
@@ -89,11 +79,11 @@ svg {
 .title, .content {
   width: 90%;
   background-color: lightgray;
-  border-radius: 1rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding: 1rem;
 }
 
 .title {
@@ -102,7 +92,6 @@ svg {
 
 .content {
   height: 50%;
-  padding: 1rem;
 }
 
 @media (max-width: 768px) {

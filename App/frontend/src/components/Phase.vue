@@ -15,25 +15,14 @@ const current = ref(0)
 const moveForward = () => {
   return props.num_phase === 5 || current.value < props.num_phase
 }
-
-onUpdated(() => {
-  if (show_intro.value) {
-    const magic = document.querySelector('.magic')
-    magic.removeEventListener('animationend', () => { show_intro.value = false })
-    magic.addEventListener('animationend', () => { show_intro.value = false })
-  }
-})
-
-onMounted(() => {
-  const magic = document.querySelector('.magic')
-  magic.addEventListener('animationend', () => { show_intro.value = false })
-})
 </script>
 
 <template>
-  <PhaseIntro v-if="show_intro" :phase="props.phase"></PhaseIntro>
+
+  <PhaseIntro v-if="show_intro" v-model="show_intro" :phase="props.phase"></PhaseIntro>
+
   <div class="model" v-else :style="{height: props.num_phase === 4 ? '68%' : '83%'}">
-    <div class="header">
+    <div class="main-header">
       <div class="buttons">
         <button
             type="button"
@@ -71,7 +60,8 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.header {
+.main-header {
+  width: 100%;
   height: 20%;
   display: flex;
   flex-direction: row;
@@ -101,10 +91,12 @@ onMounted(() => {
 }
 
 .model {
-  height: 70%;
+  height: 85%;
   width: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 @media (max-width: 768px) {

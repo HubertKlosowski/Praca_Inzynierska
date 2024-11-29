@@ -2,11 +2,17 @@
 import {inject, ref} from "vue";
 import {useRouter} from "vue-router";
 import axios from "axios";
+import ResponseOutput from "@/components/ResponseOutput.vue";
+import LoadingScreen from "@/components/LoadingScreen.vue";
 
 const choose = ref(true)
 const data = ref(null)
 const is_dragging = ref(false)
 const $cookies = inject('$cookies')
+
+const after_create = ref({})
+const title = ref('')
+const response_status = ref(0)
 
 const router = useRouter()
 
@@ -17,8 +23,8 @@ const makePredictions = async () => {
     if (extension !== 'csv' && extension !== 'json') {
       console.log('BŁĄD!! Plik musi być w rozszerzeniu csv lub json.')
       data.value = null
-    } else if (data.value.size > 200000) {
-      console.log('BŁĄD!! Plik musi mniejszy od 200KB.')
+    } else if (data.value.size > 150000) {
+      console.log('BŁĄD!! Plik musi mniejszy od 150KB.')
       data.value = null
     }
     form_data.append('file', data.value)
@@ -28,7 +34,9 @@ const makePredictions = async () => {
 
   form_data.append('language', $cookies.get('model_language'))
   form_data.append('llm_model', $cookies.get('model') + '-' + $cookies.get('model_version'))
-  // form_data.append('user', 1)
+
+  if ($cookies.isKey('user'))
+    form_data.append('user', $cookies.get('user')['id'])
 
   try {
     const response = await axios.post('http://localhost:8000/api/user/make_submission', form_data, {
@@ -43,8 +51,19 @@ const makePredictions = async () => {
     $cookies.set('submission', true)
 
     await router.push('/predict')
-  } catch (error) {
+  } catch (e) {
+    data.value = null
+    title.value = e.response.data.success
+    response_status.value = e.response.status
 
+    const error_response = e.response.data
+    if (typeof error_response['error'] === 'string') {
+      after_create.value = error_response['error']
+    } else if (typeof error_response['error'] === 'undefined') {
+      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+    } else {
+      after_create.value = error_response['error']
+    }
   }
 }
 
@@ -63,11 +82,26 @@ const getFile = () => {
 </script>
 
 <template>
-  <div class="main">
+
+  <ResponseOutput
+      v-model:response_status="response_status"
+      v-model:after_create="after_create"
+      v-if="response_status >= 200"
+      :title="title"
+  ></ResponseOutput>
+
+  <LoadingScreen></LoadingScreen>
+
+  <div class="main" :style="{
+    opacity: response_status < 200 ? '1' : '0.3',
+    pointerEvents: response_status < 200 ? 'auto' : 'none'
+  }">
     <div class="header">
-     <div class="choose" @click="choose = !choose">
-       <div :class="['circle', { active: choose }]"></div>
-     </div>
+      <span>Plik</span>
+      <div class="choose" @click="choose = !choose">
+        <div :class="['circle', { active: choose }]"></div>
+      </div>
+      <span>Tekst</span>
     </div>
     <div class="depression-form" v-if="choose">
       <form @submit.prevent="makePredictions">
@@ -108,43 +142,26 @@ const getFile = () => {
   justify-content: space-evenly;
   align-items: center;
   gap: 1.5rem;
-  padding: 1rem;
-}
-
-@media (max-width: 768px) {
-  .main {
-    font-size: 1.5vh;
-  }
-
-  .main * {
-    font-size: 1.5vh !important;
-  }
+  margin: 1rem;
 }
 
 form {
   height: 100%;
-  width: auto;
+  width: 100%;
   margin: 1rem;
 }
 
 .drag-in, .drag-out {
-  width: auto;
+  height: 80%;
   border-radius: 0.75rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
   text-align: center;
   align-content: center;
-}
-
-.drag-in, .drag-out {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100%;
-}
-
-.drag-in > *, .drag-out > * {
-  margin: 1%;
+  gap: 0.5rem;
 }
 
 .drag-in {
@@ -162,12 +179,19 @@ form {
   height: 20%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-evenly;
+}
+
+.header > span {
+  background-color: #ccc;
+  border-radius: 1.5rem;
+  padding: 1rem;
+  font-weight: bold;
 }
 
 .choose {
-  width: 10rem;
-  height: 3rem;
+  width: 15vw;
+  height: 5vw;
   background-color: #ccc;
   border-radius: 1.5rem;
   display: flex;
@@ -182,8 +206,8 @@ form {
 }
 
 .circle {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 4vw;
+  height: 4vw;
   background-color: whitesmoke;
   border-radius: 50%;
   border: 2px solid black;
@@ -193,9 +217,9 @@ form {
 }
 
 .circle.active {
-  transform: translateX(7rem);
-  background-color: purple;
-  border-color: purple;
+  transform: translateX(10vw);
+  background-color: mediumblue;
+  border-color: dodgerblue;
 }
 
 .depression-form {
@@ -208,6 +232,8 @@ form {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   gap: 1.5rem;
 }
 
@@ -237,7 +263,7 @@ form {
   color: white;
   border: 2px solid white;
   background-color: darkgrey;
-  box-shadow: 1rem 1rem mediumpurple;
+  box-shadow: 1rem 1rem dodgerblue;
 }
 
 span {
@@ -278,5 +304,61 @@ span {
 .confirm:hover {
   background-color: #3a6a9b;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .main {
+    font-size: 1.5vh;
+  }
+
+  .main * {
+    font-size: 1.5vh !important;
+  }
+
+  .choose {
+    width: 15vh;
+    height: 5vh;
+  }
+
+  .circle.active {
+    transform: translateX(10vh);
+  }
+
+  .circle {
+    width: 4vh;
+    height: 4vh;
+  }
+}
+
+@media (max-height: 550px) {
+  .drag-in, .drag-out {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+  }
+}
+
+@media (max-height: 650px) {
+  .main {
+    font-size: 3vh;
+  }
+
+  .main * {
+    font-size: 3vh !important;
+  }
+
+  .choose {
+    width: 30vh;
+    height: 10vh;
+  }
+
+  .circle.active {
+    transform: translateX(20vh);
+  }
+
+  .circle {
+    width: 8vh;
+    height: 8vh;
+  }
 }
 </style>

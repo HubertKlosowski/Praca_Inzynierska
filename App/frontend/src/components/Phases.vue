@@ -99,4 +99,11 @@ watch(global_num_phase, (newValue, oldValue) => {
 .phase:first-child {
   background-color: red;
 }
+
+@media (max-height: 500px) {
+  .phase {
+    height: 20px;
+    width: 20px;
+  }
+}
 </style>

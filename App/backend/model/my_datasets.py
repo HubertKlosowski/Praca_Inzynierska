@@ -8,9 +8,9 @@ from datetime import datetime
 from praw.models import MoreComments
 from langdetect import detect, DetectorFactory
 
-import nltk
-import string
-import emoji  # do wykrycia emotek
+import spacy
+from spacymoji import Emoji  # konwersja emotek na ich znaczenie
+from deep_translator import GoogleTranslator  # tłumaczenie znaczenia emotek
 import re
 from nltk.stem import PorterStemmer  # stemming dla języka angielskiego
 from pystempel import Stemmer  # stemming dla języka polskiego
@@ -127,6 +127,8 @@ def merge_datasets(lang = 'pl', for_train = False) -> pd.DataFrame:
     merged.drop(columns=['len'], inplace=True)
     merged.reset_index(drop=True, inplace=True)
 
+    merged.dropna(subset=['text'], inplace=True)
+
     return merged
 
 
@@ -138,31 +140,38 @@ def merge_datasets(lang = 'pl', for_train = False) -> pd.DataFrame:
 # usuniecie stop-words
 # stemming
 def preprocess_dataset(dataset: pd.DataFrame, lang = 'pl') -> pd.DataFrame:
+    lang_resource = spacy.load('en_core_web_sm') if lang == 'en' else spacy.load('pl_core_news_sm')
+    lang_resource.add_pipe('emoji', first=True)
+
     stemmer = PorterStemmer() if lang == 'en' else Stemmer.polimorf()
 
-    url_pattern = r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?'  # GOTOWIEC Z INTERNETU
+    url_pattern = r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?'
     dataset['text'] = dataset['text'].apply(lambda sentence: re.sub(url_pattern, '', sentence))
-
-    if lang == 'en':
-        dataset['text'] = dataset['text'].apply(lambda sentence: emoji.demojize(sentence))
-
     dataset['text'] = dataset['text'].apply(lambda sentence: sentence.strip())
-    dataset['text'] = dataset['text'].apply(lambda sentence: nltk.word_tokenize(sentence))
+
+    dataset['text'] = dataset['text'].apply(lambda sentence: lang_resource(sentence))
     dataset['text'] = dataset['text'].apply(
-        lambda tokens: [token for token in tokens if token not in string.punctuation])
+        lambda tokens: [token for token in tokens if not token.is_punct]
+    )
     dataset['text'] = dataset['text'].apply(
-        lambda tokens: [token for token in tokens if token.lower() not in nltk.corpus.stopwords.words('polish' if lang == 'pl' else 'english')])
+        lambda tokens: [token for token in tokens if not token.is_stop]
+    )
 
     if lang == 'pl':
+        translator = GoogleTranslator(source='auto', target='pl')  # do tłumaczenia znaczenia emotek
+        dataset['text'] = dataset['text'].apply(
+            lambda tokens: [translator.translate(token._.emoji_desc) if token._.is_emoji else token.text for token in tokens]
+        )
         dataset['text'] = dataset['text'].apply(lambda tokens: [stemmer(token) for token in tokens])
     else:
+        dataset['text'] = dataset['text'].apply(
+            lambda tokens: [token._.emoji_desc if token._.is_emoji else token.text for token in tokens]
+        )
         dataset['text'] = dataset['text'].apply(lambda tokens: [stemmer.stem(token) for token in tokens])
 
     dataset['text'] = dataset['text'].apply(
         lambda tokens: ' '.join([str(token) for token in tokens if token is not None])
     )
-
-    dataset.dropna(inplace=True)
 
     return dataset
 
@@ -199,10 +208,10 @@ def manage_too_long(df: pd.DataFrame, tokenizer) -> tuple[pd.DataFrame, pd.DataF
 
 
 # Przetworzone wpisy w obu językach
-# preprocess_dataset(merge_datasets(lang='en', for_train=True), lang='en').to_csv(os.path.join('data', 'final', 'preprocessed_english_dataset.csv'), index=False)
+# preprocess_dataset(pd.read_csv(os.path.join('data', 'final', 'english_dataset.csv')), lang='en').to_csv(os.path.join('data', 'final', 'preprocessed_english_dataset.csv'), index=False)
 # preprocess_dataset(merge_datasets(lang='pl', for_train=False), lang='pl').to_csv(os.path.join('data', 'final', 'preprocessed_polish_dataset.csv'), index=False)
 # extract_comments()
 
 # Nie przetworzone wpisy w języku polskim
-# merge_datasets(lang='pl', for_train=False).to_csv(os.path.join('data', 'final', 'polish_dataset.csv'), index=False)
 # merge_datasets(lang='en', for_train=True).to_csv(os.path.join('data', 'final', 'english_dataset.csv'), index=False)
+# merge_datasets(lang='pl', for_train=False).to_csv(os.path.join('data', 'final', 'polish_dataset.csv'), index=False)

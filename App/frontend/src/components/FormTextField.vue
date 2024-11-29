@@ -19,9 +19,10 @@ const model = defineModel()
 <style scoped>
 .form-row {
   width: 70%;
+  height: 10rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
   background-color: #f5f5f5;
   border-radius: 0.75rem;
