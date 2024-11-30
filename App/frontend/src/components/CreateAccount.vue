@@ -33,16 +33,15 @@ const createAccount = async () => {
 
     resetInputs()
   } catch (e) {
-    title.value = 'Problem z podanymi danymi'
-    response_status.value = e.response.status
-
-    const error_response = e.response.data
-    if (typeof error_response['error'] === 'string') {
-      after_create.value = error_response['error']
-    } else if (typeof error_response['error'] === 'undefined') {
+    if (typeof e.response === 'undefined') {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      response_status.value = 500
+      title.value = 'Problem z serwerem'
     } else {
-      after_create.value = error_response['error']
+      const error_response = e.response
+      after_create.value = error_response['error'].data
+      response_status.value = error_response['error'].status
+      title.value = 'Problem z podanymi danymi'
     }
   }
 }

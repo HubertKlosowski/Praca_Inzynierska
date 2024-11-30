@@ -9,7 +9,6 @@ from praw.models import MoreComments
 from langdetect import detect, DetectorFactory
 
 import spacy
-from spacymoji import Emoji  # konwersja emotek na ich znaczenie
 from deep_translator import GoogleTranslator  # tłumaczenie znaczenia emotek
 import re
 from nltk.stem import PorterStemmer  # stemming dla języka angielskiego
@@ -175,36 +174,15 @@ def preprocess_dataset(dataset: pd.DataFrame, lang = 'pl') -> pd.DataFrame:
 
     return dataset
 
-
-# funkcja sluzaca do podzialu zbyt dlugich sekwencji tokenow na mniejsze czesci o dlugosci limitu tokenizatora
-def slice_too_long(tokens, limit) -> list:
-    return [tokens[limit * i:limit * (i + 1)] for i in range(len(tokens) // limit + 1)]
-
-
 # obsluga zbyt dlugich wpisow
-def manage_too_long(df: pd.DataFrame, tokenizer) -> tuple[pd.DataFrame, pd.DataFrame]:
+def drop_too_long(df: pd.DataFrame, tokenizer) -> pd.DataFrame:
+    df_copy = df.copy(deep=True)
     limit = 256
+    df_copy['len'] = df_copy['text'].apply(lambda sentence: len(tokenizer.tokenize(sentence)))
+    df_copy.drop(df_copy.loc[df_copy['len'] > limit, ['text']].index, inplace=True)  # wpisy zbyt dlugie
+    df_copy.drop(columns=['len'], inplace=True)
 
-    df['text'] = df['text'].apply(lambda x: tokenizer.tokenize(x))  # tokenizacja zdań
-    df['len'] = df['text'].apply(lambda x: len(x))
-    over_limit = df.loc[df['len'] > limit, ['text']].reset_index(drop=True)  # wpisy zbyt dlugie
-    under_limit = df.loc[df['len'] <= limit, ['text']].reset_index(drop=True)
-
-    over_limit['text'] = over_limit['text'].apply(lambda row: slice_too_long(row, limit))  # podzial wpisow na krotsze czesci
-    over_limit = over_limit.explode(column='text')  # rozbicie df po kolumnie 'text'
-    over_limit['text'] = over_limit['text'].apply(lambda row: tokenizer.convert_tokens_to_string(row))  # konwersja tokenow na string
-    under_limit['text'] = under_limit['text'].apply(lambda row: tokenizer.convert_tokens_to_string(row))
-
-    return over_limit, under_limit
-# Przykład użycia
-"""
-    long = manage_too_long(
-        pd.read_csv('data/test_too_long.csv'),
-        AutoTokenizer.from_pretrained('bert-base-uncased')
-    )
-
-    print(long)
-"""
+    return df_copy
 
 
 # Przetworzone wpisy w obu językach

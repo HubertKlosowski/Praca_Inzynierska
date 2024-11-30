@@ -270,7 +270,8 @@ def make_submission(request):
     prepared = preprocess_dataset(df.copy(deep=True), lang=data['language'])
 
     try:
-        stats = predict_file(f'D:/{data['llm_model']}', prepared)
+        path = f'D:/{data['llm_model']}'
+        stats = predict_file(data['llm_model'], prepared)
         data['time_taken'] = (timezone.now() - time_start).total_seconds()
     except Exception as e:
         return Response({'error': [f'BŁĄD!! {str(e)}']}, status=status.HTTP_404_NOT_FOUND)

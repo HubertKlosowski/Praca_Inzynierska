@@ -57,14 +57,8 @@ watch(global_num_phase, (newValue, oldValue) => {
     <Phase
         v-if="phases[global_num_phase]"
         :phase="phases[global_num_phase]"
-        :num_phase="global_num_phase"
-        @nextOne="(next_num_phase) => {
-          global_num_phase = next_num_phase
-        }"
-        @previousOne="(next_num_phase) => {
-          global_num_phase = next_num_phase
-        }
-    ">
+        v-model:global_num_phase="global_num_phase"
+    >
 
     </Phase>
   </div>

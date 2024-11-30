@@ -4,7 +4,7 @@ import {inject, onMounted, ref} from "vue";
 const $cookies = inject('$cookies')
 const model_text = ref([])
 const show = ref(true)
-const emits = defineEmits(['confirm'])
+const current = defineModel('current')
 
 const modelConfigDescription = () => {
   const lang = $cookies.get('model_language') === 'polish' ? 'polskim' : 'angielskim'
@@ -29,7 +29,7 @@ const modelConfigDescription = () => {
 
 onMounted(() => {
   model_text.value = modelConfigDescription()
-  emits('confirm', 3)
+  current.value = 3
 })
 </script>
 

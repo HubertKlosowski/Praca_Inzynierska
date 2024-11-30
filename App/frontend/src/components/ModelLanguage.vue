@@ -4,10 +4,10 @@ import english from "@/assets/angielski.png";
 import {inject} from "vue";
 
 const $cookies = inject('$cookies')
-const emits = defineEmits(['confirm'])
+const current = defineModel('current')
 
 const setLanguage = (param) => {
-  emits('confirm', 1)
+  current.value = 1
   $cookies.set('model_language', param)
   param === 'pl' ? $cookies.set('model', 'roberta') : $cookies.set('model', 'bert')
 

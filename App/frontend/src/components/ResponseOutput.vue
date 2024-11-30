@@ -13,7 +13,7 @@ const closeWindow = () => {
 <template>
   <div class="response">
     <div class="header">
-      <h3 :style="{color: response_status >= 200 && response_status <= 299 ? 'darkgreen' : 'darkred'}">{{ props.title }}</h3>
+      <h3 :style="{ color: response_status >= 200 && response_status <= 299 ? 'darkgreen' : 'darkred' }">{{ props.title }}</h3>
       <div
         class="show-content"
         @click="closeWindow()"
@@ -22,7 +22,8 @@ const closeWindow = () => {
     </div>
     <div class="content">
       <h3 v-if="response_status >= 200 && response_status <= 299">Dane użytkownika</h3>
-      <h3 v-else>Dane przekazane do formularza są błędne. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:</h3>
+      <h3 v-else-if="response_status >= 300 && response_status <= 499">Dane przekazane do formularza są błędne. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:</h3>
+      <h3 v-else>Proszę poczekać, serwer nie jest teraz dostępny.</h3>
       <ul>
         <li v-for="sentence in after_create" :key="sentence">
           {{ sentence }}
@@ -38,7 +39,7 @@ const closeWindow = () => {
   top: 20%;
   width: 90%;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
+  background-color: rgba(245, 245, 245, 0.95);
   border-radius: 1rem;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   z-index: 1000;

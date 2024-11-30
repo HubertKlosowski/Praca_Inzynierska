@@ -4,10 +4,10 @@ import large from "@/assets/large.png";
 import {inject} from "vue";
 
 const $cookies = inject('$cookies')
-const emits = defineEmits(['confirm'])
+const current = defineModel('current')
 
 const setVersion = (param) => {
-  emits('confirm', 2)
+  current.value = 2
   $cookies.set('model_version', param)
 
   const activeElement = document.getElementsByClassName(param)[0]

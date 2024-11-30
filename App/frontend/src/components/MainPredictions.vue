@@ -22,15 +22,13 @@ const changeSection = (param) => {
 <template>
  <div class="left-part">
    <div class="main">
-     <div class="content">
 
-       <Results v-if="inc === 1"></Results>
+     <Results v-if="inc === 1"></Results>
 
-       <ResultsOverview v-if="inc === 2"></ResultsOverview>
+     <ResultsOverview v-if="inc === 2"></ResultsOverview>
 
-       <ResultsPlot v-if="inc === 3 && text.length > 1"></ResultsPlot>
+     <ResultsPlot v-if="inc === 3 && text.length > 1"></ResultsPlot>
 
-     </div>
    </div>
    <div class="buttons">
      <div class="move" @click="changeSection(1)">
@@ -49,30 +47,6 @@ const changeSection = (param) => {
 </template>
 
 <style scoped>
-@media (max-width: 768px) {
-  .left-part {
-    flex-direction: column;
-    font-size: 1.5vh !important;
-  }
-
-  svg {
-    width: 5vw;
-    height: auto;
-  }
-}
-
-@media (max-height: 950px) {
-  svg {
-    width: 15vh;
-    height: auto;
-  }
-}
-
-.content {
-  width: 100%;
-  height: 100%;
-}
-
 .move {
   width: 15%;
   height: 100%;
@@ -86,7 +60,7 @@ const changeSection = (param) => {
   width: 100%;
   height: 80%;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   margin-bottom: 1rem;
@@ -104,5 +78,24 @@ const changeSection = (param) => {
   flex-direction: row;
   justify-content: space-evenly;
   align-items: center;
+}
+
+@media (max-width: 768px) {
+  .left-part {
+    flex-direction: column;
+    font-size: 1.5vh !important;
+  }
+
+  svg {
+    width: 5vw;
+    height: auto;
+  }
+}
+
+@media (max-height: 950px) {
+  svg {
+    width: 15vh;
+    height: auto;
+  }
 }
 </style>

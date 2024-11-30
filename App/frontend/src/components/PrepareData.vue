@@ -3,7 +3,6 @@ import {inject, ref} from "vue";
 import {useRouter} from "vue-router";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
-import LoadingScreen from "@/components/LoadingScreen.vue";
 
 const choose = ref(true)
 const data = ref(null)
@@ -13,12 +12,18 @@ const $cookies = inject('$cookies')
 const after_create = ref({})
 const title = ref('')
 const response_status = ref(0)
+const show_loading_screen = defineModel('show_loading_screen')
 
 const router = useRouter()
 
 const makePredictions = async () => {
   let form_data = new FormData()
-  if (typeof data.value === 'object') {
+
+  if (data.value === null) {
+    after_create.value = ['BŁĄD!! Przekazane dane są puste!']
+    response_status.value = 400
+    title.value = 'Problem z podanymi danymi'
+  } else if (typeof data.value === 'object') {
     const extension = data.value.name.split('.')[1]
     if (extension !== 'csv' && extension !== 'json') {
       console.log('BŁĄD!! Plik musi być w rozszerzeniu csv lub json.')
@@ -38,6 +43,8 @@ const makePredictions = async () => {
   if ($cookies.isKey('user'))
     form_data.append('user', $cookies.get('user')['id'])
 
+  show_loading_screen.value = true
+
   try {
     const response = await axios.post('http://localhost:8000/api/user/make_submission', form_data, {
       headers: {
@@ -50,19 +57,22 @@ const makePredictions = async () => {
 
     $cookies.set('submission', true)
 
+    show_loading_screen.value = false
+
     await router.push('/predict')
   } catch (e) {
+    show_loading_screen.value = false
     data.value = null
-    title.value = e.response.data.success
-    response_status.value = e.response.status
 
-    const error_response = e.response.data
-    if (typeof error_response['error'] === 'string') {
-      after_create.value = error_response['error']
-    } else if (typeof error_response['error'] === 'undefined') {
+    if (typeof e.response === 'undefined' || e.status >= 500) {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      response_status.value = 500
+      title.value = 'Problem z serwerem'
     } else {
-      after_create.value = error_response['error']
+      const error_response = e.response
+      after_create.value = error_response['error'].data
+      response_status.value = error_response['error'].status
+      title.value = 'Problem z podanymi danymi'
     }
   }
 }
@@ -89,8 +99,6 @@ const getFile = () => {
       v-if="response_status >= 200"
       :title="title"
   ></ResponseOutput>
-
-  <LoadingScreen></LoadingScreen>
 
   <div class="main" :style="{
     opacity: response_status < 200 ? '1' : '0.3',
@@ -124,7 +132,7 @@ const getFile = () => {
               <span>Upuść plik</span>
               <span>albo</span>
               <label for="data" class="file-label">Wybierz plik</label>
-              <input type="file" id="data" @change="getFile" :style="{display: 'none'}">
+              <input type="file" id="data" @change="getFile" :style="{ display: 'none' }">
           </div>
           <button type="submit" class="confirm">Zatwierdź</button>
         </div>

@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
 
-from model.my_datasets import preprocess_dataset, merge_datasets, manage_too_long
+from model.my_datasets import preprocess_dataset, merge_datasets, drop_too_long
 from model.api_keys import save_model_token
 from huggingface_hub import login, logout
 
@@ -107,10 +107,10 @@ def fine_tune(model_name: str):
 
 
 def predict_file(model_path: str, df: pd.DataFrame) -> pd.DataFrame:
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModelForSequenceClassification.from_pretrained(model_path)
-    # tokenizer = AutoTokenizer.from_pretrained(f'depression-detect/{model_path}')
-    # model = AutoModelForSequenceClassification.from_pretrained(f'depression-detect/{model_path}')
+    # tokenizer = AutoTokenizer.from_pretrained(model_path)
+    # model = AutoModelForSequenceClassification.from_pretrained(model_path)
+    tokenizer = AutoTokenizer.from_pretrained(f'depression-detect/{model_path}')
+    model = AutoModelForSequenceClassification.from_pretrained(f'depression-detect/{model_path}')
 
     pipe = TextClassificationPipeline(
         model=model,
@@ -124,29 +124,28 @@ def predict_file(model_path: str, df: pd.DataFrame) -> pd.DataFrame:
         predictions = prepare_predictions(pipe(dataset['test']['text']))
 
     except RuntimeError:
-        over_limit, under_limit = manage_too_long(df, tokenizer)
+        under_limit = drop_too_long(df, tokenizer)
 
-        dataset_over_limit, dataset_under_limit = create_dataset(
-            over_limit, split_train_test=False
-        ), create_dataset(
+        dataset_under_limit = create_dataset(
             under_limit, split_train_test=False
         )
 
-        predictions_over_limit, predictions_under_limit = prepare_predictions(
-            pipe(dataset_over_limit['test']['text'])
-        ), prepare_predictions(
-            pipe(dataset_under_limit['test']['text'])
+        predictions_under_limit = prepare_predictions(
+            pipe(dataset_under_limit['test']['text']),
+            under_limit.index
         )
 
-        over_limit.reset_index(inplace=True)
-        predictions_over_limit = pd.concat([over_limit, predictions_over_limit], axis=1).groupby(['index']).mean(numeric_only=True)
-        predictions = pd.concat([predictions_under_limit, predictions_over_limit], axis=0)
+        predictions = pd.concat([under_limit, predictions_under_limit], axis=1)
+        predictions = pd.merge(df, predictions, how='left', on='text')
+
+        predictions.drop(columns=['text'], inplace=True)
+        predictions.fillna(-1, inplace=True)
 
     return predictions
 
 
-def prepare_predictions(predictions) -> pd.DataFrame:
-    return pd.DataFrame([{pair['label']: pair['score'] for pair in row} for row in predictions])
+def prepare_predictions(pred, df_index) -> pd.DataFrame:
+    return pd.DataFrame([{pair['label']: pair['score'] for pair in row} for row in pred], index=df_index)
 
 
 # fine_tune('bert-base')
