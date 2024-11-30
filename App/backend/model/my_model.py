@@ -56,9 +56,9 @@ def fine_tune(model_name: str):
     tokenizer = AutoTokenizer.from_pretrained(f'{model_name}-uncased')
 
     dataset = create_dataset(
-        preprocess_dataset(pd.read_csv(os.path.join('data', 'final', 'english_dataset.csv')), lang='en')
+        pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_english_dataset.csv'))
         if model_name == 'bert-base' or model_name == 'bert-large'
-        else preprocess_dataset(merge_datasets(lang='pl', for_train=True), lang='pl'),
+        else pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_polish_dataset.csv')),
         split_train_test=True
     )
 
@@ -121,7 +121,7 @@ def predict_file(model_path: str, df: pd.DataFrame) -> pd.DataFrame:
 
     try:
         dataset = create_dataset(df, split_train_test=False)
-        predictions = prepare_predictions(pipe(dataset['test']['text']))
+        predictions = prepare_predictions(pipe(dataset['test']['text']), df.index)
 
     except RuntimeError:
         under_limit = drop_too_long(df, tokenizer)

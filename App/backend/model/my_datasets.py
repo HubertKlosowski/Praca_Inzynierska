@@ -1,5 +1,5 @@
 import os
-
+import json
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from model.api_keys import public_key, secret_key
@@ -138,7 +138,7 @@ def merge_datasets(lang = 'pl', for_train = False) -> pd.DataFrame:
 # usuniecie znaków interpunkcyjnych
 # usuniecie stop-words
 # stemming
-def preprocess_dataset(dataset: pd.DataFrame, lang = 'pl') -> pd.DataFrame:
+def preprocess_dataset(dataset: pd.DataFrame, lang: str = 'pl') -> pd.DataFrame:
     lang_resource = spacy.load('en_core_web_sm') if lang == 'en' else spacy.load('pl_core_news_sm')
     lang_resource.add_pipe('emoji', first=True)
 
@@ -185,11 +185,33 @@ def drop_too_long(df: pd.DataFrame, tokenizer) -> pd.DataFrame:
     return df_copy
 
 
-# Przetworzone wpisy w obu językach
-# preprocess_dataset(pd.read_csv(os.path.join('data', 'final', 'english_dataset.csv')), lang='en').to_csv(os.path.join('data', 'final', 'preprocessed_english_dataset.csv'), index=False)
-# preprocess_dataset(merge_datasets(lang='pl', for_train=False), lang='pl').to_csv(os.path.join('data', 'final', 'preprocessed_polish_dataset.csv'), index=False)
-# extract_comments()
+def read_json_tweet(file_name):
+    with open(os.path.join('data', 'tweets', file_name), 'r') as file:
+        data = json.load(file)
+    return {'text': data['text'], 'lang': data['lang']}
 
-# Nie przetworzone wpisy w języku polskim
-# merge_datasets(lang='en', for_train=True).to_csv(os.path.join('data', 'final', 'english_dataset.csv'), index=False)
-# merge_datasets(lang='pl', for_train=False).to_csv(os.path.join('data', 'final', 'polish_dataset.csv'), index=False)
+
+def prepare_tweets():
+    posts = []
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        res = [executor.submit(read_json_tweet, f) for f in os.listdir(os.path.join('data', 'tweets'))]
+        for f in as_completed(res):
+            posts.append(f.result())
+
+    tweets = pd.DataFrame(posts)
+    tweets = limit_lang(tweets)
+    tweets = preprocess_dataset(tweets, lang='en')
+
+    return tweets
+
+
+# Przetworzone wpisy w obu językach (zbiór treningowy/walidacyjny)
+# train_preprocessed_english_dataset = preprocess_dataset(merge_datasets(lang='en', for_train=True), lang='en')
+# train_preprocessed_english_dataset.to_csv(os.path.join('data', 'final', 'train_preprocessed_english_dataset.csv'), index=False)
+#
+# train_preprocessed_polish_dataset = preprocess_dataset(merge_datasets(lang='pl', for_train=False), lang='pl')  # brak wskazanych klas
+# train_preprocessed_polish_dataset.to_csv(os.path.join('data', 'final', 'train_preprocessed_polish_dataset.csv'), index=False)
+
+# Przetworzone wpisy w obu językach (zbiór testowy)
+# test_preprocessed_english_dataset = prepare_tweets()
+# test_preprocessed_english_dataset.to_csv(os.path.join('data', 'final', 'test_preprocessed_english_dataset.csv'), index=False)

@@ -4,7 +4,7 @@ import {inject} from "vue";
 const $cookies = inject('$cookies')
 
 const checkUser = () => {
-  return !(!$cookies.isKey('user') && $cookies.isKey('submission'))
+  return !(!$cookies.isKey('user') && $cookies.isKey('made_submission'))
 }
 </script>
 
@@ -36,7 +36,7 @@ const checkUser = () => {
     </div>
     <div class="links">
       <RouterLink to="/phases" class="router-link" v-if="checkUser()">Sprawdź posty</RouterLink>
-      <RouterLink to="/predict" class="router-link" v-if="$cookies.isKey('submission')">Zobacz predykcje</RouterLink>
+      <RouterLink to="/predict" class="router-link" v-if="$cookies.isKey('made_submission')">Zobacz predykcje</RouterLink>
     </div>
   </div>
 </template>

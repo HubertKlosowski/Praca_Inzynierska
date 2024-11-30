@@ -248,6 +248,20 @@ def make_submission(request):
     time_start = timezone.now()
 
     if request.FILES:
+        file_size = request.FILES['file'].size
+        if data['usertype'] == 0 and file_size >= 20000:
+            return Response(
+                {'error': [f'BŁĄD!! Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 20KB']},
+                status=status.HTTP_400_BAD_REQUEST)
+        elif data['usertype'] == 1 and file_size >= 100000:
+            return Response(
+                {'error': [f'BŁĄD!! Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 100KB']},
+                status=status.HTTP_400_BAD_REQUEST)
+        elif data['usertype'] == 2 and file_size >= 1000000:
+            return Response(
+                {'error': [f'BŁĄD!! Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 1MB']},
+                status=status.HTTP_400_BAD_REQUEST)
+
         extension = request.FILES['file'].name.split('.')[-1]
 
         if extension != 'csv' and extension != 'json':
@@ -274,6 +288,7 @@ def make_submission(request):
         stats = predict_file(data['llm_model'], prepared)
         data['time_taken'] = (timezone.now() - time_start).total_seconds()
     except Exception as e:
+        print(e)
         return Response({'error': [f'BŁĄD!! {str(e)}']}, status=status.HTTP_404_NOT_FOUND)
 
     if 'user' in data.keys():

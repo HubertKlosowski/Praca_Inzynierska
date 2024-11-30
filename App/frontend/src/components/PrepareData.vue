@@ -53,9 +53,11 @@ const makePredictions = async () => {
     })
     localStorage.setItem('stats', JSON.stringify(response.data['stats']))
     localStorage.setItem('text', JSON.stringify(response.data['text']))
-    localStorage.setItem('submission', JSON.stringify(response.data['submission']))
 
-    $cookies.set('submission', true)
+    if ($cookies.isKey('user') && $cookies.get('user')['id'] !== 0)
+      localStorage.setItem('submission', JSON.stringify(response.data['submission']))
+
+    $cookies.set('made_submission', true)
 
     show_loading_screen.value = false
 

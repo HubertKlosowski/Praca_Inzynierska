@@ -1,11 +1,12 @@
 <script setup>
-import {ref} from "vue";
+import {inject, ref} from "vue";
 import Results from "@/components/Results.vue";
 import ResultsPlot from "@/components/ResultsPlot.vue";
 import ResultsOverview from "@/components/ResultsOverview.vue";
 
 const inc = ref(1)
 const text = ref(JSON.parse(localStorage.getItem('text')))
+const $cookies = inject('$cookies')
 
 const changeSection = (param) => {
   const limit_up = text.value.length > 1 ? 3 : 2
@@ -17,6 +18,16 @@ const changeSection = (param) => {
     inc.value -= param
   }
 }
+
+const checkUserPrivilege = () => {
+  if (inc.value === 2) {
+    return $cookies.isKey('user') && $cookies.get('user')['id'] !== 0
+  } else if (inc.value === 3) {
+    return $cookies.isKey('user') && $cookies.get('user')['id'] === 2
+  } else {
+    return true
+  }
+}
 </script>
 
 <template>
@@ -25,9 +36,9 @@ const changeSection = (param) => {
 
      <Results v-if="inc === 1"></Results>
 
-     <ResultsOverview v-if="inc === 2"></ResultsOverview>
+     <ResultsOverview v-if="inc === 2 && checkUserPrivilege()"></ResultsOverview>
 
-     <ResultsPlot v-if="inc === 3 && text.length > 1"></ResultsPlot>
+     <ResultsPlot v-if="inc === 3 && text.length > 1 && checkUserPrivilege()"></ResultsPlot>
 
    </div>
    <div class="buttons">
