@@ -13,7 +13,7 @@ const show_info = ref(1)
   <AboutProject v-if="show_info === 1"></AboutProject>
   <AboutAccount v-if="show_info === 2"></AboutAccount>
   <AboutPredictions v-if="show_info === 3"></AboutPredictions>
-  <Menu @emitShowInfo="(n) => show_info = n"></Menu>
+  <Menu v-model:show_info="show_info"></Menu>
 </template>
 
 <style scoped>

@@ -16,23 +16,23 @@ const hardToAccess = () => {
 </script>
 
 <template>
-<div class="general-info">
-  <div class="info">
-    Czas wykonania (s): {{ submission['time_taken'].toFixed(2) }}
+  <div class="general-info">
+    <div class="info">
+      Czas wykonania (s): {{ submission['time_taken'].toFixed(2) }}
+    </div>
+    <div class="info">
+      Liczba rekordów: {{ text.length }}
+    </div>
+    <div class="info">
+      Liczba "trudnych" rekordów : {{ hardToAccess() }}
+    </div>
+    <div class="info">
+      Użytkownik: {{ submission['user'] }}
+    </div>
+    <div class="info">
+      Nazwa modelu: {{ submission['llm_model'] }}
+    </div>
   </div>
-  <div class="info">
-    Liczba rekordów: {{ text.length }}
-  </div>
-  <div class="info">
-    Liczba "trudnych" rekordów : {{ hardToAccess() }}
-  </div>
-  <div class="info">
-    Użytkownik: {{ submission['user'] }}
-  </div>
-  <div class="info">
-    Nazwa modelu: {{ submission['llm_model'] }}
-  </div>
-</div>
 </template>
 
 <style scoped>

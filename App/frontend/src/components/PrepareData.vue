@@ -1,5 +1,5 @@
 <script setup>
-import {inject, ref} from "vue";
+import {inject, onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
@@ -7,7 +7,7 @@ import ResponseOutput from "@/components/ResponseOutput.vue";
 const choose = ref(true)
 const data = ref(null)
 const is_dragging = ref(false)
-const $cookies = inject('$cookies')
+const models = ref(['roberta-base', 'bert-base'])
 
 const after_create = ref({})
 const title = ref('')
@@ -15,6 +15,7 @@ const response_status = ref(0)
 const show_loading_screen = defineModel('show_loading_screen')
 
 const router = useRouter()
+const $cookies = inject('$cookies')
 
 const makePredictions = async () => {
   let form_data = new FormData()
@@ -28,7 +29,7 @@ const makePredictions = async () => {
     if (extension !== 'csv' && extension !== 'json') {
       console.log('BŁĄD!! Plik musi być w rozszerzeniu csv lub json.')
       data.value = null
-    } else if (data.value.size > 150000) {
+    } else if (data.value.size > 150000 && !$cookies.isKey('user')) {
       console.log('BŁĄD!! Plik musi mniejszy od 150KB.')
       data.value = null
     }
@@ -37,11 +38,11 @@ const makePredictions = async () => {
     form_data.append('entry', data.value)
   }
 
-  form_data.append('language', $cookies.get('model_language'))
-  form_data.append('llm_model', $cookies.get('model') + '-' + $cookies.get('model_version'))
+  form_data.append('pl_model', models.value[0])
+  form_data.append('en_model', models.value[1])
 
   if ($cookies.isKey('user'))
-    form_data.append('user', $cookies.get('user')['id'])
+    form_data.append('user', $cookies.get('user')['username'])
 
   show_loading_screen.value = true
 
@@ -72,8 +73,8 @@ const makePredictions = async () => {
       title.value = 'Problem z serwerem'
     } else {
       const error_response = e.response
-      after_create.value = error_response['error'].data
-      response_status.value = error_response['error'].status
+      after_create.value = error_response.data.error
+      response_status.value = error_response.status
       title.value = 'Problem z podanymi danymi'
     }
   }
@@ -91,6 +92,14 @@ const drop = (event) => {
 const getFile = () => {
   data.value = document.getElementById('data').files[0]
 }
+
+onMounted(() => {
+  if (!$cookies.isKey('user')) {
+    localStorage.setItem('choosen_models', JSON.stringify(models.value))
+  } else {
+    models.value = JSON.parse(localStorage.getItem('choosen_models'))
+  }
+})
 </script>
 
 <template>
@@ -203,7 +212,7 @@ form {
   width: 15vw;
   height: 5vw;
   background-color: #ccc;
-  border-radius: 1.5rem;
+  border-radius: 1.5vw;
   display: flex;
   align-items: center;
   cursor: pointer;

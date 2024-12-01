@@ -6,7 +6,7 @@ import re
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
+        fields = ['name', 'username', 'email', 'usertype', 'submission_num']
         extra_kwargs = {
             'password': {
                 'write_only': True,
@@ -57,4 +57,4 @@ class UserSerializer(serializers.ModelSerializer):
 class SubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Submission
-        fields = '__all__'
+        fields = ['name', 'time_taken', 'llm_model', 'entry', 'file', 'user']

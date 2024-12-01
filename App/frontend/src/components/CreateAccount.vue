@@ -16,15 +16,13 @@ const title = ref('')
 const response_status = ref(0)
 
 const createAccount = async () => {
-  const sub_num = [10, 30, 100][+usertype.value] || 10
   try {
     const response = await axios.post('http://localhost:8000/api/user/create_user', {
       name: name.value,
       email: email.value,
       username: username.value,
       usertype: +usertype.value,
-      password: password.value,
-      submission_num: sub_num
+      password: password.value
     })
 
     after_create.value = response.data.user
@@ -39,8 +37,8 @@ const createAccount = async () => {
       title.value = 'Problem z serwerem'
     } else {
       const error_response = e.response
-      after_create.value = error_response['error'].data
-      response_status.value = error_response['error'].status
+      after_create.value = error_response.data.error
+      response_status.value = error_response.status
       title.value = 'Problem z podanymi danymi'
     }
   }
@@ -60,13 +58,13 @@ const resetInputs = () => {
   <ResponseOutput
       v-model:response_status="response_status"
       v-model:after_create="after_create"
-      v-if="response_status > 300"
+      v-if="response_status >= 200"
       :title="title"
   ></ResponseOutput>
 
   <div class="left-part" :style="{
-    opacity: response_status >= 200 && response_status <= 299 || response_status === 0 ? '1' : '0.3',
-    pointerEvents: response_status >= 200 && response_status <= 299 || response_status === 0 ? 'auto' : 'none'
+    opacity: response_status < 200 ? '1' : '0.3',
+    pointerEvents: response_status < 200 ? 'auto' : 'none'
   }">
     <div class="header">
       <h3>Utwórz konto</h3>

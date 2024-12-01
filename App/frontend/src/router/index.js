@@ -23,10 +23,8 @@ const router = createRouter({
 
 router.beforeEach(async (to, from) => {
     const $cookies = inject('$cookies')
-    if (!$cookies.isKey('submission') && to.path === '/predict') {
+    if (!$cookies.isKey('made_submission') && to.path === '/predict') {
         return false
-    } else if (to.path === '/login' && $cookies.isKey('user')) {
-        return '/profile'
     } else if (to.path === '/profile' && !$cookies.isKey('user')) {
         return false
     }

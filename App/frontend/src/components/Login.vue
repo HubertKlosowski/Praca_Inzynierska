@@ -3,6 +3,10 @@ import {inject, ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
+import {useRouter} from "vue-router";
+import _ from "lodash";
+
+const router = useRouter()
 
 const $cookies = inject('$cookies')
 
@@ -12,6 +16,7 @@ const password = ref('')
 const after_create = ref({})
 const title = ref('')
 const response_status = ref(0)
+const users_verify = ref([])
 
 const login = async () => {
   try {
@@ -26,7 +31,15 @@ const login = async () => {
 
     $cookies.set('user', response.data.user)
 
+    localStorage.setItem('submissions', JSON.stringify(response.data.submissions))
+
+    if ($cookies.get('user')['usertype'] === 2) {
+      await getUsers()
+    }
+
     resetInputs()
+
+    await router.push('/profile')
   } catch (e) {
     if (typeof e.response === 'undefined') {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
@@ -34,10 +47,22 @@ const login = async () => {
       title.value = 'Problem z serwerem'
     } else {
       const error_response = e.response
-      after_create.value = error_response['error'].data
-      response_status.value = error_response['error'].status
+      after_create.value = error_response.data.error
+      response_status.value = error_response.status
       title.value = 'Problem z podanymi danymi'
     }
+  }
+}
+
+const getUsers = async () => {
+  try {
+    const response = await axios.get('http://localhost:8000/api/get_users')
+    users_verify.value = _.remove(response.data, function (n) {
+      return n['username'] !== $cookies.get('user')['username']
+    })
+    localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
+  } catch (e) {
+
   }
 }
 
@@ -148,11 +173,11 @@ form {
   }
 
   .router-link {
-    font-size: 3vh !important;
+    font-size: 1.75vh !important;
   }
 
   .header {
-    font-size: 3vh;
+    font-size: 1.75vh;
   }
 }
 </style>

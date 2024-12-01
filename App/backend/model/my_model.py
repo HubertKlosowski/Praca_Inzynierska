@@ -150,5 +150,3 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
 
 # fine_tune('bert-base')
 # fine_tune('bert-large')
-
-# predict_file('bert-base', pd.read_csv('data/test_too_long.csv'))

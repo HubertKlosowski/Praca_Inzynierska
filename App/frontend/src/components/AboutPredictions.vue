@@ -19,10 +19,6 @@ const checkUser = () => {
     </div>
     <div class="info">
       <div class="phase">
-        <h3>Wybierz model</h3>
-        <p>W tej części należy wybrać model, który wykryje depresję w przygotowanych danych.</p>
-      </div>
-      <div class="phase">
         <h3>Przygotuj dane</h3>
         <p>Analiza depresji wymaga posiadania danych tekstowych.</p>
         <p>Dane możesz wysłać w postaci pliku w rozszerzeniu "csv", "json" lub w formie pojedyńczego wpisu.</p>

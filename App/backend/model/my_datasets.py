@@ -6,15 +6,13 @@ from model.api_keys import public_key, secret_key
 import praw
 from datetime import datetime
 from praw.models import MoreComments
-from langdetect import detect, DetectorFactory
 
 import spacy
 from deep_translator import GoogleTranslator  # tłumaczenie znaczenia emotek
+from googletrans import Translator
 import re
 from nltk.stem import PorterStemmer  # stemming dla języka angielskiego
 from pystempel import Stemmer  # stemming dla języka polskiego
-
-DetectorFactory.seed = 0
 
 
 # Dla wpisów z języka polskiego z Reddita
@@ -61,13 +59,22 @@ def read_reddit_post(sub: praw.reddit.Submission) -> dict:
 
 
 def limit_lang(df: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:  # pozostawienie tylko wpisow w danym jezyku
+    translator = Translator()
     df['text'] = df['text'].apply(lambda x: x.strip())
     if 'lang' not in df.columns:
-        df['lang'] = df['text'].apply(lambda x: detect(x))
+        df['lang'] = df['text'].apply(lambda x: translator.detect(x).lang)
     df.drop(index=df.loc[(df['lang'] != lang), :].index, inplace=True)
     df.drop(columns=['lang'], inplace=True)
     df.reset_index(drop=True, inplace=True)
     return df
+
+
+def detect_lang(df: pd.DataFrame) -> str:
+    translator = Translator()
+    df['text'] = df['text'].apply(lambda x: x.strip())
+    df['lang'] = df['text'].apply(lambda x: translator.detect(x).lang)
+    langs = df['lang'].value_counts()
+    return langs.idxmax(axis=0)
 
 
 def extract_comments() -> pd.DataFrame:
@@ -138,7 +145,7 @@ def merge_datasets(lang = 'pl', for_train = False) -> pd.DataFrame:
 # usuniecie znaków interpunkcyjnych
 # usuniecie stop-words
 # stemming
-def preprocess_dataset(dataset: pd.DataFrame, lang: str = 'pl') -> pd.DataFrame:
+def preprocess_dataset(dataset: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:
     lang_resource = spacy.load('en_core_web_sm') if lang == 'en' else spacy.load('pl_core_news_sm')
     lang_resource.add_pipe('emoji', first=True)
 
@@ -177,7 +184,7 @@ def preprocess_dataset(dataset: pd.DataFrame, lang: str = 'pl') -> pd.DataFrame:
 # obsluga zbyt dlugich wpisow
 def drop_too_long(df: pd.DataFrame, tokenizer) -> pd.DataFrame:
     df_copy = df.copy(deep=True)
-    limit = 256
+    limit = 512
     df_copy['len'] = df_copy['text'].apply(lambda sentence: len(tokenizer.tokenize(sentence)))
     df_copy.drop(df_copy.loc[df_copy['len'] > limit, ['text']].index, inplace=True)  # wpisy zbyt dlugie
     df_copy.drop(columns=['len'], inplace=True)

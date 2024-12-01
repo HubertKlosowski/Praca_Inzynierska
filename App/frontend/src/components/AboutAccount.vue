@@ -21,7 +21,7 @@ const $cookies = inject('$cookies')
         <ul>
           <li>liczba dziennych prób: 10</li>
           <li>analiza pojedyńczych wpisów</li>
-          <li>max. wielkość pliku: do 20KB</li>
+          <li>max. wielkość pliku: do 200KB</li>
         </ul>
       </div>
       <div class="account">
@@ -29,7 +29,7 @@ const $cookies = inject('$cookies')
         <ul>
           <li>liczba dziennych prób: 30</li>
           <li>ogólne statystyki dla plików</li>
-          <li>max. wielkość pliku: do 100KB</li>
+          <li>max. wielkość pliku: do 1MB</li>
         </ul>
       </div>
       <div class="account">
@@ -37,7 +37,7 @@ const $cookies = inject('$cookies')
         <ul>
           <li>liczba dziennych prób: 100</li>
           <li>wykresy dotyczące danych</li>
-          <li>max. wielkość pliku: do 1 000KB</li>
+          <li>max. wielkość pliku: do 10MB</li>
         </ul>
       </div>
     </div>
@@ -50,18 +50,6 @@ const $cookies = inject('$cookies')
 </template>
 
 <style scoped>
-@media (max-width: 768px) {
-  .left-part {
-    width: 90%;
-    height: 45%;
-    font-size: 1.75vh;
-  }
-
-  .left-part * {
-    font-size: 1.75vh !important;
-  }
-}
-
 li {
   font-size: 1.5vw;
 }
@@ -76,7 +64,8 @@ li {
   flex-direction: column;
   gap: 1.5rem;
   padding: 1rem;
-  justify-items: center;
+  justify-content: center;
+  align-items: center;
   font-size: 1.25vw;
   box-sizing: border-box;
 }
@@ -111,5 +100,17 @@ li {
 
 ul {
   display: inline-block;
+}
+
+@media (max-width: 768px) {
+  .left-part {
+    width: 90%;
+    height: 45%;
+    font-size: 1.75vh;
+  }
+
+  .left-part * {
+    font-size: 1.75vh !important;
+  }
 }
 </style>

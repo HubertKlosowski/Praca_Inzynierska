@@ -11,22 +11,13 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 
-from .models import User
+from .models import User, Submission
 from .serializer import UserSerializer, SubmissionSerializer
 from model.my_model import predict_file
-from model.my_datasets import preprocess_dataset
+from model.my_datasets import preprocess_dataset, detect_lang
 
 import pandas as pd
 import smtplib
-
-
-@api_view(['GET'])
-def get_user(request):
-    if not User.objects.filter(**request.GET.dict()).exists():
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    user = User.objects.get(**request.GET.dict())
-    return Response(UserSerializer(user).data)
 
 
 @api_view(['POST'])
@@ -120,8 +111,14 @@ def login_user(request):
                         status=status.HTTP_406_NOT_ACCEPTABLE)
 
     if check_password(password, user.password):
-        return Response({'user': UserSerializer(user).data, 'success': 'SUKCES!! Udało się zalogować.'},
-                        status=status.HTTP_200_OK)
+        user_submissions = SubmissionSerializer(Submission.objects.filter(user=user.id), many=True).data
+
+        return Response({
+            'submissions': user_submissions,
+            'user': UserSerializer(user).data,
+            'success': ['SUKCES!! Udało się zalogować.']},
+            status=status.HTTP_200_OK
+        )
 
     return Response({'error': ['BŁĄD!! Niepoprawne hasło.']}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -160,8 +157,8 @@ def delete_user(request, username):
 
 
 @api_view(['PATCH'])
-def update_user(request, user_id):
-    if not User.objects.filter(id=user_id).exists():
+def update_user(request, username):
+    if not User.objects.filter(id=username).exists():
         return Response({'error': 'BŁĄD!! Użytkownik nie istnieje.'}, status=status.HTTP_404_NOT_FOUND)
 
     if {'username', 'email', 'name', 'password'} in set(request.data.keys()):
@@ -172,7 +169,7 @@ def update_user(request, user_id):
         return Response({'error': 'BŁĄD!! Żadne pole nie może być puste.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     data = dict(zip(request.data.keys(), request.data.values()))
-    user = User.objects.get(id=user_id)
+    user = User.objects.get(id=username)
 
     if 'password' in data:
         try:
@@ -249,15 +246,15 @@ def make_submission(request):
 
     if request.FILES:
         file_size = request.FILES['file'].size
-        if data['usertype'] == 0 and file_size >= 20000:
+        if data['usertype'] == 0 and file_size >= 2e5:
             return Response(
                 {'error': [f'BŁĄD!! Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 20KB']},
                 status=status.HTTP_400_BAD_REQUEST)
-        elif data['usertype'] == 1 and file_size >= 100000:
+        elif data['usertype'] == 1 and file_size >= 1e6:
             return Response(
                 {'error': [f'BŁĄD!! Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 100KB']},
                 status=status.HTTP_400_BAD_REQUEST)
-        elif data['usertype'] == 2 and file_size >= 1000000:
+        elif data['usertype'] == 2 and file_size >= 1e7:
             return Response(
                 {'error': [f'BŁĄD!! Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 1MB']},
                 status=status.HTTP_400_BAD_REQUEST)
@@ -281,27 +278,34 @@ def make_submission(request):
     else:
         df = pd.DataFrame(data={'text': [request.data['entry']]})
 
-    prepared = preprocess_dataset(df.copy(deep=True), lang=data['language'])
+    lang = detect_lang(df)
+
+    model = data['pl_model'] if lang == 'pl' else data['en_model']
+    path = f'D:/{model}'
+
+    prepared = preprocess_dataset(df.copy(deep=True), lang=lang)
 
     try:
-        path = f'D:/{data['llm_model']}'
-        stats = predict_file(data['llm_model'], prepared)
+        stats = predict_file(model, prepared)
         data['time_taken'] = (timezone.now() - time_start).total_seconds()
     except Exception as e:
-        print(e)
         return Response({'error': [f'BŁĄD!! {str(e)}']}, status=status.HTTP_404_NOT_FOUND)
 
     if 'user' in data.keys():
+        data.pop('pl_model', None)
+        data.pop('en_model', None)
+        data['llm_model'] = model
+
+        if not User.objects.filter(username=data['user']).exists():
+            return Response({'error': ['BŁĄD!! Użytkownik nie istnieje.']}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        user = User.objects.get(username=data['user'])
+        data['user'] = user.id
+
         serializer = SubmissionSerializer(data=data)
 
         if not serializer.is_valid():
-            print(serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        if not User.objects.filter(id=serializer.data['user']).exists():
-            return Response({'error': ['BŁĄD!! Użytkownik nie istnieje.']}, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-        user = User.objects.get(id=request.data['user'])
 
         if user.submission_num == 0:
             return Response({'error': ['BŁĄD!! Użytkownik nie posiada możliwych prób.']},

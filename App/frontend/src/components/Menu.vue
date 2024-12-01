@@ -1,8 +1,7 @@
 <script setup>
-import {ref} from "vue";
 import depression from "@/assets/depression.jpg";
 
-const show_info = ref(1)
+const show_info = defineModel('show_info')
 
 // https://www.amahahealth.com/blog/understanding-depression-signs-causes-and-types/
 </script>
@@ -11,23 +10,13 @@ const show_info = ref(1)
   <div class="right-part" :style="{
       backgroundImage: `url(${depression})`,
       backgroundRepeat: 'no-repeat',
-      backgroundSize: 'cover'}">
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
+  }">
     <div class="buttons">
-      <button type="button" class="main-button" @click="$emit('emitShowInfo', 1); show_info = 1"
-              :style="{
-        backgroundColor: show_info === 1 ? 'darkgrey' : 'lightgrey',
-        color: show_info === 1 ? 'white' : 'black',
-        border: show_info === 1 ? 'none' : '2px solid black'}">O projekcie</button>
-      <button type="button" class="main-button" @click="$emit('emitShowInfo', 2); show_info = 2"
-              :style="{
-        backgroundColor: show_info === 2 ? 'darkgrey' : 'lightgrey',
-        color: show_info === 2 ? 'white' : 'black',
-        border: show_info === 2 ? 'none' : '2px solid black'}">Twoje konto</button>
-      <button type="button" class="main-button" @click="$emit('emitShowInfo', 3); show_info = 3"
-              :style="{
-        backgroundColor: show_info === 3 ? 'darkgrey' : 'lightgrey',
-        color: show_info === 3 ? 'white' : 'black',
-        border: show_info === 3 ? 'none' : '2px solid black'}">Sprawdź posty</button>
+      <button type="button" class="router-link" @click="show_info = 1">O projekcie</button>
+      <button type="button" class="router-link" @click="show_info = 2">Twoje konto</button>
+      <button type="button" class="router-link" @click="show_info = 3">Sprawdź posty</button>
     </div>
   </div>
 </template>
@@ -46,15 +35,6 @@ const show_info = ref(1)
 button {
   width: 50%;
   height: 20%;
-  margin: 1rem;
-  font-size: 1.5vw;
-  border-radius: 1rem;
-  transition: 0.4s ease;
-}
-
-button:hover {
-  background-color: darkgrey;
-  box-shadow: 1rem 1rem dodgerblue;
 }
 
 .right-part {
