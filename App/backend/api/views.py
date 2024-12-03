@@ -1,23 +1,22 @@
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
-from django.contrib.auth.hashers import make_password, check_password
-from django.template import loader
-from django.utils import timezone
-from django.core.mail import EmailMessage
-from django.conf import settings
-
-from rest_framework.response import Response
-from rest_framework.decorators import api_view, parser_classes
-from rest_framework import status
-from rest_framework.parsers import MultiPartParser
-
-from .models import User, Submission
-from .serializer import UserSerializer, SubmissionSerializer
-from model.my_model import predict_file
-from model.my_datasets import preprocess_dataset, detect_lang
+import smtplib
 
 import pandas as pd
-import smtplib
+from django.conf import settings
+from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.mail import EmailMessage
+from django.template import loader
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.decorators import api_view, parser_classes
+from rest_framework.parsers import MultiPartParser
+from rest_framework.response import Response
+
+from model.model_datasets import preprocess_dataset, detect_lang
+from model.model_datasets import predict_file
+from .models import User, Submission
+from .serializer import UserSerializer, SubmissionSerializer
 
 
 @api_view(['POST'])
@@ -281,7 +280,8 @@ def make_submission(request):
     lang = detect_lang(df)
 
     model = data['pl_model'] if lang == 'pl' else data['en_model']
-    path = f'D:/{model}'
+    # path = f'D:/{model}'
+    path = f'depression-detect/{model}'
 
     prepared = preprocess_dataset(df.copy(deep=True), lang=lang)
 
