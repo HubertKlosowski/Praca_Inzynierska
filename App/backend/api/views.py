@@ -14,7 +14,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
 from model.model_datasets import preprocess_dataset, detect_lang
-from model.model_datasets import predict_file
+from model.model_datasets import predict
 from .models import User, Submission
 from .serializer import UserSerializer, SubmissionSerializer
 
@@ -281,12 +281,13 @@ def make_submission(request):
 
     model = data['pl_model'] if lang == 'pl' else data['en_model']
     # path = f'D:/{model}'
+
     path = f'depression-detect/{model}'
 
     prepared = preprocess_dataset(df.copy(deep=True), lang=lang)
 
     try:
-        stats = predict_file(model, prepared)
+        stats = predict(path, prepared, False)
         data['time_taken'] = (timezone.now() - time_start).total_seconds()
     except Exception as e:
         return Response({'error': [f'BŁĄD!! {str(e)}']}, status=status.HTTP_404_NOT_FOUND)

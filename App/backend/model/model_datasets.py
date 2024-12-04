@@ -6,6 +6,10 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
+from langdetect import DetectorFactory, detect
+
+DetectorFactory.seed = 0
+
 import numpy as np
 import praw
 import requests
@@ -19,7 +23,7 @@ from praw.models import MoreComments
 from pystempel import Stemmer  # stemming dla języka polskiego
 from sklearn.model_selection import train_test_split
 
-from model.api_keys import public_key, secret_key, microsoft_api_key
+from model.api_keys import public_key, secret_key, microsoft_api_key, save_model_token
 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
@@ -28,7 +32,6 @@ from transformers import (AutoModelForSequenceClassification, TextClassification
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-from model.api_keys import save_model_token
 from huggingface_hub import login, logout
 
 
@@ -74,10 +77,9 @@ def read_reddit_post(sub: praw.reddit.Submission) -> dict:
 
 
 def limit_lang(df: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:  # pozostawienie tylko wpisow w danym jezyku
-    translator = Translator()
     df['text'] = df['text'].apply(lambda x: x.strip())
     if 'lang' not in df.columns:
-        df['lang'] = df['text'].apply(lambda x: translator.detect(x).lang)
+        df['lang'] = df['text'].apply(lambda x: detect(x))
     df.drop(index=df.loc[(df['lang'] != lang), :].index, inplace=True)
     df.drop(columns=['lang'], inplace=True)
     df.reset_index(drop=True, inplace=True)
@@ -104,14 +106,11 @@ def extract_comments() -> pd.DataFrame:
 
 def create_dataset(dataframe: pd.DataFrame, split_train_test: bool) -> DatasetDict:
     dt = DatasetDict()
-
     if split_train_test:
         dataframe['label'] = dataframe['label'].astype(int)
-
         x_train, x_test = train_test_split(dataframe, test_size=0.3, random_state=4)
         training = pd.DataFrame(x_train, columns=dataframe.columns).reset_index(drop=True)
         testing = pd.DataFrame(x_test, columns=dataframe.columns).reset_index(drop=True)
-
         dt['train'] = Dataset.from_pandas(training)
         dt['test'] = Dataset.from_pandas(testing)
 
@@ -120,7 +119,7 @@ def create_dataset(dataframe: pd.DataFrame, split_train_test: bool) -> DatasetDi
     return dt
 
 
-# Połączenie wielu zbiorów w jeden + ujednolicenie nazewnictwa kolumn
+# Połączenie zbiorów w jeden + ujednolicenie nazewnictwa kolumn
 def merge_datasets(lang: str = 'en', for_train: bool = False) -> pd.DataFrame:
     merged = pd.DataFrame()
     columns = ['text', 'label'] if for_train and lang == 'en' else ['text']
@@ -150,22 +149,26 @@ def merge_datasets(lang: str = 'en', for_train: bool = False) -> pd.DataFrame:
                 )
 
     if for_train:
-        merged['label'] = merged['label'].astype(int)
-        counts = merged['label'].value_counts()
-
-        if counts[0] > counts[1]:
-            sample = counts[0] - counts[1]
-            merged.drop(index=merged.loc[merged['label'] == 0].sample(n=sample).index, inplace=True)
-        else:
-            sample = counts[1] - counts[0]
-            merged.drop(index=merged.loc[merged['label'] == 1].sample(n=sample).index, inplace=True)
-
-        merged = merged.sample(frac=1)  # shuffle
+        merged = balance_dataset(merged)
 
     merged.drop(columns=['len'], inplace=True)
     merged.reset_index(drop=True, inplace=True)
 
     return merged
+
+
+def balance_dataset(dataframe: pd.DataFrame) -> pd.DataFrame:
+    dataframe['label'] = dataframe['label'].astype(int)
+    counts = dataframe['label'].value_counts()
+
+    if counts[0] > counts[1]:
+        sample = counts[0] - counts[1]
+        dataframe.drop(index=dataframe.loc[dataframe['label'] == 0].sample(n=sample).index, inplace=True)
+    else:
+        sample = counts[1] - counts[0]
+        dataframe.drop(index=dataframe.loc[dataframe['label'] == 1].sample(n=sample).index, inplace=True)
+
+    return dataframe.sample(frac=1).reset_index(drop=True)
 
 
 # Funkcja odpowiedzialna jest za przygotowanie zbiorów:
@@ -184,7 +187,6 @@ def preprocess_dataset(dataframe: pd.DataFrame, lang: str = 'en') -> pd.DataFram
     url_pattern = r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?'
     dataframe['text'] = dataframe['text'].apply(lambda sentence: re.sub(url_pattern, '', sentence))
     dataframe['text'] = dataframe['text'].apply(lambda sentence: sentence.strip())
-
     dataframe['text'] = dataframe['text'].apply(lambda sentence: lang_resource(sentence))
     dataframe['text'] = dataframe['text'].apply(
         lambda tokens: [token for token in tokens if not token.is_punct]
@@ -192,7 +194,6 @@ def preprocess_dataset(dataframe: pd.DataFrame, lang: str = 'en') -> pd.DataFram
     dataframe['text'] = dataframe['text'].apply(
         lambda tokens: [token for token in tokens if not token.is_stop]
     )
-
     if lang == 'pl':
         translator = GoogleTranslator(source='auto', target='pl')  # do tłumaczenia znaczenia emotek
         dataframe['text'] = dataframe['text'].apply(
@@ -204,7 +205,6 @@ def preprocess_dataset(dataframe: pd.DataFrame, lang: str = 'en') -> pd.DataFram
             lambda tokens: [token._.emoji_desc if token._.is_emoji else token.text for token in tokens]
         )
         dataframe['text'] = dataframe['text'].apply(lambda tokens: [stemmer.stem(token) for token in tokens])
-
     dataframe['text'] = dataframe['text'].apply(
         lambda tokens: ' '.join([str(token) for token in tokens if token is not None])
     )
@@ -218,7 +218,6 @@ def drop_too_long(df: pd.DataFrame, tokenizer) -> pd.DataFrame:
     df_copy['len'] = df_copy['text'].apply(lambda sentence: len(tokenizer.tokenize(sentence)))
     df_copy.drop(df_copy.loc[df_copy['len'] > limit, ['text']].index, inplace=True)  # wpisy zbyt dlugie
     df_copy.drop(columns=['len'], inplace=True)
-
     return df_copy
 
 
@@ -299,86 +298,54 @@ def translate_to_en(dataframe: pd.DataFrame):
     return translated
 
 
-# Predykcje modelu Roberta odpowiedzialnego za wykrycie emocji w języku polskim
-# Emocje: złość, strach, obrzydzenie, smutek, szczęście, żadna z wymienionych
-def return_roberta_emotions_pred(dataframe: pd.DataFrame) -> pd.DataFrame:
-    res = predict_file('visegradmedia-emotion/Emotion_RoBERTa_polish6', dataframe)  # predykcje
-    res.rename(columns={'LABEL_0': 'anger', 'LABEL_1': 'fear', 'LABEL_3': 'sadness', 'LABEL_4': 'joy'}, inplace=True)  # zmiana nazewnictwa zwracanych wyników
-    res.drop(columns=['LABEL_2', 'LABEL_5'], axis=1, inplace=True)  # usunięcie niepotrzebnych etykiet
-
-    columns = ['joy', 'fear', 'sadness', 'anger']
-    res = res[columns]
-    res = pd.DataFrame(np.argmax(res.to_numpy(), axis=1), columns=['emotion'])
-
+# Predykcje modeli odpowiedzialnych za analizę
+# sentymentu, emocji w zbiorze polskim i depresji tego zbioru w języku angielskim
+def return_pred(model_path: str, dataframe: pd.DataFrame, result_column: str) -> pd.DataFrame:
+    res = predict(model_path, dataframe, True)
+    res = pd.DataFrame(np.argmax(res.to_numpy(), axis=1), columns=[result_column])
     return res
-
-
-# Predykcje modelu Roberta odpowiedzialnego za wykrycie depresji w języku angielskim
-# Klasy: posiada depresję, nie posiada depresji
-def return_en_depression(dataframe: pd.DataFrame) -> pd.DataFrame:
-    res = predict_file('ShreyaR/finetuned-roberta-depression', dataframe)  # predykcje
-    res.loc[res['LABEL_1'] > res['LABEL_0'], 'en_depress'] = 1  # wskazanie etykiet depresji
-    res.loc[res['LABEL_1'] <= res['LABEL_0'], 'en_depress'] = 0
-    res['en_depress'] = res['en_depress'].astype(int)
-    res.drop(columns=['LABEL_0', 'LABEL_1'], axis=1, inplace=True)  # usunięcie niepotrzebnych etykiet
-
-    return res
-
-
-# Predykcje modeli GPT2 odpowiedzialnych za analizę sentymentu w zbiorze polskim
-# Sentyment: negatywny, pozytywny, neutralny, dwuznaczny
-def return_gpt2_pred(dataframe: pd.DataFrame) -> pd.DataFrame:
-    gpt2_large = predict_file('nie3e/sentiment-polish-gpt2-large', dataframe) # predykcje
-    gpt2_small = predict_file('nie3e/sentiment-polish-gpt2-small', dataframe)
-    gpt2_large.drop(columns=['AMBIGUOUS', 'NEUTRAL'], axis=1, inplace=True)  # usunięcie niepotrzebnych etykiet
-    gpt2_small.drop(columns=['AMBIGUOUS', 'NEUTRAL'], axis=1, inplace=True)
-
-    layer_soft = torch.nn.Softmax(dim=1)  # wykorzystanie softmax, aby wyrównać wartości sentymentu po usunięcie 2 innych klas
-
-    gpt2_large = pd.DataFrame(layer_soft(torch.tensor(gpt2_large.to_numpy())).detach().numpy(), columns=gpt2_large.columns)
-    gpt2_small = pd.DataFrame(layer_soft(torch.tensor(gpt2_large.to_numpy())).detach().numpy(), columns=gpt2_large.columns)
-
-    gpt2_pred = gpt2_large + gpt2_small  # dodanie rezultatów
-
-    gpt2_pred.loc[gpt2_pred['POSITIVE'] > gpt2_pred['NEGATIVE'], 'is_negative'] = 0  # wskazanie etykiet sentymentu
-    gpt2_pred.loc[gpt2_pred['POSITIVE'] <= gpt2_pred['NEGATIVE'], 'is_negative'] = 1
-
-    gpt2_pred.drop(columns=['POSITIVE', 'NEGATIVE'], axis=1, inplace=True)   # usunięcie niepotrzebnych etykiet
-    gpt2_pred['is_negative'] = gpt2_pred['is_negative'].astype(int)
-
-    return gpt2_pred
 
 
 # Funkcja łączy rezultaty z modeli:
-# 1) analiza sentymentu w wpisach po polsku
-# 2) wykrycie emocji w wpisach po polsku
-# 3) wykrycie depresji w wpisach przetłumaczonych na język angielski
+# 1) analiza sentymentu w wpisach po polsku:
+#       negatywny, pozytywny, neutralny, dwuznaczny
+# 2) wykrycie emocji w wpisach po polsku:
+#       złość, strach, obrzydzenie, smutek, szczęście, żadna z wymienionych
+# 3) wykrycie depresji w wpisach przetłumaczonych na język angielski:
+#       posiada/nie posiada depresji (LABEL_1, LABEL_0)
 # Ostatecznie podjęty jest wybór, które podgrupy posiadają depresję na podstawie obliczonych składowych
-# Zapisanie predykcji do pliku
 def get_polish(dataframe: pd.DataFrame) -> pd.DataFrame:
-    gpt2_neg_pos = return_gpt2_pred(dataframe)  # rezultaty GPT2
-    roberta_emotion = return_roberta_emotions_pred(dataframe)  # rezultaty RoBERTa dla emocji
-    english = pd.read_csv('data/final/polish_translated.csv')
-    roberta_en_depress = return_en_depression(english)  # rezultaty RoBERTa dla depresji w języku angielskim
+    # rezultaty GPT2 dla sentymentu
+    sentiment = return_pred('nie3e/sentiment-polish-gpt2-large', dataframe, 'sentiment')
 
-    polish_results = pd.concat([gpt2_neg_pos, roberta_emotion], axis=1)  # złączenie cząstkowych rezultatów
-    polish_results = pd.concat([polish_results, roberta_en_depress], axis=1)
-    polish_results = pd.concat([dataframe, polish_results], axis=1)
+    # rezultaty RoBERTa dla emocji
+    emotion = return_pred('visegradmedia-emotion/Emotion_RoBERTa_polish6', dataframe, 'emotion')
+
+    # rezultaty mojego BERT dla depresji w języku angielskim
+    english = pd.read_csv('data/final/polish_translated.csv')
+    en_depress = return_pred('depression-detect/bert-base', english, 'en_depress')
+
+    # złączenie cząstkowych rezultatów
+    polish_results = pd.concat([dataframe, sentiment, emotion, en_depress], axis=1)
 
     # wskazanie, które podgrupy danych uznaję za posiadające depresję
     # Grupy:
-    # 1) ma negatywny sentyment, posiada depresję po angielsku i smutek z strachem
-    # 2) ma pozytywny sentyment, posiada depresję i nie jest zły
-    polish_results.loc[(polish_results['is_negative'] == 0) & (polish_results['en_depress'] == 1) & (polish_results['emotion'] != 3), 'label'] = 1
-    polish_results.loc[(polish_results['is_negative'] == 1) & (polish_results['en_depress'] == 1) & ((polish_results['emotion'] == 1) | (polish_results['emotion'] == 2)), 'label'] = 1
+    # 1) ma negatywny sentyment, posiada depresję w języku angielskim i emocje lęku, smutku lub obrzydzenia
+    # 2) ma dwuznaczny sentyment, posiada depresję w języku angielskim i emocje lęku lub smutku
+    # 3) ma neutralny sentyment, posiada depresję w języku angielskim i emocje lęku lub smutku
+    polish_results.loc[(polish_results['sentiment'] == 3) & (polish_results['en_depress'] == 1) & (
+                (polish_results['emotion'] == 2) | (polish_results['emotion'] == 4) | (
+                    polish_results['emotion'] == 5)), 'label'] = 1
+    polish_results.loc[(polish_results['sentiment'] == 0) & (polish_results['en_depress'] == 1) & (
+                (polish_results['emotion'] == 2) | (polish_results['emotion'] == 4)), 'label'] = 1
+    polish_results.loc[(polish_results['sentiment'] == 1) & (polish_results['en_depress'] == 1) & (
+                (polish_results['emotion'] == 2) | (polish_results['emotion'] == 4)), 'label'] = 1
 
     polish_results.fillna(0, inplace=True)
     polish_results['label'] = polish_results['label'].astype(int)
 
-    polish_results.drop(columns=['emotion', 'is_negative', 'en_depress'], inplace=True)  # usunięcie niepotrzebnych danych
-    polish_results.dropna(inplace=True)
-    polish_results.to_csv('data/pl/train_polish.csv', index=False)  # zapis ostatecznego zbioru
-    polish_results.reset_index(inplace=True)
+    polish_results.drop(columns=['emotion', 'sentiment', 'en_depress'], inplace=True)  # usunięcie niepotrzebnych danych
+    polish_results.reset_index(drop=True, inplace=True)
 
     return polish_results
 
@@ -406,7 +373,7 @@ def fine_tune(model_path: str):
     dataset = create_dataset(
         pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'))
         if model_path == 'bert-base' or model_path == 'bert-large'
-        else pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_polish.csv')),
+        else pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_polish.csv')).dropna(),
         split_train_test=True
     )
 
@@ -424,9 +391,9 @@ def fine_tune(model_path: str):
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
     training_args = TrainingArguments(
-        output_dir=model_path,
+        output_dir=f'{model_path}-depression',
         learning_rate=2e-5,
-        per_device_train_batch_size=32,  # 32 dla bert-large, 64 dla bert-base
+        per_device_train_batch_size=32,
         per_device_eval_batch_size=64,
         num_train_epochs=10,
         weight_decay=0.01,
@@ -442,7 +409,7 @@ def fine_tune(model_path: str):
         args=training_args,
         train_dataset=tokenized_dataset['train'],
         eval_dataset=tokenized_dataset['test'],
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics
     )
@@ -454,7 +421,9 @@ def fine_tune(model_path: str):
     logout()
 
 
-def predict_file(model_path: str, dataframe: pd.DataFrame) -> pd.DataFrame:
+def predict(model_path: str, dataframe: pd.DataFrame, for_train: bool = True) -> pd.DataFrame:
+    login(token=save_model_token)
+
     dataset = create_dataset(dataframe, split_train_test=False)
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     model = AutoModelForSequenceClassification.from_pretrained(model_path)
@@ -465,26 +434,32 @@ def predict_file(model_path: str, dataframe: pd.DataFrame) -> pd.DataFrame:
         device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     )
 
-    try:
-        predictions = prepare_predictions(pipe(dataset['test']['text']), dataframe.index)
-
-    except RuntimeError:
-        under_limit = drop_too_long(dataframe, tokenizer)
-
-        dataset_under_limit = create_dataset(
-            under_limit, split_train_test=False
+    if for_train:
+        predictions = prepare_predictions(
+            pipe(dataset['test']['text'], **{'truncation': True, 'max_length': 512}),
+            dataframe.index
         )
+    else:
+        try:
+            predictions = prepare_predictions(
+                pipe(dataset['test']['text']),
+                dataframe.index
+            )
+        except RuntimeError:
+            under_limit = drop_too_long(dataframe, tokenizer)
+            dataset_under_limit = create_dataset(
+                under_limit, split_train_test=False
+            )
+            predictions_under_limit = prepare_predictions(
+                pipe(dataset_under_limit['test']['text']),
+                under_limit.index
+            )
+            predictions = pd.concat([under_limit, predictions_under_limit], axis=1)
+            predictions = pd.merge(dataframe, predictions, how='left', on='text')
+            predictions.drop(columns=['text'], inplace=True)
+            predictions.fillna(-1, inplace=True)
 
-        predictions_under_limit = prepare_predictions(
-            pipe(dataset_under_limit['test']['text']),
-            under_limit.index
-        )
-
-        predictions = pd.concat([under_limit, predictions_under_limit], axis=1)
-        predictions = pd.merge(dataframe, predictions, how='left', on='text')
-
-        predictions.drop(columns=['text'], inplace=True)
-        predictions.fillna(-1, inplace=True)
+    logout()
 
     return predictions
 
@@ -498,15 +473,25 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
 # fine_tune('roberta-base')
 # fine_tune('roberta-large')
 
+# Przetworzone wpisy dla języka angielskiego (zbiór treningowy)
+# if 'train_english.csv' in os.listdir(os.path.join('data', 'final')):
+#     train_english = pd.read_csv(os.path.join('data', 'final', 'train_english.csv'))
+# else:
+#     train_english = merge_datasets(lang='en', for_train=True)
+#     train_english.to_csv(os.path.join('data', 'final', 'train_english.csv'), index=False)
+#
+# train_preprocessed_english = preprocess_dataset(train_english, lang='en').dropna()
+# train_preprocessed_english.to_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'), index=False)
+
 # Wygenerowanie otagowanego zbioru polskiego
-# train_polish = get_polish(merge_datasets('pl', False))
-
-# Przetworzone wpisy w obu językach (zbiór treningowy/walidacyjny)
-# train_preprocessed_english_dataset = preprocess_dataset(merge_datasets(lang='en', for_train=True), lang='en')
-# train_preprocessed_english_dataset.to_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'), index=False)
-
-train_preprocessed_polish_dataset = preprocess_dataset(get_polish(merge_datasets('pl', False)), lang='pl')
-train_preprocessed_polish_dataset.to_csv(os.path.join('data', 'final', 'train_preprocessed_polish.csv'), index=False)
+# if 'train_polish.csv' in os.listdir(os.path.join('data', 'final')):
+#     train_polish = pd.read_csv(os.path.join('data', 'final', 'train_polish.csv'))
+# else:
+#     train_polish = get_polish(merge_datasets(lang='pl', for_train=False))
+#     train_polish.to_csv(os.path.join('data', 'final', 'train_polish.csv'), index=False)
+#
+# train_preprocessed_polish = balance_dataset(preprocess_dataset(train_polish, lang='pl')).dropna()
+# train_preprocessed_polish.to_csv(os.path.join('data', 'final', 'train_preprocessed_polish.csv'), index=False)
 
 # Przetworzone wpisy w języku angielskim (zbiór testowy)
 # test_preprocessed_english_dataset = prepare_tweets()
