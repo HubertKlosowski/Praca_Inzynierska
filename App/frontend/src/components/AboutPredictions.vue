@@ -31,7 +31,7 @@ const checkUser = () => {
       </div>
     </div>
     <div class="links">
-      <RouterLink to="/phases" class="router-link" v-if="checkUser()">Sprawdź posty</RouterLink>
+      <RouterLink to="/phases" class="router-link" v-if="checkUser">Sprawdź posty</RouterLink>
       <RouterLink to="/predict" class="router-link" v-if="$cookies.isKey('made_submission')">Zobacz predykcje</RouterLink>
     </div>
   </div>

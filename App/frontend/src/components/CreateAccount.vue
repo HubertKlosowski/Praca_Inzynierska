@@ -14,6 +14,7 @@ const usertype = ref(0)
 const after_create = ref({})
 const title = ref('')
 const response_status = ref(0)
+const show_password = ref(false)
 
 const createAccount = async () => {
   try {
@@ -78,26 +79,31 @@ const resetInputs = () => {
       <form @submit.prevent="createAccount">
 
         <FormTextField
-            v-model="name"
-            :label_info="'Imię i nazwisko'"
+            v-model:input_value="name"
+            :label_info="'imię i nazwisko'"
+            :input_placeholder="'imie i nazwisko'"
             :label_name="'name'"
         ></FormTextField>
 
         <FormTextField
-            v-model="username"
-            :label_info="'Nazwa użytkownika'"
+            v-model:input_value="username"
+            :label_info="'nazwę użytkownika'"
+            :input_placeholder="'Nazwa użytkownika'"
             :label_name="'username'"
         ></FormTextField>
 
         <FormTextField
-            v-model="email"
+            v-model:input_value="email"
             :label_info="'Email'"
+            :input_placeholder="'Adres email'"
             :label_name="'email'"
         ></FormTextField>
 
         <FormTextField
-            v-model="password"
+            v-model:input_value="password"
+            v-model:show_password="show_password"
             :label_info="'Hasło'"
+            :input_placeholder="'Hasło'"
             :label_name="'password'"
         ></FormTextField>
 
@@ -105,7 +111,7 @@ const resetInputs = () => {
 
         <div class="buttons" style="border: none; height: 100px">
           <button type="submit" class="router-link">Wyślij</button>
-          <button type="button" class="router-link" @click="resetInputs()">Wyczyść</button>
+          <button type="button" class="router-link" @click="resetInputs">Wyczyść</button>
         </div>
       </form>
     </div>

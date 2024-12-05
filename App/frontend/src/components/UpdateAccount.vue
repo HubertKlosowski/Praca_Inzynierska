@@ -1,46 +1,43 @@
 <script setup>
 import {inject, ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
-import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
-import {useRouter} from "vue-router";
+import axios from "axios";
 import _ from "lodash";
-
-const router = useRouter()
 
 const $cookies = inject('$cookies')
 
+const show_password = ref(false)
+const name = ref('')
 const username = ref('')
+const email = ref('')
 const password = ref('')
-const users_verify = ref([])
 
 const after_create = ref({})
 const title = ref('')
 const response_status = ref(0)
-const show_password = ref(false)
+const logged_user = $cookies.get('user')
 
-const login = async () => {
+const updateAccount = async () => {
   try {
-    const response = await axios.post('http://localhost:8000/api/user/login_user', {
+    let new_user = {
+      name: name.value,
+      email: email.value,
       username: username.value,
       password: password.value
-    })
+    }
+
+    new_user = _.pickBy(new_user, value => value && value.length > 0)
+
+    const response = await axios.patch('http://localhost:8000/api/user/update_user/' + logged_user['username'], new_user)
 
     after_create.value = response.data.user
     title.value = response.data.success
     response_status.value = response.status
 
-    $cookies.set('user', response.data.user)
-
-    localStorage.setItem('submissions', JSON.stringify(response.data.submissions))
-
-    if ($cookies.get('user')['usertype'] === 2) {
-      await getUsers()
-    }
+    $cookies.set('user', after_create.value)
 
     resetInputs()
-
-    await router.push('/profile')
   } catch (e) {
     if (typeof e.response === 'undefined') {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
@@ -55,20 +52,10 @@ const login = async () => {
   }
 }
 
-const getUsers = async () => {
-  try {
-    const response = await axios.get('http://localhost:8000/api/get_users')
-    users_verify.value = _.remove(response.data, function (n) {
-      return n['username'] !== $cookies.get('user')['username']
-    })
-    localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
-  } catch (e) {
-
-  }
-}
-
 const resetInputs = () => {
+  name.value = ''
   username.value = ''
+  email.value = ''
   password.value = ''
 }
 </script>
@@ -87,26 +74,47 @@ const resetInputs = () => {
     pointerEvents: response_status < 200 ? 'auto' : 'none'
   }">
     <div class="header">
-      <h3>Witaj ponownie</h3>
+      <h3>Zmień dane konta</h3>
+      <ul>
+        <li>Nie wymagana jest zmiana wszystkich pól.</li>
+        <li>Typu użytkownika nie można zmienić, ze względu bezpieczeństwa.</li>
+      </ul>
     </div>
     <div class="form">
-      <form @submit.prevent="login">
+      <form @submit.prevent="updateAccount">
+
+        <FormTextField
+            v-model:input_value="name"
+            :label_info="'imię i nazwisko'"
+            :input_placeholder="logged_user['name']"
+            :label_name="'name'"
+        ></FormTextField>
 
         <FormTextField
             v-model:input_value="username"
-            :label_info="'Nazwę użytkownika'"
+            :label_info="'nazwę użytkownika'"
+            :input_placeholder="logged_user['username']"
             :label_name="'username'"
+        ></FormTextField>
+
+        <FormTextField
+            v-model:input_value="email"
+            :label_info="'email'"
+            :input_placeholder="logged_user['email']"
+            :label_name="'email'"
         ></FormTextField>
 
         <FormTextField
             v-model:input_value="password"
             v-model:show_password="show_password"
-            :label_info="'Hasło'"
+            :label_info="'hasło'"
+            :input_placeholder="'Wiesz jakie masz hasło 🙂'"
             :label_name="'password'"
         ></FormTextField>
 
-        <div class="buttons" style="border: none;">
-          <button type="submit" class="router-link">Zaloguj się</button>
+        <div class="buttons" style="border: none">
+          <button type="submit" class="router-link">Zatwierdź</button>
+          <button type="button" class="router-link" @click="resetInputs">Wyczyść</button>
         </div>
       </form>
     </div>
@@ -122,22 +130,22 @@ li {
 }
 
 .header {
-  height: 10%;
+  height: 20%;
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   font-size: 1.5vw;
+  padding-bottom: 1rem;
 }
 
 .left-part {
   width: 90%;
-  overflow-y: hidden;
 }
 
 .form {
   width: 100%;
-  height: 70%;
+  height: 60%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -145,7 +153,6 @@ li {
 }
 
 form {
-  position: relative;
   width: 100%;
   height: 100%;
   margin: 1rem;
@@ -158,10 +165,10 @@ form {
 .buttons {
   border-top: 2px solid black;
   width: 100%;
-  height: 20%;
+  height: 15%;
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-evenly;
   align-items: center;
 }
 
@@ -172,10 +179,7 @@ form {
 @media (max-width: 768px) {
   .buttons > * {
     width: 70%;
-  }
-
-  .router-link {
-    font-size: 1.75vh !important;
+    font-size: 1.75vh;
   }
 
   .header {

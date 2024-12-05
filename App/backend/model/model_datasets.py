@@ -322,29 +322,29 @@ def get_polish(dataframe: pd.DataFrame) -> pd.DataFrame:
     emotion = return_pred('visegradmedia-emotion/Emotion_RoBERTa_polish6', dataframe, 'emotion')
 
     # rezultaty mojego BERT dla depresji w języku angielskim
-    english = pd.read_csv('data/final/polish_translated.csv')
-    en_depress = return_pred('depression-detect/bert-base', english, 'en_depress')
+    # english = pd.read_csv('data/final/polish_translated.csv')
+    # en_depress = return_pred('depression-detect/bert-base', english, 'en_depress')
 
     # złączenie cząstkowych rezultatów
-    polish_results = pd.concat([dataframe, sentiment, emotion, en_depress], axis=1)
+    polish_results = pd.concat([dataframe, sentiment, emotion], axis=1)
 
     # wskazanie, które podgrupy danych uznaję za posiadające depresję
     # Grupy:
     # 1) ma negatywny sentyment, posiada depresję w języku angielskim i emocje lęku, smutku lub obrzydzenia
     # 2) ma dwuznaczny sentyment, posiada depresję w języku angielskim i emocje lęku lub smutku
     # 3) ma neutralny sentyment, posiada depresję w języku angielskim i emocje lęku lub smutku
-    polish_results.loc[(polish_results['sentiment'] == 3) & (polish_results['en_depress'] == 1) & (
-                (polish_results['emotion'] == 2) | (polish_results['emotion'] == 4) | (
-                    polish_results['emotion'] == 5)), 'label'] = 1
-    polish_results.loc[(polish_results['sentiment'] == 0) & (polish_results['en_depress'] == 1) & (
-                (polish_results['emotion'] == 2) | (polish_results['emotion'] == 4)), 'label'] = 1
-    polish_results.loc[(polish_results['sentiment'] == 1) & (polish_results['en_depress'] == 1) & (
-                (polish_results['emotion'] == 2) | (polish_results['emotion'] == 4)), 'label'] = 1
+    polish_results.loc[(polish_results['sentiment'] == 3) & ((polish_results['emotion'] == 2) |
+                                                             (polish_results['emotion'] == 4) |
+                                                             (polish_results['emotion'] == 5)), 'label'] = 1
+    polish_results.loc[(polish_results['sentiment'] == 0) & ((polish_results['emotion'] == 2) |
+                                                             (polish_results['emotion'] == 4)), 'label'] = 1
+    polish_results.loc[(polish_results['sentiment'] == 1) & ((polish_results['emotion'] == 2) |
+                                                             (polish_results['emotion'] == 4)), 'label'] = 1
 
     polish_results.fillna(0, inplace=True)
     polish_results['label'] = polish_results['label'].astype(int)
 
-    polish_results.drop(columns=['emotion', 'sentiment', 'en_depress'], inplace=True)  # usunięcie niepotrzebnych danych
+    polish_results.drop(columns=['emotion', 'sentiment'], inplace=True)  # usunięcie niepotrzebnych danych
     polish_results.reset_index(drop=True, inplace=True)
 
     return polish_results
@@ -421,8 +421,9 @@ def fine_tune(model_path: str):
     logout()
 
 
-def predict(model_path: str, dataframe: pd.DataFrame, for_train: bool = True) -> pd.DataFrame:
-    login(token=save_model_token)
+def predict(model_path: str, dataframe: pd.DataFrame, for_train: bool = True, login_token: str = None) -> pd.DataFrame:
+    if login_token is not None:
+        login(token=save_model_token)
 
     dataset = create_dataset(dataframe, split_train_test=False)
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -459,7 +460,8 @@ def predict(model_path: str, dataframe: pd.DataFrame, for_train: bool = True) ->
             predictions.drop(columns=['text'], inplace=True)
             predictions.fillna(-1, inplace=True)
 
-    logout()
+    if login_token is not None:
+        logout()
 
     return predictions
 

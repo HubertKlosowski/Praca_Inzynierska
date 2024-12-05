@@ -16,7 +16,7 @@ const closeWindow = () => {
       <h3 :style="{ color: response_status >= 200 && response_status <= 299 ? 'darkgreen' : 'darkred' }">{{ props.title }}</h3>
       <div
         class="show-content"
-        @click="closeWindow()"
+        @click="closeWindow"
         title="Kliknij, aby zamknąć"
       ></div>
     </div>

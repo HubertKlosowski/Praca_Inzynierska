@@ -1,24 +1,32 @@
 <script setup>
-import {inject, onMounted, ref, watch} from "vue";
+import {inject, onMounted, ref} from "vue";
 import polish from "@/assets/polski.png";
 import english from "@/assets/angielski.png";
 import {useRouter} from "vue-router";
+import axios from "axios";
+import ResponseOutput from "@/components/ResponseOutput.vue";
+import _ from "lodash";
+import UpdateAccount from "@/components/UpdateAccount.vue";
 
 const router = useRouter()
 const $cookies = inject('$cookies')
 
-const user = ref($cookies.get('user'))
+const logged_user = ref($cookies.get('user'))
 const usertypes = ['Normal', 'Pro', 'Administrator']
 
-const go = ref(0)
+const show_update_form = ref(false)
 const choose_polish = ref(false)
 const choose_english = ref(false)
 const submissions = ref(JSON.parse(localStorage.getItem('submissions')))
 const users_verify = ref([])
 const models = ref(['roberta-base', 'bert-base'])
 
+const after_create = ref({})
+const title = ref('')
+const response_status = ref(0)
+
 const logoutUser = async () => {
-  if (user.value['usertype'] === 2)
+  if (logged_user.value['usertype'] === 2)
     localStorage.removeItem('users_verify')
   $cookies.remove('user')
   localStorage.removeItem('submissions')
@@ -27,6 +35,82 @@ const logoutUser = async () => {
 
 const showDetails = () => {
 
+}
+
+const deleteUser = async () => {
+  try {
+    const response = await axios.delete('http://localhost:8000/api/user/delete_user/' + logged_user.value['username'])
+
+    after_create.value = [logged_user.value['username'], logged_user.value['email'], 'Użytkownik poprawnie usunięty']
+    title.value = response.data.success
+    response_status.value = response.status
+    await logoutUser()
+
+  } catch (e) {
+    if (typeof e.response === 'undefined') {
+      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      response_status.value = 500
+      title.value = 'Problem z serwerem'
+    } else {
+      const error_response = e.response
+      after_create.value = error_response.data.error
+      response_status.value = error_response.status
+      title.value = 'Problem z usunięciem konta'
+    }
+  }
+}
+
+const verifyUser = async (user) => {
+  try {
+    const response = await axios.patch('http://localhost:8000/api/user/verify_user/' + user['username'])
+
+    const index = _.indexOf(users_verify.value, user)
+    users_verify.value[index]['is_verified'] = true
+    localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
+
+    after_create.value = [user['username'], user['email'], 'zweryfikowany']
+    title.value = response.data.success
+    response_status.value = response.status
+
+  } catch (e) {
+    if (typeof e.response === 'undefined') {
+      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      response_status.value = 500
+      title.value = 'Problem z serwerem'
+    } else {
+      const error_response = e.response
+      after_create.value = error_response.data.error
+      response_status.value = error_response.status
+      title.value = 'Problem z weryfikacją'
+    }
+  }
+}
+
+const renewSubmission = async (user) => {
+  try {
+    const response = await axios.patch('http://localhost:8000/api/user/renew_submission/' + user['username'])
+
+    const index = _.indexOf(users_verify.value, user)
+    const submission_num = [10, 30, 100][user['usertype']]
+    users_verify.value[index]['submission_num'] = submission_num
+    localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
+
+    after_create.value = [user['username'], user['email'], submission_num]
+    title.value = response.data.success
+    response_status.value = response.status
+
+    } catch (e) {
+    if (typeof e.response === 'undefined') {
+      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      response_status.value = 500
+      title.value = 'Problem z serwerem'
+    } else {
+      const error_response = e.response
+      after_create.value = error_response.data.error
+      response_status.value = error_response.status
+      title.value = 'Problem z odnowieniem prób'
+    }
+  }
 }
 
 const setPolishModel = () => {
@@ -39,11 +123,10 @@ const setEnglishModel = () => {
   choose_english.value = !choose_english.value
   models.value[1] = choose_english.value ? 'bert-large' : 'bert-base'
   localStorage.setItem('choosen_models', JSON.stringify(models.value))
-  console.log(JSON.parse(localStorage.getItem('choosen_models')))
 }
 
 onMounted(() => {
-  if (user.value['usertype'] === 2) {
+  if (logged_user.value['usertype'] === 2) {
     users_verify.value = JSON.parse(localStorage.getItem('users_verify'))
   } else {
     users_verify.value = []
@@ -52,7 +135,6 @@ onMounted(() => {
   if (JSON.parse(localStorage.getItem('choosen_models')) === null) {
     localStorage.setItem('choosen_models', JSON.stringify(models.value))
   } else {
-    console.log(JSON.parse(localStorage.getItem('choosen_models')))
     models.value = JSON.parse(localStorage.getItem('choosen_models'))
     choose_polish.value = models.value[0] !== 'roberta-base'
     choose_english.value = models.value[1] !== 'bert-base'
@@ -61,14 +143,29 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="left-part">
+
+  <ResponseOutput
+      v-model:response_status="response_status"
+      v-model:after_create="after_create"
+      v-if="response_status >= 200"
+      :title="title"
+  ></ResponseOutput>
+
+  <UpdateAccount
+      v-if="show_update_form"
+  ></UpdateAccount>
+
+  <div class="left-part" :style="{
+    opacity: response_status < 200 ? '1' : '0.3',
+    pointerEvents: response_status < 200 ? 'auto' : 'none'
+  }" v-else>
     <div class="header">
-      <h3>Witaj {{ user['username'] }}!</h3>
-      <div class="info">{{ user['name'] }}</div>
-      <div class="info">{{ user['email'] }}</div>
-      <div class="info">{{ usertypes[user['usertype']] }}</div>
-      <div class="info">{{ user['submission_num'] }}</div>
-      <button type="button" class="logout" @click="logoutUser()">Wyloguj się</button>
+      <h3>Witaj {{ logged_user['username'] }}!</h3>
+      <div class="info">{{ logged_user['name'] }}</div>
+      <div class="info">{{ logged_user['email'] }}</div>
+      <div class="info">{{ usertypes[logged_user['usertype']] }}</div>
+      <div class="info">{{ logged_user['submission_num'] }}</div>
+      <button type="button" class="logout" @click="logoutUser">Wyloguj się</button>
     </div>
     <div class="model-config">
       <h3>Konfiguracja modelu</h3>
@@ -78,7 +175,7 @@ onMounted(() => {
           <div
               class="toggle-button"
               :style="{ justifyContent: choose_polish ? 'start' : 'end' }"
-              @click="setPolishModel()">
+              @click="setPolishModel">
             <div class="circle" :style="{
               backgroundImage: `url(${polish})`,
               backgroundRepeat: 'no-repeat',
@@ -89,7 +186,7 @@ onMounted(() => {
           <div
               class="toggle-button"
               :style="{ justifyContent: choose_english ? 'start' : 'end' }"
-              @click="setEnglishModel()">
+              @click="setEnglishModel">
             <div class="circle" :style="{
               backgroundImage: `url(${english})`,
               backgroundRepeat: 'no-repeat',
@@ -113,27 +210,66 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <div class="verify" v-if="$cookies.get('user')['usertype'] === 2">
+    <div class="users" v-if="$cookies.get('user')['usertype'] === 2">
       <h3>Użytkownicy do zweryfikowania</h3>
+      <div class="header-user-verify">
+        <div class="field">Nazwa</div>
+        <div class="field">Adres email</div>
+        <div class="field">Typ konta</div>
+        <div class="field">Liczba prób</div>
+        <div class="field">Zweryfikuj</div>
+        <div class="field">Odnów próby</div>
+      </div>
       <div class="u-verify">
-        <div class="user-verify" v-for="(item, i) in users_verify" :key="i">
-          <div class="field" v-for="(el, j) in item" :key="j">
-            <span v-if="j !== 'usertype'">{{ el }}</span>
-            <span v-else>{{ usertypes[el] }}</span>
+        <div class="user-verify" v-for="user in users_verify" :key="user">
+          <div class="field">
+            <span>{{ user['username'] }}</span>
+          </div>
+          <div class="field">
+            <span>{{ user['email'] }}</span>
+          </div>
+          <div class="field">
+            <span>{{ usertypes[user['usertype']] }}</span>
+          </div>
+          <div class="field">
+            <span>{{ user['submission_num'] }}</span>
+          </div>
+          <div class="field">
+            <button type="button" class="verify" @click="verifyUser(user)" :style="{
+              opacity: !user['is_verified'] ? '1' : '0.3',
+              pointerEvents: !user['is_verified'] ? 'auto' : 'none'
+            }">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/>
+              </svg>
+            </button>
+            <button type="button" class="renew" @click="renewSubmission(user)" :style="{
+              opacity: user['submission_num'] !== [10, 30, 100][user['usertype']] ? '1' : '0.3',
+              pointerEvents: user['submission_num'] !== [10, 30, 100][user['usertype']] ? 'auto' : 'none'
+            }">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path d="M105.1 202.6c7.7-21.8 20.2-42.3 37.8-59.8c62.5-62.5 163.8-62.5 226.3 0L386.3 160 352 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l111.5 0c0 0 0 0 0 0l.4 0c17.7 0 32-14.3 32-32l0-112c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 35.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5zM39 289.3c-5 1.5-9.8 4.2-13.7 8.2c-4 4-6.7 8.8-8.1 14c-.3 1.2-.6 2.5-.8 3.8c-.3 1.7-.4 3.4-.4 5.1L16 432c0 17.7 14.3 32 32 32s32-14.3 32-32l0-35.1 17.6 17.5c0 0 0 0 0 0c87.5 87.4 229.3 87.4 316.7 0c24.4-24.4 42.1-53.1 52.9-83.8c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.5 62.5-163.8 62.5-226.3 0l-.1-.1L125.6 352l34.4 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L48.4 288c-1.6 0-3.2 .1-4.8 .3s-3.1 .5-4.6 1z"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
     </div>
     <div class="buttons">
-      <button type="button" @click="go = 1" class="update">Zmień dane</button>
-      <button type="button" @click="go = 2" class="delete">Usuń konto</button>
+      <button type="button" @click="show_update_form = true" class="update">Zmień dane</button>
+      <button type="button" @click="deleteUser" class="delete">Usuń konto</button>
       <RouterLink to="/" class="router-link">Wróć do strony głównej</RouterLink>
     </div>
   </div>
 </template>
 
 <style scoped>
-.history, .verify {
+svg {
+  width: 100%;
+  height: 100%;
+}
+
+.history, .users {
   border-top: 2px solid black;
   height: 60%;
   display: flex;
@@ -152,9 +288,9 @@ onMounted(() => {
   overflow-y: auto;
 }
 
-.history-submission, .user-verify {
+.history-submission, .user-verify, .header-user-verify {
   width: 90%;
-  min-height: 40%;
+  min-height: 50%;
   margin: 1rem 0 1rem 0;
   display: flex;
   flex-direction: row;
@@ -165,10 +301,22 @@ onMounted(() => {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
 }
 
+.header-user-verify {
+  width: 95%;
+  min-height: 20%;
+}
+
 .field {
   width: 40%;
   height: 80%;
   font-size: 1.5vw;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.field button {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -234,7 +382,12 @@ onMounted(() => {
   height: 60%;
 }
 
-.update, .delete, .logout, .details {
+.verify, .renew {
+  width: 50%;
+  height: 50%;
+}
+
+.update, .delete, .logout, .details, .verify, .renew {
   text-decoration: none;
   text-align: center;
   align-content: center;
@@ -246,13 +399,13 @@ onMounted(() => {
   border-radius: 1rem;
 }
 
-.update:hover, .delete:hover, .logout:hover, .details:hover {
+.update:hover, .delete:hover, .logout:hover, .details:hover, .verify:hover, .renew:hover {
   color: white;
   border: 2px solid white;
   box-shadow: 1rem 1rem dodgerblue;
 }
 
-.update:hover {
+.update:hover, .verify:hover {
   background-color: darkgreen;
 }
 
@@ -260,11 +413,11 @@ onMounted(() => {
   background-color: darkred;
 }
 
-.logout:hover, .details:hover {
+.logout:hover, .details:hover, .renew:hover {
   background-color: darkgrey;
 }
 
-.update {
+.update, .verify {
   border: 2px solid green;
   color: green;
 }
@@ -274,7 +427,7 @@ onMounted(() => {
   color: red;
 }
 
-.logout, .details {
+.logout, .details, .renew {
   border: 2px solid black;
   color: black;
 }
