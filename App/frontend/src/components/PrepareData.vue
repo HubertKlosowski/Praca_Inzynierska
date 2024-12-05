@@ -29,15 +29,13 @@ const makePredictions = async () => {
     if (extension !== 'csv' && extension !== 'json') {
       console.log('BŁĄD!! Plik musi być w rozszerzeniu csv lub json.')
       data.value = null
-    } else if (data.value.size > 150000 && !$cookies.isKey('user')) {
-      console.log('BŁĄD!! Plik musi mniejszy od 150KB.')
+    } else if (data.value.size > 10000 && !$cookies.isKey('user')) {
+      console.log('BŁĄD!! Plik musi mniejszy od 100KB.')
       data.value = null
     }
-    form_data.append('file', data.value)
-  } else {
-    form_data.append('entry', data.value)
   }
 
+  form_data.append('content', data.value)
   form_data.append('pl_model', models.value[0])
   form_data.append('en_model', models.value[1])
 

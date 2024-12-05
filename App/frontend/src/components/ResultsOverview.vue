@@ -30,7 +30,7 @@ const hardToAccess = () => {
       Użytkownik: {{ submission['user'] }}
     </div>
     <div class="info">
-      Nazwa modelu: {{ submission['llm_model'] }}
+      Nazwa modelu: {{ submission['model'] }}
     </div>
   </div>
 </template>

@@ -31,6 +31,7 @@ const createAccount = async () => {
     response_status.value = response.status
 
     resetInputs()
+
   } catch (e) {
     if (typeof e.response === 'undefined') {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
@@ -81,7 +82,7 @@ const resetInputs = () => {
         <FormTextField
             v-model:input_value="name"
             :label_info="'imię i nazwisko'"
-            :input_placeholder="'imie i nazwisko'"
+            :input_placeholder="'Imię i nazwisko'"
             :label_name="'name'"
         ></FormTextField>
 

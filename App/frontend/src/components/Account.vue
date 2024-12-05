@@ -26,10 +26,9 @@ const title = ref('')
 const response_status = ref(0)
 
 const logoutUser = async () => {
-  if (logged_user.value['usertype'] === 2)
-    localStorage.removeItem('users_verify')
   $cookies.remove('user')
-  localStorage.removeItem('submissions')
+  localStorage.clear()
+  $cookies.remove('made_submission')
   await router.push('/')
 }
 

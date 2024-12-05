@@ -1,4 +1,5 @@
 import smtplib
+from io import BytesIO
 
 import pandas as pd
 from django.conf import settings
@@ -8,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.template import loader
 from django.utils import timezone
+from django.core.files import File
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
@@ -17,6 +19,8 @@ from model.model_datasets import preprocess_dataset, detect_lang
 from model.model_datasets import predict
 from .models import User, Submission
 from .serializer import UserSerializer, SubmissionSerializer
+import string
+import random
 
 
 @api_view(['POST'])
@@ -24,23 +28,24 @@ def create_user(request):
     # sprawdzenie czy wartości pól są puste
     if any(len(str(el)) == 0 for el in request.data.values()):
         return Response({
-            'error': ['BŁĄD!! Żadne pole nie może być puste.']
+            'error': ['Żadne pole nie może być puste.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # jeśli użytkownik już istnieje
     if User.objects.filter(username=request.data['username']).exists():
         return Response({
-            'error': ['BŁĄD!! Użytkownik o podanej nazwie już istnieje.']
+            'error': ['Użytkownik o podanej nazwie już istnieje.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # jesli email już jest na kogoś innego zarejestrowany
     if User.objects.filter(email=request.data['email']).exists():
         return Response({
-            'error': ['BŁĄD!! Użytkownik o podanym adresie email już istnieje.']
+            'error': ['Użytkownik o podanym adresie email już istnieje.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # walidacja hasła
     data = request.data.copy()
+
     try:
         validate_password(data['password'])
     except ValidationError as e:
@@ -75,9 +80,9 @@ def create_user(request):
 
         try:
             email.send()
-        except smtplib.SMTPException as e:
+        except smtplib.SMTPException:
             return Response({
-                'error': ['BŁĄD!! Nie udało się wysłać wiadomości potwierdzającej dodanie konto.']
+                'error': ['Nie udało się wysłać wiadomości potwierdzającej dodanie konto.']
             }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
@@ -101,19 +106,19 @@ def login_user(request):
 
     if len(username) == 0 or len(password) == 0:
         return Response({
-            'error': ['BŁĄD!! Żadne pole nie może być puste.']
+            'error': ['Żadne pole nie może być puste.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     if not User.objects.filter(username=username).exists():
         return Response({
-            'error': [f'BŁĄD!! Użytkownik o nazwie {username} nie istnieje.']
+            'error': [f'Użytkownik o nazwie {username} nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
     user = User.objects.get(username=username)
 
     if not user.is_verified:
         return Response({
-            'error': [f'BŁĄD!! Użytkownik o nazwie {username} nie został zweryfikowany.  Proszę skontaktować się z administratorem.']
+            'error': [f'Użytkownik o nazwie {username} nie został zweryfikowany.  Proszę skontaktować się z administratorem.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     if check_password(password, user.password):
@@ -127,7 +132,7 @@ def login_user(request):
         )
 
     return Response({
-        'error': ['BŁĄD!! Niepoprawne hasło.']
+        'error': ['Niepoprawne hasło.']
     }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -135,7 +140,7 @@ def login_user(request):
 def delete_user(request, username):
     if not User.objects.filter(username=username).exists():
         return Response({
-            'error': [f'BŁĄD!! Użytkownik o nazwie {username} nie istnieje.']
+            'error': [f'Użytkownik o nazwie {username} nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
     user = User.objects.get(username=username)
@@ -157,9 +162,9 @@ def delete_user(request, username):
 
     try:
         email.send()
-    except smtplib.SMTPException as e:
+    except smtplib.SMTPException:
         return Response({
-            'error': ['BŁĄD!! Nie udało się wysłać wiadomości potwierdzającej usunięcie konta.']
+            'error': ['Nie udało się wysłać wiadomości potwierdzającej usunięcie konta.']
         }, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({
@@ -172,19 +177,19 @@ def delete_user(request, username):
 def update_user(request, username):
     if not User.objects.filter(username=username).exists():
         return Response({
-            'error': ['BŁĄD!! Użytkownik nie istnieje.']
+            'error': ['Użytkownik nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
     data = request.data
 
     if {'username', 'email', 'name', 'password'} in set(data.keys()):
         return Response({
-            'error': ['BŁĄD!! Można tylko zmienić tylko nazwę użytkownika, email, imię i hasło.']
+            'error': ['Można tylko zmienić tylko nazwę użytkownika, email, imię i hasło.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     if all(len(el) == 0 for el in data.values()) or len(data.keys()) == 0:
         return Response({
-            'error': ['BŁĄD!! Żadne pole nie może być puste.']
+            'error': ['Żadne pole nie może być puste.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     user = User.objects.get(username=username)
@@ -213,7 +218,7 @@ def update_user(request, username):
 def verify_user(request, username):
     if not User.objects.filter(username=username).exists():
         return Response({
-            'error': ['BŁĄD!! Użytkownik nie istnieje.']
+            'error': ['Użytkownik nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
     user = User.objects.get(username=username)
@@ -232,7 +237,7 @@ def verify_user(request, username):
 def renew_submission(request, username):
     if not User.objects.filter(username=username).exists():
         return Response({
-            'error': ['BŁĄD!! Użytkownik nie istnieje.']
+            'error': ['Użytkownik nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
     user = User.objects.get(username=username)
@@ -252,55 +257,48 @@ def renew_submission(request, username):
 @parser_classes([MultiPartParser])
 def make_submission(request):
     data = request.data.copy()
-    # Pola file i entry muszą być w request, ale nie muszą mieć wartości
-    if 'file' not in data.keys() and 'entry' not in data.keys():
+
+    # Pola text muszą być w request
+    if 'content' not in data.keys():
         return Response({
-            'error': ['BŁĄD!! Pola \"file\" i \"entry\" muszą być podane.']
+            'error': ['Pola \"content\" musi być podane.']
         }, status=status.HTTP_400_BAD_REQUEST)
 
     time_start = timezone.now()
 
     if request.FILES:
-        file_size = request.FILES['file'].size
-        if data['usertype'] == 0 and file_size >= 2e5:
+        file_size = request.FILES['content'].size
+
+        if file_size >= 2e5:
             return Response({
-                'error': [f'BŁĄD!! Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 20KB']
-            }, status=status.HTTP_400_BAD_REQUEST)
-        elif data['usertype'] == 1 and file_size >= 1e6:
-            return Response({
-                'error': [f'BŁĄD!! Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 100KB']
-            }, status=status.HTTP_400_BAD_REQUEST)
-        elif data['usertype'] == 2 and file_size >= 1e7:
-            return Response({
-                'error': [f'BŁĄD!! Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 1MB']
+                'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 20KB']
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        extension = request.FILES['file'].name.split('.')[-1]
+        extension = request.FILES['content'].name.split('.')[-1]
 
         if extension != 'csv' and extension != 'json':
             return Response({
-                'error': ['BŁĄD!! Plik musi być w rozszerzeniu csv lub json.']
+                'error': ['Plik musi być w rozszerzeniu csv lub json.']
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # BARDZO WAŻNE !!!!!!!!!!!!!!!!!!!!!!
-        my_file = request.FILES['file'].file
+        my_file = request.FILES['content'].file
         my_file.seek(0)
 
         df = pd.read_csv(my_file) if extension == 'csv' else pd.read_json(my_file)
 
         if 'text' not in df.columns.tolist():
             return Response({
-                'error': ['BŁĄD!! Plik musi zawierać kolumnę \"text\".']
+                'error': ['Plik musi zawierać kolumnę \"text\".']
             }, status=status.HTTP_400_BAD_REQUEST)
 
     else:
-        df = pd.DataFrame(data={'text': [request.data['entry']]})
+        df = pd.DataFrame(data={'text': [data['content']]})
 
     lang = detect_lang(df)
 
     model = data['pl_model'] if lang == 'pl' else data['en_model']
     # path = f'D:/{model}'
-
     path = f'depression-detect/{model}'
 
     prepared = preprocess_dataset(df.copy(deep=True), lang=lang)
@@ -310,20 +308,47 @@ def make_submission(request):
         data['time_taken'] = (timezone.now() - time_start).total_seconds()
     except Exception as e:
         return Response({
-            'error': [f'BŁĄD!! {str(e)}']
+            'error': [f' xd {str(e)}']
         }, status=status.HTTP_404_NOT_FOUND)
 
     if 'user' in data.keys():
-        data.pop('pl_model', None)
-        data.pop('en_model', None)
-        data['llm_model'] = model
-
         if not User.objects.filter(username=data['user']).exists():
             return Response({
-                'error': ['BŁĄD!! Użytkownik nie istnieje.']
+                'error': ['Użytkownik nie istnieje.']
             }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
         user = User.objects.get(username=data['user'])
+
+        if request.FILES:
+            file_size = request.FILES['content'].size
+
+            if user.usertype == 0 and file_size >= 2e5:
+                return Response({
+                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 20KB']
+                }, status=status.HTTP_400_BAD_REQUEST)
+            elif user.usertype == 1 and file_size >= 1e6:
+                return Response({
+                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 100KB']
+                }, status=status.HTTP_400_BAD_REQUEST)
+            elif user.usertype == 2 and file_size >= 1e7:
+                return Response({
+                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 1MB']
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        data.pop('pl_model', None)
+        data.pop('en_model', None)
+        data['model'] = model
+
+        concated = pd.concat([df, stats], axis=1)
+        buffer = BytesIO()
+        concated.to_csv(buffer, index=False)
+        buffer.seek(0)
+        file_name = ''.join(random.choices(string.ascii_letters, k=25))
+        file_name = f'{file_name}.csv'
+
+        result_file = File(buffer, name=file_name)
+
+        data['content'] = result_file
         data['user'] = user.id
 
         serializer = SubmissionSerializer(data=data)
@@ -333,7 +358,7 @@ def make_submission(request):
 
         if user.submission_num == 0:
             return Response({
-                'error': ['BŁĄD!! Użytkownik nie posiada możliwych prób.']
+                'error': ['Użytkownik nie posiada wolnych prób.']
             }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
         user.submission_num -= 1
@@ -344,8 +369,7 @@ def make_submission(request):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-    data.pop('file', None)
-    data.pop('entry', None)
+    data.pop('content', None)
 
     return Response({
         'success': 'Udało się przesłać dane.',
@@ -353,8 +377,3 @@ def make_submission(request):
         'text': df['text'],
         'submission': data
     }, status=status.HTTP_201_CREATED)
-
-
-@api_view(['GET'])
-def get_user_submissions(user_id):
-    pass
