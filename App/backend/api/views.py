@@ -127,9 +127,8 @@ def login_user(request):
         return Response({
             'submissions': user_submissions,
             'user': UserSerializer(user).data,
-            'success': 'Udało się zalogować.'},
-            status=status.HTTP_200_OK
-        )
+            'success': 'Poprawne logowanie.'
+        }, status=status.HTTP_200_OK)
 
     return Response({
         'error': ['Niepoprawne hasło.']
@@ -392,7 +391,6 @@ def make_submission(request):
 def get_submission(request, sub_uuid):
     submission = Submission.objects.get(id=sub_uuid)
 
-    print(submission)
     try:
         results = pd.read_csv(submission.content.path)
     except FileNotFoundError as e:

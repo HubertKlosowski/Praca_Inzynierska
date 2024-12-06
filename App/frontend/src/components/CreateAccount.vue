@@ -5,6 +5,7 @@ import FormRadioField from "@/components/FormRadioField.vue";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import axios from "axios";
 
+
 const name = ref('')
 const username = ref('')
 const email = ref('')
@@ -16,6 +17,7 @@ const title = ref('')
 const subtitle = ref('')
 const response_status = ref(0)
 const show_password = ref(false)
+
 
 const createAccount = async () => {
   try {

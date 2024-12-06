@@ -11,7 +11,7 @@ import UpdateAccount from "@/components/UpdateAccount.vue";
 const router = useRouter()
 const $cookies = inject('$cookies')
 
-const logged_user = ref($cookies.get('user'))
+const user = ref(JSON.parse(localStorage.getItem('user')))
 const usertypes = ['Normal', 'Pro', 'Administrator']
 
 const show_update_form = ref(false)
@@ -27,7 +27,6 @@ const subtitle = ref('')
 const response_status = ref(0)
 
 const logoutUser = async () => {
-  $cookies.remove('user')
   localStorage.clear()
   $cookies.remove('made_submission')
   await router.push('/')
@@ -35,9 +34,9 @@ const logoutUser = async () => {
 
 const deleteUser = async () => {
   try {
-    const response = await axios.delete('http://localhost:8000/api/user/delete_user/' + logged_user.value['username'])
+    const response = await axios.delete('http://localhost:8000/api/user/delete_user/' + user.value['username'])
 
-    after_create.value = [logged_user.value['username'], logged_user.value['email']]
+    after_create.value = [user.value['username'], user.value['email']]
     title.value = response.data.success
     subtitle.value = 'Użytkownik poprawnie usunięty.'
     response_status.value = response.status
@@ -136,6 +135,7 @@ const showDetails = async (submission) => {
 
     localStorage.setItem('depressed', JSON.stringify(response.data['depressed']))
     localStorage.setItem('text', JSON.stringify(response.data['text']))
+    localStorage.setItem('choosen_submission', JSON.stringify(submission))
 
     await router.push('/predict')
 
@@ -156,7 +156,7 @@ const showDetails = async (submission) => {
 }
 
 onMounted(() => {
-  if (logged_user.value['usertype'] === 2) {
+  if (user.value['usertype'] === 2) {
     users_verify.value = JSON.parse(localStorage.getItem('users_verify'))
   } else {
     users_verify.value = []
@@ -191,11 +191,11 @@ onMounted(() => {
     pointerEvents: response_status < 200 ? 'auto' : 'none'
   }" v-else>
     <div class="header">
-      <h3>Witaj {{ logged_user['username'] }}!</h3>
-      <div class="info">{{ logged_user['name'] }}</div>
-      <div class="info">{{ logged_user['email'] }}</div>
-      <div class="info">{{ usertypes[logged_user['usertype']] }}</div>
-      <div class="info">{{ logged_user['submission_num'] }}</div>
+      <h3>Witaj {{ user['username'] }}!</h3>
+      <div class="info">{{ user['name'] }}</div>
+      <div class="info">{{ user['email'] }}</div>
+      <div class="info">{{ usertypes[user['usertype']] }}</div>
+      <div class="info">{{ user['submission_num'] }}</div>
       <button type="button" class="logout" @click="logoutUser">Wyloguj się</button>
     </div>
     <div class="model-config">
@@ -247,7 +247,7 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <div class="users" v-if="$cookies.get('user')['usertype'] === 2">
+    <div class="users" v-if="user['usertype'] === 2">
       <h3>Użytkownicy do zweryfikowania</h3>
       <div class="header-user-verify">
         <div class="field">Nazwa</div>

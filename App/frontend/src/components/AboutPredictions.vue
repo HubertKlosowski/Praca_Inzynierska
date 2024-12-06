@@ -1,10 +1,11 @@
 <script setup>
-import {inject} from "vue";
+import {inject, ref} from "vue";
 
 const $cookies = inject('$cookies')
+const user = ref(JSON.parse(localStorage.getItem('user')))
 
 const checkUser = () => {
-  return !(!$cookies.isKey('user') && $cookies.isKey('made_submission'))
+  return !(user === null && $cookies.isKey('made_submission'))
 }
 </script>
 

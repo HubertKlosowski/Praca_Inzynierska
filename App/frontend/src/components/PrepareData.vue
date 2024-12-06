@@ -4,6 +4,12 @@ import {useRouter} from "vue-router";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 
+
+const router = useRouter()
+const $cookies = inject('$cookies')
+
+const show_loading_screen = defineModel('show_loading_screen')
+const user = ref(JSON.parse(localStorage.getItem('user')))
 const choose = ref(true)
 const data = ref(null)
 const is_dragging = ref(false)
@@ -13,10 +19,7 @@ const after_create = ref({})
 const title = ref('')
 const subtitle = ref('')
 const response_status = ref(0)
-const show_loading_screen = defineModel('show_loading_screen')
 
-const router = useRouter()
-const $cookies = inject('$cookies')
 
 const makePredictions = async () => {
   let form_data = new FormData()
@@ -35,7 +38,7 @@ const makePredictions = async () => {
       title.value = 'Problem z podanymi danymi'
       subtitle.value = 'Nieprawidłowe rozszerzenie pliku. Proszę poprawić nazwę pliku i spróbować ponownie go przesłać.'
       return
-    } else if (data.value.size > 10000 && !$cookies.isKey('user')) {
+    } else if (data.value.size > 10000 && user.value === null) {
       data.value = null
       after_create.value = ['Limit wielkości pliku dla gościa wynosi 100KB.']
       response_status.value = 403
@@ -49,8 +52,8 @@ const makePredictions = async () => {
   form_data.append('pl_model', models.value[0])
   form_data.append('en_model', models.value[1])
 
-  if ($cookies.isKey('user'))
-    form_data.append('user', $cookies.get('user')['id'])
+  if (user.value !== null)
+    form_data.append('user', user.value['id'])
 
   show_loading_screen.value = true
 
@@ -63,16 +66,15 @@ const makePredictions = async () => {
     localStorage.setItem('depressed', JSON.stringify(response.data['depressed']))
     localStorage.setItem('text', JSON.stringify(response.data['text']))
 
-    if ($cookies.isKey('user')) {
+    if (user.value !== null) {
       // dodanie do histori predykcji ostatniego submission
       let previous_subs =  JSON.parse(localStorage.getItem('history_submissions'))
       previous_subs.unshift(response.data['submission'])
       localStorage.setItem('history_submissions', JSON.stringify(previous_subs))
 
       // aktualizacja danych usera
-      let user = $cookies.get('user')
-      user['submission_num'] -= 1
-      $cookies.set('user', user)
+      user.value['submission_num'] -= 1
+      localStorage.setItem('user', JSON.stringify(user))
     }
 
     $cookies.set('made_submission', true)
@@ -113,7 +115,7 @@ const getFile = () => {
 }
 
 onMounted(() => {
-  if (!$cookies.isKey('user')) {
+  if (user.value === null) {
     localStorage.setItem('choosen_models', JSON.stringify(models.value))
   } else {
     models.value = JSON.parse(localStorage.getItem('choosen_models'))

@@ -1,23 +1,23 @@
 <script setup>
-import {inject, ref} from "vue";
+import {ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import axios from "axios";
 import _ from "lodash";
 
-const $cookies = inject('$cookies')
 
 const show_password = ref(false)
 const name = ref('')
 const username = ref('')
 const email = ref('')
 const password = ref('')
-const logged_user = $cookies.get('user')
+const logged_user = ref(JSON.parse(localStorage.getItem('user')))
 
 const after_create = ref({})
 const title = ref('')
 const subtitle = ref('')
 const response_status = ref(0)
+
 
 const updateAccount = async () => {
   try {
@@ -27,7 +27,6 @@ const updateAccount = async () => {
       username: username.value,
       password: password.value
     }
-
     new_user = _.pickBy(new_user, value => value && value.length > 0)
 
     const response = await axios.patch('http://localhost:8000/api/user/update_user/' + logged_user['username'], new_user)
@@ -37,9 +36,9 @@ const updateAccount = async () => {
     subtitle.value = ''
     response_status.value = response.status
 
-    $cookies.set('user', after_create.value)
-
+    localStorage.setItem('user', JSON.stringify(after_create.value))
     resetInputs()
+
   } catch (e) {
     if (typeof e.response === 'undefined') {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']

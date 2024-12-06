@@ -2,9 +2,12 @@
 import _ from "lodash";
 import {ref} from "vue";
 
+
 const stats = ref(JSON.parse(localStorage.getItem('depressed')))
 const text = ref(JSON.parse(localStorage.getItem('text')))
-const submission = ref(JSON.parse(localStorage.getItem('history_submissions'))[0])
+const submission = ref(JSON.parse(localStorage.getItem('choosen_submission')))
+const user = ref(JSON.parse(localStorage.getItem('user')))
+
 
 const hardToAccess = () => {
   const results = stats.value
@@ -33,7 +36,7 @@ const hardToAccess = () => {
       Brak "trudnych" rekordów
     </div>
     <div class="info">
-      Użytkownik: {{ $cookies.get('user')['username'] }}
+      Użytkownik: {{ user['username'] }}
     </div>
     <div class="info">
       Nazwa modelu: {{ submission['model'] }}

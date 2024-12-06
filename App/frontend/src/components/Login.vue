@@ -1,5 +1,5 @@
 <script setup>
-import {inject, ref} from "vue";
+import {ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
@@ -8,12 +8,12 @@ import _ from "lodash";
 
 
 const router = useRouter()
-const $cookies = inject('$cookies')
 
 const username = ref('')
 const password = ref('')
 const users_verify = ref([])
 const show_password = ref(false)
+const user = ref(null)
 
 const after_create = ref({})
 const title = ref('')
@@ -33,11 +33,12 @@ const login = async () => {
     subtitle.value = ''
     response_status.value = response.status
 
-    $cookies.set('user', response.data.user)
+    localStorage.setItem('history_submissions', JSON.stringify(response.data['submissions']))
+    user.value = response.data['user']
 
-    localStorage.setItem('history_submissions', JSON.stringify(response.data.submissions))
+    localStorage.setItem('user', JSON.stringify(user.value))
 
-    if ($cookies.get('user')['usertype'] === 2) {
+    if (user.value['usertype'] === 2) {
       await getUsers()
     }
     resetInputs()
@@ -63,7 +64,7 @@ const getUsers = async () => {
   try {
     const response = await axios.get('http://localhost:8000/api/get_users')
     users_verify.value = _.remove(response.data, function (n) {
-      return n['username'] !== $cookies.get('user')['username']
+      return n['username'] !== user['username']
     })
     localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
   } catch (e) {

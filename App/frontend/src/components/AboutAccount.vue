@@ -1,7 +1,7 @@
 <script setup>
-import {inject} from "vue";
+import {ref} from "vue";
 
-const $cookies = inject('$cookies')
+const user = ref(JSON.parse(localStorage.getItem('user')))
 </script>
 
 <template>
@@ -42,8 +42,8 @@ const $cookies = inject('$cookies')
       </div>
     </div>
     <div class="links">
-      <RouterLink to="/create_account" class="router-link" v-if="!$cookies.isKey('user')">Utwórz konto</RouterLink>
-      <RouterLink to="/login" class="router-link" v-if="!$cookies.isKey('user')">Zaloguj się</RouterLink>
+      <RouterLink to="/create_account" class="router-link" v-if="user === null">Utwórz konto</RouterLink>
+      <RouterLink to="/login" class="router-link" v-if="user === null">Zaloguj się</RouterLink>
       <RouterLink to="/profile" class="router-link" v-else>Twoje konto</RouterLink>
     </div>
   </div>
