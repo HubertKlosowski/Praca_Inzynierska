@@ -269,9 +269,9 @@ def make_submission(request):
     if request.FILES:
         file_size = request.FILES['content'].size
 
-        if file_size >= 2e5:
+        if file_size >= 1e5:
             return Response({
-                'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 20KB']
+                'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000}KB > 100KB']
             }, status=status.HTTP_400_BAD_REQUEST)
 
         extension = request.FILES['content'].name.split('.')[-1]
@@ -299,6 +299,12 @@ def make_submission(request):
 
     model = data['pl_model'] if lang == 'pl' else data['en_model']
     # path = f'D:/{model}'
+
+    if 'user' not in data.keys() and model == 'bert-large' or model == 'roberta-large':
+        return Response({
+            'error': ['Bez konta nie można korzystać z modeli LARGE.']
+        }, status=status.HTTP_400_BAD_REQUEST)
+
     path = f'depression-detect/{model}'
 
     prepared = preprocess_dataset(df.copy(deep=True), lang=lang)
@@ -308,16 +314,29 @@ def make_submission(request):
         data['time_taken'] = (timezone.now() - time_start).total_seconds()
     except Exception as e:
         return Response({
-            'error': [f' xd {str(e)}']
+            'error': [f'{str(e)}']
         }, status=status.HTTP_404_NOT_FOUND)
 
+    data.pop('pl_model', None)
+    data.pop('en_model', None)
+    data['model'] = model
+
+    concated = pd.concat([df, stats], axis=1)
+    buffer = BytesIO()
+    concated.to_csv(buffer, index=False)
+    buffer.seek(0)
+    filename = ''.join(random.choices(string.ascii_letters, k=25))
+    filename = f'{filename}.csv'
+
+    result_file = File(buffer, name=filename)
+
     if 'user' in data.keys():
-        if not User.objects.filter(username=data['user']).exists():
+        if not User.objects.filter(id=data['user']).exists():
             return Response({
                 'error': ['Użytkownik nie istnieje.']
             }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        user = User.objects.get(username=data['user'])
+        user = User.objects.get(id=data['user'])
 
         if request.FILES:
             file_size = request.FILES['content'].size
@@ -335,26 +354,7 @@ def make_submission(request):
                     'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 1MB']
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-        data.pop('pl_model', None)
-        data.pop('en_model', None)
-        data['model'] = model
-
-        concated = pd.concat([df, stats], axis=1)
-        buffer = BytesIO()
-        concated.to_csv(buffer, index=False)
-        buffer.seek(0)
-        file_name = ''.join(random.choices(string.ascii_letters, k=25))
-        file_name = f'{file_name}.csv'
-
-        result_file = File(buffer, name=file_name)
-
         data['content'] = result_file
-        data['user'] = user.id
-
-        serializer = SubmissionSerializer(data=data)
-
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         if user.submission_num == 0:
             return Response({
@@ -366,14 +366,42 @@ def make_submission(request):
         user.save()
 
         serializer = SubmissionSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         serializer.save()
+
+        return Response({
+            'success': 'Poprawnie przeprowadzono obliczenia.',
+            'depressed': stats['depressed'],
+            'text': df['text'],
+            'submission': serializer.data
+        }, status=status.HTTP_201_CREATED)
 
     data.pop('content', None)
 
     return Response({
-        'success': 'Udało się przesłać dane.',
-        'stats': stats,
-        'text': df['text'],
-        'submission': data
+        'success': 'Poprawnie przeprowadzono obliczenia.',
+        'depressed': stats['depressed'],
+        'text': df['text']
     }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def get_submission(request, sub_uuid):
+    submission = Submission.objects.get(id=sub_uuid)
+
+    print(submission)
+    try:
+        results = pd.read_csv(submission.content.path)
+    except FileNotFoundError as e:
+        return Response({
+            'error': [f'Plik z wskazanej próby nie istnieje.']
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    return Response({
+        'success': 'Poprawnie odczytano dane.',
+        'depressed': results['depressed'],
+        'text': results['text'],
+    }, status=status.HTTP_200_OK)

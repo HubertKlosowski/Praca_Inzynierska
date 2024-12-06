@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.utils import timezone
 
@@ -27,14 +29,10 @@ class Submission(models.Model):
         ('roberta-base', 'Roberta Base'),
         ('roberta-large', 'Roberta Large'),
     ]
-    LANGUAGE_CHOICES = [
-        ('en', 'english'),
-        ('pl', 'polish')
-    ]
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=True)
     name = models.CharField(max_length=100, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    language = models.CharField(choices=LANGUAGE_CHOICES, max_length=10)
     created_at = models.DateTimeField(default=timezone.now)
     time_taken = models.FloatField(default=0)
     model = models.CharField(max_length=20, choices=LLM_CHOICES)

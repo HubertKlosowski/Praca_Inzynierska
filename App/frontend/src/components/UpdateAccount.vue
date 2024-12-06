@@ -12,11 +12,12 @@ const name = ref('')
 const username = ref('')
 const email = ref('')
 const password = ref('')
+const logged_user = $cookies.get('user')
 
 const after_create = ref({})
 const title = ref('')
+const subtitle = ref('')
 const response_status = ref(0)
-const logged_user = $cookies.get('user')
 
 const updateAccount = async () => {
   try {
@@ -33,6 +34,7 @@ const updateAccount = async () => {
 
     after_create.value = response.data.user
     title.value = response.data.success
+    subtitle.value = ''
     response_status.value = response.status
 
     $cookies.set('user', after_create.value)
@@ -43,11 +45,13 @@ const updateAccount = async () => {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
       after_create.value = error_response.data.error
       response_status.value = error_response.status
       title.value = 'Problem z podanymi danymi'
+      subtitle.value = 'Dane przekazane do formularza są błędne. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:'
     }
   }
 }
@@ -67,6 +71,7 @@ const resetInputs = () => {
       v-model:after_create="after_create"
       v-if="response_status >= 200"
       :title="title"
+      :subtitle="subtitle"
   ></ResponseOutput>
 
   <div class="left-part" :style="{

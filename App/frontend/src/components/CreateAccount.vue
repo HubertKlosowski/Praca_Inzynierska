@@ -13,6 +13,7 @@ const usertype = ref(0)
 
 const after_create = ref({})
 const title = ref('')
+const subtitle = ref('')
 const response_status = ref(0)
 const show_password = ref(false)
 
@@ -28,8 +29,8 @@ const createAccount = async () => {
 
     after_create.value = response.data.user
     title.value = response.data.success
+    subtitle.value = ''
     response_status.value = response.status
-
     resetInputs()
 
   } catch (e) {
@@ -37,11 +38,13 @@ const createAccount = async () => {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
       after_create.value = error_response.data.error
       response_status.value = error_response.status
       title.value = 'Problem z podanymi danymi'
+      subtitle.value = 'Dane przekazane do formularza są błędne. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:'
     }
   }
 }
@@ -60,8 +63,10 @@ const resetInputs = () => {
   <ResponseOutput
       v-model:response_status="response_status"
       v-model:after_create="after_create"
+      :move_to="'/'"
       v-if="response_status >= 200"
       :title="title"
+      :subtitle="subtitle"
   ></ResponseOutput>
 
   <div class="left-part" :style="{

@@ -11,6 +11,7 @@ const models = ref(['roberta-base', 'bert-base'])
 
 const after_create = ref({})
 const title = ref('')
+const subtitle = ref('')
 const response_status = ref(0)
 const show_loading_screen = defineModel('show_loading_screen')
 
@@ -21,17 +22,26 @@ const makePredictions = async () => {
   let form_data = new FormData()
 
   if (data.value === null) {
-    after_create.value = ['BŁĄD!! Przekazane dane są puste!']
+    after_create.value = ['Przekazane dane są puste!']
     response_status.value = 400
     title.value = 'Problem z podanymi danymi'
+    subtitle.value = 'Modele nie są w stanie pracować na pustych danych. Proszę przesłać plik lub tekst.'
   } else if (typeof data.value === 'object') {
     const extension = data.value.name.split('.')[1]
     if (extension !== 'csv' && extension !== 'json') {
-      console.log('BŁĄD!! Plik musi być w rozszerzeniu csv lub json.')
       data.value = null
+      after_create.value = ['Modele obsługują pliki z rozszerzeniem csv lub json.']
+      response_status.value = 403
+      title.value = 'Problem z podanymi danymi'
+      subtitle.value = 'Nieprawidłowe rozszerzenie pliku. Proszę poprawić nazwę pliku i spróbować ponownie go przesłać.'
+      return
     } else if (data.value.size > 10000 && !$cookies.isKey('user')) {
-      console.log('BŁĄD!! Plik musi mniejszy od 100KB.')
       data.value = null
+      after_create.value = ['Limit wielkości pliku dla gościa wynosi 100KB.']
+      response_status.value = 403
+      title.value = 'Problem z podanymi danymi'
+      subtitle.value = 'Zbyt duży plik. Proszę przesłać plik o mniejszej wielkości.'
+      return
     }
   }
 
@@ -40,21 +50,30 @@ const makePredictions = async () => {
   form_data.append('en_model', models.value[1])
 
   if ($cookies.isKey('user'))
-    form_data.append('user', $cookies.get('user')['username'])
+    form_data.append('user', $cookies.get('user')['id'])
 
   show_loading_screen.value = true
 
   try {
-    const response = await axios.post('http://localhost:8000/api/user/make_submission', form_data, {
+    const response = await axios.post('http://localhost:8000/api/submission/make_submission', form_data, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
-    localStorage.setItem('stats', JSON.stringify(response.data['stats']))
+    localStorage.setItem('depressed', JSON.stringify(response.data['depressed']))
     localStorage.setItem('text', JSON.stringify(response.data['text']))
 
-    if ($cookies.isKey('user') && $cookies.get('user')['id'] !== 0)
-      localStorage.setItem('submission', JSON.stringify(response.data['submission']))
+    if ($cookies.isKey('user')) {
+      // dodanie do histori predykcji ostatniego submission
+      let previous_subs =  JSON.parse(localStorage.getItem('history_submissions'))
+      previous_subs.unshift(response.data['submission'])
+      localStorage.setItem('history_submissions', JSON.stringify(previous_subs))
+
+      // aktualizacja danych usera
+      let user = $cookies.get('user')
+      user['submission_num'] -= 1
+      $cookies.set('user', user)
+    }
 
     $cookies.set('made_submission', true)
 
@@ -69,11 +88,13 @@ const makePredictions = async () => {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
       after_create.value = error_response.data.error
       response_status.value = error_response.status
       title.value = 'Problem z podanymi danymi'
+      subtitle.value = 'Przekazane dane zawierają błędy. Proszę się zapoznać z nimi i spróbować ponownie.'
     }
   }
 }
@@ -107,6 +128,7 @@ onMounted(() => {
       v-model:after_create="after_create"
       v-if="response_status >= 200"
       :title="title"
+      :subtitle="subtitle"
   ></ResponseOutput>
 
   <div class="main" :style="{

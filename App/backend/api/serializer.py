@@ -77,4 +77,4 @@ class UserSerializer(serializers.ModelSerializer):
 class SubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Submission
-        fields = ['name', 'time_taken', 'model', 'content', 'user']
+        fields = '__all__'

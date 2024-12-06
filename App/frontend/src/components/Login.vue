@@ -6,18 +6,20 @@ import ResponseOutput from "@/components/ResponseOutput.vue";
 import {useRouter} from "vue-router";
 import _ from "lodash";
 
-const router = useRouter()
 
+const router = useRouter()
 const $cookies = inject('$cookies')
 
 const username = ref('')
 const password = ref('')
 const users_verify = ref([])
+const show_password = ref(false)
 
 const after_create = ref({})
 const title = ref('')
+const subtitle = ref('')
 const response_status = ref(0)
-const show_password = ref(false)
+
 
 const login = async () => {
   try {
@@ -28,29 +30,31 @@ const login = async () => {
 
     after_create.value = response.data.user
     title.value = response.data.success
+    subtitle.value = ''
     response_status.value = response.status
 
     $cookies.set('user', response.data.user)
 
-    localStorage.setItem('submissions', JSON.stringify(response.data.submissions))
+    localStorage.setItem('history_submissions', JSON.stringify(response.data.submissions))
 
     if ($cookies.get('user')['usertype'] === 2) {
       await getUsers()
     }
-
     resetInputs()
-
     await router.push('/profile')
+
   } catch (e) {
     if (typeof e.response === 'undefined') {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
       after_create.value = error_response.data.error
       response_status.value = error_response.status
       title.value = 'Problem z podanymi danymi'
+      subtitle.value = 'Dane przekazane do formularza są błędne. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:'
     }
   }
 }
@@ -63,7 +67,18 @@ const getUsers = async () => {
     })
     localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
   } catch (e) {
-
+    if (typeof e.response === 'undefined') {
+      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      response_status.value = 500
+      title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
+    } else {
+      const error_response = e.response
+      after_create.value = error_response.data.error
+      response_status.value = error_response.status
+      title.value = 'Problem z dostępem do użytkowników'
+      subtitle.value = 'Podczas zbierania informacji o użytkownikach wystąpił błąd. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:'
+    }
   }
 }
 
@@ -80,6 +95,7 @@ const resetInputs = () => {
       v-model:after_create="after_create"
       v-if="response_status >= 200"
       :title="title"
+      :subtitle="subtitle"
   ></ResponseOutput>
 
   <div class="left-part" :style="{

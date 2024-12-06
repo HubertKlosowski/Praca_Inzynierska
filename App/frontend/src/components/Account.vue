@@ -17,12 +17,13 @@ const usertypes = ['Normal', 'Pro', 'Administrator']
 const show_update_form = ref(false)
 const choose_polish = ref(false)
 const choose_english = ref(false)
-const submissions = ref(JSON.parse(localStorage.getItem('submissions')))
+const history_submissions = ref(JSON.parse(localStorage.getItem('history_submissions')))
 const users_verify = ref([])
 const models = ref(['roberta-base', 'bert-base'])
 
 const after_create = ref({})
 const title = ref('')
+const subtitle = ref('')
 const response_status = ref(0)
 
 const logoutUser = async () => {
@@ -32,16 +33,13 @@ const logoutUser = async () => {
   await router.push('/')
 }
 
-const showDetails = () => {
-
-}
-
 const deleteUser = async () => {
   try {
     const response = await axios.delete('http://localhost:8000/api/user/delete_user/' + logged_user.value['username'])
 
-    after_create.value = [logged_user.value['username'], logged_user.value['email'], 'Użytkownik poprawnie usunięty']
+    after_create.value = [logged_user.value['username'], logged_user.value['email']]
     title.value = response.data.success
+    subtitle.value = 'Użytkownik poprawnie usunięty.'
     response_status.value = response.status
     await logoutUser()
 
@@ -50,11 +48,13 @@ const deleteUser = async () => {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
       after_create.value = error_response.data.error
       response_status.value = error_response.status
       title.value = 'Problem z usunięciem konta'
+      subtitle.value = 'Próba usunięcia konta się nie powiodła. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
     }
   }
 }
@@ -67,8 +67,9 @@ const verifyUser = async (user) => {
     users_verify.value[index]['is_verified'] = true
     localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
 
-    after_create.value = [user['username'], user['email'], 'zweryfikowany']
+    after_create.value = [user['username'], user['email']]
     title.value = response.data.success
+    subtitle.value = 'Użytkownik został zweryfikowany.'
     response_status.value = response.status
 
   } catch (e) {
@@ -76,11 +77,13 @@ const verifyUser = async (user) => {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
       after_create.value = error_response.data.error
       response_status.value = error_response.status
       title.value = 'Problem z weryfikacją'
+      subtitle.value = 'Próba weryfikacji użytkownika się nie powiodła. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
     }
   }
 }
@@ -96,18 +99,21 @@ const renewSubmission = async (user) => {
 
     after_create.value = [user['username'], user['email'], submission_num]
     title.value = response.data.success
+    subtitle.value = 'Liczba prób użytkownika została odnowiona.'
     response_status.value = response.status
 
-    } catch (e) {
+  } catch (e) {
     if (typeof e.response === 'undefined') {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
       after_create.value = error_response.data.error
       response_status.value = error_response.status
       title.value = 'Problem z odnowieniem prób'
+      subtitle.value = 'Próba odnowienia prób użytkownika się nie powiodła. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
     }
   }
 }
@@ -122,6 +128,31 @@ const setEnglishModel = () => {
   choose_english.value = !choose_english.value
   models.value[1] = choose_english.value ? 'bert-large' : 'bert-base'
   localStorage.setItem('choosen_models', JSON.stringify(models.value))
+}
+
+const showDetails = async (submission) => {
+  try {
+    const response = await axios.get('http://localhost:8000/api/submission/get_submission/' + submission['id'])
+
+    localStorage.setItem('depressed', JSON.stringify(response.data['depressed']))
+    localStorage.setItem('text', JSON.stringify(response.data['text']))
+
+    await router.push('/predict')
+
+  } catch (e) {
+    if (typeof e.response === 'undefined') {
+      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      response_status.value = 500
+      title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
+    } else {
+      const error_response = e.response
+      after_create.value = error_response.data.error
+      response_status.value = error_response.status
+      title.value = 'Problem z odczytaniem rezultatów'
+      subtitle.value = 'Podczas szukania rezultatów wystąpił błąd. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
+    }
+  }
 }
 
 onMounted(() => {
@@ -148,6 +179,7 @@ onMounted(() => {
       v-model:after_create="after_create"
       v-if="response_status >= 200"
       :title="title"
+      :subtitle="subtitle"
   ></ResponseOutput>
 
   <UpdateAccount
@@ -199,12 +231,18 @@ onMounted(() => {
     </div>
     <div class="history">
       <h3>Historia predykcji</h3>
+      <div class="header-user-verify">
+        <div class="field">Numer</div>
+        <div class="field">Nazwa</div>
+        <div class="field">Szczegóły</div>
+      </div>
       <div class="h-submissions">
-        <div class="history-submission" v-for="(item, i) in submissions" :key="i">
+        <div class="history-submission" v-for="(item, i) in history_submissions" :key="item">
+          <div class="field" style="width: 10%">{{ i + 1 }}</div>
           <div class="field" v-if="item.name !== null">{{ item.name }}</div>
-          <div class="field" v-if="item.name === null">Brak nazwy</div>
+          <div class="field" v-else>Brak nazwy</div>
           <div class="field">
-            <button type="button" class="details" @click="showDetails">Pokaż szczegóły</button>
+            <button type="button" class="details" @click="showDetails(item)">Pokaż szczegóły</button>
           </div>
         </div>
       </div>
@@ -301,7 +339,7 @@ svg {
 }
 
 .header-user-verify {
-  width: 95%;
+  width: 100%;
   min-height: 20%;
 }
 
@@ -404,6 +442,10 @@ svg {
   box-shadow: 1rem 1rem dodgerblue;
 }
 
+.details:hover, .logout:hover {
+  background-color: black;
+}
+
 .update:hover, .verify:hover {
   background-color: darkgreen;
 }
@@ -412,7 +454,7 @@ svg {
   background-color: darkred;
 }
 
-.logout:hover, .details:hover, .renew:hover {
+.renew:hover {
   background-color: darkgrey;
 }
 

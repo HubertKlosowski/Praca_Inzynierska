@@ -91,6 +91,7 @@ def detect_lang(df: pd.DataFrame) -> str:
     df['text'] = df['text'].apply(lambda x: x.strip())
     df['lang'] = df['text'].apply(lambda x: translator.detect(x).lang)
     langs = df['lang'].value_counts()
+    df.drop(columns=['lang'], inplace=True)
     return langs.idxmax(axis=0)
 
 

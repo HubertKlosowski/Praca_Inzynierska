@@ -2,7 +2,7 @@
 const after_create = defineModel('after_create')
 const response_status = defineModel('response_status')
 
-const props = defineProps(['title'])
+const props = defineProps(['title', 'subtitle'])
 
 const closeWindow = () => {
   after_create.value = {}
@@ -21,9 +21,7 @@ const closeWindow = () => {
       ></div>
     </div>
     <div class="content">
-      <h3 v-if="response_status >= 200 && response_status <= 299">Dane użytkownika</h3>
-      <h3 v-else-if="response_status >= 300 && response_status <= 499">Dane przekazane do formularza są błędne. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:</h3>
-      <h3 v-else>Proszę poczekać, serwer nie jest teraz dostępny.</h3>
+      <h3>{{ props.subtitle }}</h3>
       <ul>
         <li v-for="sentence in after_create" :key="sentence">
           {{ sentence }}

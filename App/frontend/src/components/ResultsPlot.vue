@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import {onMounted, ref} from "vue";
 import _ from "lodash";
 
-const stats = ref(JSON.parse(localStorage.getItem('stats'))['depressed'])
+const stats = ref(JSON.parse(localStorage.getItem('depressed')))
 
 const createHist = (width, height) => {
   const marginTop = 20

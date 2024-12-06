@@ -2,9 +2,9 @@
 import _ from "lodash";
 import {ref} from "vue";
 
-const stats = ref(JSON.parse(localStorage.getItem('stats'))['depressed'])
+const stats = ref(JSON.parse(localStorage.getItem('depressed')))
 const text = ref(JSON.parse(localStorage.getItem('text')))
-const submission = ref(JSON.parse(localStorage.getItem('submission')))
+const submission = ref(JSON.parse(localStorage.getItem('history_submissions'))[0])
 
 const hardToAccess = () => {
   const results = stats.value
@@ -20,14 +20,20 @@ const hardToAccess = () => {
     <div class="info">
       Czas wykonania (s): {{ submission['time_taken'].toFixed(2) }}
     </div>
-    <div class="info">
+    <div class="info" v-if="text.length > 1">
       Liczba rekordów: {{ text.length }}
     </div>
-    <div class="info">
+    <div class="info" v-else>
+      Pojedyńczy wpis
+    </div>
+    <div class="info" v-if="text.length > 1">
       Liczba "trudnych" rekordów : {{ hardToAccess() }}
     </div>
+    <div class="info" v-else>
+      Brak "trudnych" rekordów
+    </div>
     <div class="info">
-      Użytkownik: {{ submission['user'] }}
+      Użytkownik: {{ $cookies.get('user')['username'] }}
     </div>
     <div class="info">
       Nazwa modelu: {{ submission['model'] }}

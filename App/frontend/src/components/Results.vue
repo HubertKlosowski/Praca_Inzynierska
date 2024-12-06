@@ -6,7 +6,7 @@ import _ from "lodash";
 const show = ref(false)
 const sort = ref(0)
 const text = ref(JSON.parse(localStorage.getItem('text')))
-const stats = ref(JSON.parse(localStorage.getItem('stats'))['depressed'])
+const stats = ref(JSON.parse(localStorage.getItem('depressed')))
 
 
 const generateProgressBar = () => {
@@ -26,7 +26,7 @@ const sortByValue = () => {
   } else if (sort.value === 1) {
     concated = _.orderBy(concated, (row) => row[1], ['desc'])
   } else {
-    concated = _.zip(JSON.parse(localStorage.getItem('text')), JSON.parse(localStorage.getItem('stats'))['depressed'])
+    concated = _.zip(JSON.parse(localStorage.getItem('text')), JSON.parse(localStorage.getItem('depressed')))
   }
 
   concated = _.unzip(concated)
