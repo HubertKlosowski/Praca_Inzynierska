@@ -1,5 +1,7 @@
 <script setup>
 import {ref} from "vue";
+import _ from "lodash";
+
 
 const user = ref(JSON.parse(localStorage.getItem('user')))
 </script>
@@ -42,8 +44,8 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
       </div>
     </div>
     <div class="links">
-      <RouterLink to="/create_account" class="router-link" v-if="user === null">Utwórz konto</RouterLink>
-      <RouterLink to="/login" class="router-link" v-if="user === null">Zaloguj się</RouterLink>
+      <RouterLink to="/create_account" class="router-link" v-if="_.isEmpty(user)">Utwórz konto</RouterLink>
+      <RouterLink to="/login" class="router-link" v-if="_.isEmpty(user)">Zaloguj się</RouterLink>
       <RouterLink to="/profile" class="router-link" v-else>Twoje konto</RouterLink>
     </div>
   </div>

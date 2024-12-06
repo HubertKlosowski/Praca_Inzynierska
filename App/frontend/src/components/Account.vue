@@ -8,6 +8,7 @@ import ResponseOutput from "@/components/ResponseOutput.vue";
 import _ from "lodash";
 import UpdateAccount from "@/components/UpdateAccount.vue";
 
+
 const router = useRouter()
 const $cookies = inject('$cookies')
 
@@ -26,8 +27,11 @@ const title = ref('')
 const subtitle = ref('')
 const response_status = ref(0)
 
+
 const logoutUser = async () => {
   localStorage.clear()
+  localStorage.setItem('choosen_models', JSON.stringify(['roberta-base', 'bert-base']))
+  localStorage.setItem('user', JSON.stringify({}))
   $cookies.remove('made_submission')
   await router.push('/')
 }
@@ -155,6 +159,25 @@ const showDetails = async (submission) => {
   }
 }
 
+const setPredictionName = async (submission) => {
+  try {
+    const response = await axios.patch('http://localhost:8000/api/submission/change_name/' + submission['id'])
+  } catch (e) {
+    if (typeof e.response === 'undefined') {
+      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      response_status.value = 500
+      title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
+    } else {
+      const error_response = e.response
+      after_create.value = error_response.data.error
+      response_status.value = error_response.status
+      title.value = 'Problem z zmianą nazwy predykcji'
+      subtitle.value = 'Podczas zmiany nazwy wystąpił błąd. Wynika to z utraty danych o próbie w bazie danych.'
+    }
+  }
+}
+
 onMounted(() => {
   if (user.value['usertype'] === 2) {
     users_verify.value = JSON.parse(localStorage.getItem('users_verify'))
@@ -239,8 +262,8 @@ onMounted(() => {
       <div class="h-submissions">
         <div class="history-submission" v-for="(item, i) in history_submissions" :key="item">
           <div class="field" style="width: 10%">{{ i + 1 }}</div>
-          <div class="field" v-if="item.name !== null">{{ item.name }}</div>
-          <div class="field" v-else>Brak nazwy</div>
+          <div class="field" @click="setPredictionName(item)" v-if="item.name !== null">{{ item.name }}</div>
+          <div class="field" @click="setPredictionName(item)" v-else>Brak nazwy</div>
           <div class="field">
             <button type="button" class="details" @click="showDetails(item)">Pokaż szczegóły</button>
           </div>

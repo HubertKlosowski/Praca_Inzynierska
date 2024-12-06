@@ -3,6 +3,7 @@ import {inject, onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
+import _ from "lodash";
 
 
 const router = useRouter()
@@ -38,7 +39,7 @@ const makePredictions = async () => {
       title.value = 'Problem z podanymi danymi'
       subtitle.value = 'Nieprawidłowe rozszerzenie pliku. Proszę poprawić nazwę pliku i spróbować ponownie go przesłać.'
       return
-    } else if (data.value.size > 10000 && user.value === null) {
+    } else if (data.value.size > 10000 && _.isEmpty(user.value)) {
       data.value = null
       after_create.value = ['Limit wielkości pliku dla gościa wynosi 100KB.']
       response_status.value = 403
@@ -52,8 +53,9 @@ const makePredictions = async () => {
   form_data.append('pl_model', models.value[0])
   form_data.append('en_model', models.value[1])
 
-  if (user.value !== null)
+  if (!_.isEmpty(user.value)) {
     form_data.append('user', user.value['id'])
+  }
 
   show_loading_screen.value = true
 
@@ -66,22 +68,21 @@ const makePredictions = async () => {
     localStorage.setItem('depressed', JSON.stringify(response.data['depressed']))
     localStorage.setItem('text', JSON.stringify(response.data['text']))
 
-    if (user.value !== null) {
+    if (!_.isEmpty(user.value)) {
       // dodanie do histori predykcji ostatniego submission
       let previous_subs =  JSON.parse(localStorage.getItem('history_submissions'))
       previous_subs.unshift(response.data['submission'])
       localStorage.setItem('history_submissions', JSON.stringify(previous_subs))
+      localStorage.setItem('choosen_submission', JSON.stringify(response.data['submission']))
 
       // aktualizacja danych usera
       user.value['submission_num'] -= 1
-      localStorage.setItem('user', JSON.stringify(user))
+      localStorage.setItem('user', JSON.stringify(user.value))
     }
-
     $cookies.set('made_submission', true)
-
     show_loading_screen.value = false
-
     await router.push('/predict')
+
   } catch (e) {
     show_loading_screen.value = false
     data.value = null
@@ -115,7 +116,7 @@ const getFile = () => {
 }
 
 onMounted(() => {
-  if (user.value === null) {
+  if (_.isEmpty(user.value)) {
     localStorage.setItem('choosen_models', JSON.stringify(models.value))
   } else {
     models.value = JSON.parse(localStorage.getItem('choosen_models'))

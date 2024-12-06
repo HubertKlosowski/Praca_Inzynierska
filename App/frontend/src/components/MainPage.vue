@@ -3,10 +3,18 @@ import AboutProject from "@/components/AboutProject.vue";
 import AboutAccount from "@/components/AboutAccount.vue";
 import AboutPredictions from "@/components/AboutPredictions.vue";
 import Menu from "@/components/Menu.vue";
+import _ from "lodash";
 
-import {ref} from "vue";
+import {onMounted, ref} from "vue";
 
 const show_info = ref(1)
+
+onMounted(() => {
+  const user = JSON.parse(localStorage.getItem('user'))
+  if (_.isEmpty(user)) {
+    localStorage.setItem('user', JSON.stringify({}))
+  }
+})
 </script>
 
 <template>

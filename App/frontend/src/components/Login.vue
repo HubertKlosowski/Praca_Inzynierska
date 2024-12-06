@@ -13,7 +13,7 @@ const username = ref('')
 const password = ref('')
 const users_verify = ref([])
 const show_password = ref(false)
-const user = ref(null)
+const user = ref({})
 
 const after_create = ref({})
 const title = ref('')
@@ -64,7 +64,7 @@ const getUsers = async () => {
   try {
     const response = await axios.get('http://localhost:8000/api/get_users')
     users_verify.value = _.remove(response.data, function (n) {
-      return n['username'] !== user['username']
+      return n['username'] !== user.value['username']
     })
     localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
   } catch (e) {

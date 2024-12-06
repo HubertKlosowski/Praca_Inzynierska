@@ -10,8 +10,7 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
 
 
 const hardToAccess = () => {
-  const results = stats.value
-  let res = _.filter(results, function (num) {
+  let res = _.filter(stats, function (num) {
     return num > 0.45 && num < 0.55
   })
   return _.size(res)

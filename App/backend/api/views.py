@@ -21,6 +21,7 @@ from .models import User, Submission
 from .serializer import UserSerializer, SubmissionSerializer
 import string
 import random
+from model.api_keys import save_model_token
 
 
 @api_view(['POST'])
@@ -296,6 +297,11 @@ def make_submission(request):
 
     lang = detect_lang(df)
 
+    if lang != 'en' and lang != 'pl':
+        return Response({
+            'error': ['Wykryty język nie jest obsługiwany. Podaj dane w języku polskim lub angielskim.']
+        }, status=status.HTTP_400_BAD_REQUEST)
+
     model = data['pl_model'] if lang == 'pl' else data['en_model']
     # path = f'D:/{model}'
 
@@ -305,11 +311,10 @@ def make_submission(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     path = f'depression-detect/{model}'
-
     prepared = preprocess_dataset(df.copy(deep=True), lang=lang)
 
     try:
-        stats = predict(path, prepared, False)
+        stats = predict(path, prepared, False, login_token=save_model_token)
         data['time_taken'] = (timezone.now() - time_start).total_seconds()
     except Exception as e:
         return Response({

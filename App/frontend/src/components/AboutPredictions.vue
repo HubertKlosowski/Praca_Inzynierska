@@ -1,12 +1,10 @@
 <script setup>
 import {inject, ref} from "vue";
+import _ from "lodash";
+
 
 const $cookies = inject('$cookies')
 const user = ref(JSON.parse(localStorage.getItem('user')))
-
-const checkUser = () => {
-  return !(user === null && $cookies.isKey('made_submission'))
-}
 </script>
 
 <template>
@@ -32,8 +30,18 @@ const checkUser = () => {
       </div>
     </div>
     <div class="links">
-      <RouterLink to="/phases" class="router-link" v-if="checkUser">Sprawdź posty</RouterLink>
-      <RouterLink to="/predict" class="router-link" v-if="$cookies.isKey('made_submission')">Zobacz predykcje</RouterLink>
+      <RouterLink
+          to="/phases"
+          class="router-link"
+          v-if="
+          (!_.isEmpty(user) && $cookies.isKey('made_submission')) ||
+          (_.isEmpty(user) && !$cookies.isKey('made_submission'))"
+      >Sprawdź posty</RouterLink>
+      <RouterLink
+          to="/predict"
+          class="router-link"
+          v-if="$cookies.isKey('made_submission')"
+      >Zobacz predykcje</RouterLink>
     </div>
   </div>
 </template>
