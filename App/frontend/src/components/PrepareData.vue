@@ -30,6 +30,7 @@ const makePredictions = async () => {
     response_status.value = 400
     title.value = 'Problem z podanymi danymi'
     subtitle.value = 'Modele nie są w stanie pracować na pustych danych. Proszę przesłać plik lub tekst.'
+    return
   } else if (typeof data.value === 'object') {
     const extension = data.value.name.split('.')[1]
     if (extension !== 'csv' && extension !== 'json') {
@@ -235,7 +236,7 @@ form {
   width: 15vw;
   height: 5vw;
   background-color: #ccc;
-  border-radius: 1.5vw;
+  border-radius: 2.5vw;
   display: flex;
   align-items: center;
   cursor: pointer;

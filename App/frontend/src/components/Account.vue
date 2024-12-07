@@ -1,25 +1,24 @@
 <script setup>
-import {inject, onMounted, ref} from "vue";
+import {inject, onMounted, ref, watch} from "vue";
 import polish from "@/assets/polski.png";
 import english from "@/assets/angielski.png";
 import {useRouter} from "vue-router";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
-import _ from "lodash";
-import UpdateAccount from "@/components/UpdateAccount.vue";
+import AdminPanel from "@/components/AdminPanel.vue";
 
 
 const router = useRouter()
 const $cookies = inject('$cookies')
 
 const user = ref(JSON.parse(localStorage.getItem('user')))
-const usertypes = ['Normal', 'Pro', 'Administrator']
+const usertypes = ref(['Normal', 'Pro', 'Administrator'])
 
 const show_update_form = ref(false)
 const choose_polish = ref(false)
 const choose_english = ref(false)
 const history_submissions = ref(JSON.parse(localStorage.getItem('history_submissions')))
-const users_verify = ref([])
+
 const models = ref(['roberta-base', 'bert-base'])
 
 const after_create = ref({})
@@ -58,65 +57,6 @@ const deleteUser = async () => {
       response_status.value = error_response.status
       title.value = 'Problem z usunięciem konta'
       subtitle.value = 'Próba usunięcia konta się nie powiodła. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
-    }
-  }
-}
-
-const verifyUser = async (user) => {
-  try {
-    const response = await axios.patch('http://localhost:8000/api/user/verify_user/' + user['username'])
-
-    const index = _.indexOf(users_verify.value, user)
-    users_verify.value[index]['is_verified'] = true
-    localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
-
-    after_create.value = [user['username'], user['email']]
-    title.value = response.data.success
-    subtitle.value = 'Użytkownik został zweryfikowany.'
-    response_status.value = response.status
-
-  } catch (e) {
-    if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
-      response_status.value = 500
-      title.value = 'Problem z serwerem'
-      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
-    } else {
-      const error_response = e.response
-      after_create.value = error_response.data.error
-      response_status.value = error_response.status
-      title.value = 'Problem z weryfikacją'
-      subtitle.value = 'Próba weryfikacji użytkownika się nie powiodła. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
-    }
-  }
-}
-
-const renewSubmission = async (user) => {
-  try {
-    const response = await axios.patch('http://localhost:8000/api/user/renew_submission/' + user['username'])
-
-    const index = _.indexOf(users_verify.value, user)
-    const submission_num = [10, 30, 100][user['usertype']]
-    users_verify.value[index]['submission_num'] = submission_num
-    localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
-
-    after_create.value = [user['username'], user['email'], submission_num]
-    title.value = response.data.success
-    subtitle.value = 'Liczba prób użytkownika została odnowiona.'
-    response_status.value = response.status
-
-  } catch (e) {
-    if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
-      response_status.value = 500
-      title.value = 'Problem z serwerem'
-      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
-    } else {
-      const error_response = e.response
-      after_create.value = error_response.data.error
-      response_status.value = error_response.status
-      title.value = 'Problem z odnowieniem prób'
-      subtitle.value = 'Próba odnowienia prób użytkownika się nie powiodła. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
     }
   }
 }
@@ -178,13 +118,13 @@ const setPredictionName = async (submission) => {
   }
 }
 
-onMounted(() => {
-  if (user.value['usertype'] === 2) {
-    users_verify.value = JSON.parse(localStorage.getItem('users_verify'))
-  } else {
-    users_verify.value = []
+watch(show_update_form, async () => {
+  if (show_update_form.value === true) {
+    await router.push('/update')
   }
+})
 
+onMounted(() => {
   if (JSON.parse(localStorage.getItem('choosen_models')) === null) {
     localStorage.setItem('choosen_models', JSON.stringify(models.value))
   } else {
@@ -204,10 +144,6 @@ onMounted(() => {
       :title="title"
       :subtitle="subtitle"
   ></ResponseOutput>
-
-  <UpdateAccount
-      v-if="show_update_form"
-  ></UpdateAccount>
 
   <div class="left-part" :style="{
     opacity: response_status < 200 ? '1' : '0.3',
@@ -254,7 +190,7 @@ onMounted(() => {
     </div>
     <div class="history">
       <h3>Historia predykcji</h3>
-      <div class="header-user-verify">
+      <div class="header-history">
         <div class="field">Numer</div>
         <div class="field">Nazwa</div>
         <div class="field">Szczegóły</div>
@@ -270,51 +206,16 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <div class="users" v-if="user['usertype'] === 2">
-      <h3>Użytkownicy do zweryfikowania</h3>
-      <div class="header-user-verify">
-        <div class="field">Nazwa</div>
-        <div class="field">Adres email</div>
-        <div class="field">Typ konta</div>
-        <div class="field">Liczba prób</div>
-        <div class="field">Zweryfikuj</div>
-        <div class="field">Odnów próby</div>
-      </div>
-      <div class="u-verify">
-        <div class="user-verify" v-for="user in users_verify" :key="user">
-          <div class="field">
-            <span>{{ user['username'] }}</span>
-          </div>
-          <div class="field">
-            <span>{{ user['email'] }}</span>
-          </div>
-          <div class="field">
-            <span>{{ usertypes[user['usertype']] }}</span>
-          </div>
-          <div class="field">
-            <span>{{ user['submission_num'] }}</span>
-          </div>
-          <div class="field">
-            <button type="button" class="verify" @click="verifyUser(user)" :style="{
-              opacity: !user['is_verified'] ? '1' : '0.3',
-              pointerEvents: !user['is_verified'] ? 'auto' : 'none'
-            }">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/>
-              </svg>
-            </button>
-            <button type="button" class="renew" @click="renewSubmission(user)" :style="{
-              opacity: user['submission_num'] !== [10, 30, 100][user['usertype']] ? '1' : '0.3',
-              pointerEvents: user['submission_num'] !== [10, 30, 100][user['usertype']] ? 'auto' : 'none'
-            }">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                <path d="M105.1 202.6c7.7-21.8 20.2-42.3 37.8-59.8c62.5-62.5 163.8-62.5 226.3 0L386.3 160 352 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l111.5 0c0 0 0 0 0 0l.4 0c17.7 0 32-14.3 32-32l0-112c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 35.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5zM39 289.3c-5 1.5-9.8 4.2-13.7 8.2c-4 4-6.7 8.8-8.1 14c-.3 1.2-.6 2.5-.8 3.8c-.3 1.7-.4 3.4-.4 5.1L16 432c0 17.7 14.3 32 32 32s32-14.3 32-32l0-35.1 17.6 17.5c0 0 0 0 0 0c87.5 87.4 229.3 87.4 316.7 0c24.4-24.4 42.1-53.1 52.9-83.8c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.5 62.5-163.8 62.5-226.3 0l-.1-.1L125.6 352l34.4 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L48.4 288c-1.6 0-3.2 .1-4.8 .3s-3.1 .5-4.6 1z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+
+    <AdminPanel
+        v-if="user['usertype'] === 2"
+        :usertypes="usertypes"
+        v-model:after_create="after_create"
+        v-model:title="title"
+        v-model:response_status="response_status"
+        v-model:subtitle="subtitle"
+    ></AdminPanel>
+
     <div class="buttons">
       <button type="button" @click="show_update_form = true" class="update">Zmień dane</button>
       <button type="button" @click="deleteUser" class="delete">Usuń konto</button>
@@ -329,7 +230,7 @@ svg {
   height: 100%;
 }
 
-.history, .users {
+.history {
   border-top: 2px solid black;
   height: 60%;
   display: flex;
@@ -338,7 +239,7 @@ svg {
   overflow-y: auto;
 }
 
-.h-submissions, .u-verify {
+.h-submissions {
   width: 100%;
   height: 100%;
   display: flex;
@@ -348,7 +249,7 @@ svg {
   overflow-y: auto;
 }
 
-.history-submission, .user-verify, .header-user-verify {
+.history-submission, .header-history {
   width: 90%;
   min-height: 50%;
   margin: 1rem 0 1rem 0;
@@ -361,7 +262,7 @@ svg {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
 }
 
-.header-user-verify {
+.header-history {
   width: 100%;
   min-height: 20%;
 }
@@ -442,12 +343,7 @@ svg {
   height: 60%;
 }
 
-.verify, .renew {
-  width: 50%;
-  height: 50%;
-}
-
-.update, .delete, .logout, .details, .verify, .renew {
+.update, .delete, .logout, .details {
   text-decoration: none;
   text-align: center;
   align-content: center;
@@ -459,7 +355,7 @@ svg {
   border-radius: 1rem;
 }
 
-.update:hover, .delete:hover, .logout:hover, .details:hover, .verify:hover, .renew:hover {
+.update:hover, .delete:hover, .logout:hover, .details:hover {
   color: white;
   border: 2px solid white;
   box-shadow: 1rem 1rem dodgerblue;
@@ -469,7 +365,7 @@ svg {
   background-color: black;
 }
 
-.update:hover, .verify:hover {
+.update:hover {
   background-color: darkgreen;
 }
 
@@ -477,11 +373,7 @@ svg {
   background-color: darkred;
 }
 
-.renew:hover {
-  background-color: darkgrey;
-}
-
-.update, .verify {
+.update {
   border: 2px solid green;
   color: green;
 }
@@ -491,7 +383,7 @@ svg {
   color: red;
 }
 
-.logout, .details, .renew {
+.logout, .details {
   border: 2px solid black;
   color: black;
 }
@@ -543,7 +435,7 @@ svg {
     border: 2px solid black;
   }
 
-  .model-config, .header, .user-verify {
+  .model-config, .header {
     display: flex;
     flex-direction: column;
     align-items: center;

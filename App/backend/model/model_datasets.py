@@ -315,7 +315,7 @@ def return_pred(model_path: str, dataframe: pd.DataFrame, result_column: str) ->
 # 3) wykrycie depresji w wpisach przetłumaczonych na język angielski:
 #       posiada/nie posiada depresji (LABEL_1, LABEL_0)
 # Ostatecznie podjęty jest wybór, które podgrupy posiadają depresję na podstawie obliczonych składowych
-def get_polish(dataframe: pd.DataFrame) -> pd.DataFrame:
+def tag_polish(dataframe: pd.DataFrame) -> pd.DataFrame:
     # rezultaty GPT2 dla sentymentu
     sentiment = return_pred('nie3e/sentiment-polish-gpt2-large', dataframe, 'sentiment')
 
@@ -490,7 +490,7 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
 # if 'train_polish.csv' in os.listdir(os.path.join('data', 'final')):
 #     train_polish = pd.read_csv(os.path.join('data', 'final', 'train_polish.csv'))
 # else:
-#     train_polish = get_polish(merge_datasets(lang='pl', for_train=False))
+#     train_polish = tag_polish(merge_datasets(lang='pl', for_train=False))
 #     train_polish.to_csv(os.path.join('data', 'final', 'train_polish.csv'), index=False)
 #
 # train_preprocessed_polish = balance_dataset(preprocess_dataset(train_polish, lang='pl')).dropna()

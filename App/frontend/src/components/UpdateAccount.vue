@@ -1,16 +1,21 @@
 <script setup>
-import {ref} from "vue";
+import {reactive, ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import axios from "axios";
 import _ from "lodash";
+import {useRouter} from "vue-router";
 
+
+const router = useRouter()
 
 const show_password = ref(false)
-const name = ref('')
-const username = ref('')
-const email = ref('')
-const password = ref('')
+const new_user = reactive({
+  name: '',
+  username: '',
+  email: '',
+  password: ''
+})
 const logged_user = ref(JSON.parse(localStorage.getItem('user')))
 
 const after_create = ref({})
@@ -21,15 +26,10 @@ const response_status = ref(0)
 
 const updateAccount = async () => {
   try {
-    let new_user = {
-      name: name.value,
-      email: email.value,
-      username: username.value,
-      password: password.value
-    }
-    new_user = _.pickBy(new_user, value => value && value.length > 0)
-
-    const response = await axios.patch('http://localhost:8000/api/user/update_user/' + logged_user['username'], new_user)
+    const response = await axios.patch(
+        'http://localhost:8000/api/user/update_user/' + logged_user['username'],
+        _.pickBy(new_user, value => value && value.length > 0)
+    )
 
     after_create.value = response.data.user
     title.value = response.data.success
@@ -37,6 +37,7 @@ const updateAccount = async () => {
     response_status.value = response.status
 
     localStorage.setItem('user', JSON.stringify(after_create.value))
+    await router.push('/profile')
     resetInputs()
 
   } catch (e) {
@@ -56,10 +57,10 @@ const updateAccount = async () => {
 }
 
 const resetInputs = () => {
-  name.value = ''
-  username.value = ''
-  email.value = ''
-  password.value = ''
+  new_user.name = ''
+  new_user.username = ''
+  new_user.email = ''
+  new_user.password = ''
 }
 </script>
 
@@ -88,28 +89,28 @@ const resetInputs = () => {
       <form @submit.prevent="updateAccount">
 
         <FormTextField
-            v-model:input_value="name"
+            v-model:input_value="new_user.name"
             :label_info="'imię i nazwisko'"
             :input_placeholder="logged_user['name']"
             :label_name="'name'"
         ></FormTextField>
 
         <FormTextField
-            v-model:input_value="username"
+            v-model:input_value="new_user.username"
             :label_info="'nazwę użytkownika'"
             :input_placeholder="logged_user['username']"
             :label_name="'username'"
         ></FormTextField>
 
         <FormTextField
-            v-model:input_value="email"
+            v-model:input_value="new_user.email"
             :label_info="'email'"
             :input_placeholder="logged_user['email']"
             :label_name="'email'"
         ></FormTextField>
 
         <FormTextField
-            v-model:input_value="password"
+            v-model:input_value="new_user.password"
             v-model:show_password="show_password"
             :label_info="'hasło'"
             :input_placeholder="'Wiesz jakie masz hasło 🙂'"

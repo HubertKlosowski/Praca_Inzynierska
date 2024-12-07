@@ -1,16 +1,18 @@
 <script setup>
-import {ref} from "vue";
+import {reactive, ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import FormRadioField from "@/components/FormRadioField.vue";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import axios from "axios";
 
 
-const name = ref('')
-const username = ref('')
-const email = ref('')
-const password = ref('')
-const usertype = ref(0)
+const user = reactive({
+  name: '',
+  email: '',
+  username: '',
+  usertype: 0,
+  password: ''
+})
 
 const after_create = ref({})
 const title = ref('')
@@ -21,15 +23,9 @@ const show_password = ref(false)
 
 const createAccount = async () => {
   try {
-    const response = await axios.post('http://localhost:8000/api/user/create_user', {
-      name: name.value,
-      email: email.value,
-      username: username.value,
-      usertype: +usertype.value,
-      password: password.value
-    })
+    const response = await axios.post('http://localhost:8000/api/user/create_user', user)
 
-    after_create.value = response.data.user
+    after_create.value = [user.username, user.email]
     title.value = response.data.success
     subtitle.value = ''
     response_status.value = response.status
@@ -52,11 +48,11 @@ const createAccount = async () => {
 }
 
 const resetInputs = () => {
-  name.value = ''
-  username.value = ''
-  email.value = ''
-  password.value = ''
-  usertype.value = 0
+  user.name = ''
+  user.email = ''
+  user.username = ''
+  user.usertype = 0
+  user.password = ''
 }
 </script>
 
@@ -87,38 +83,38 @@ const resetInputs = () => {
       <form @submit.prevent="createAccount">
 
         <FormTextField
-            v-model:input_value="name"
+            v-model:input_value="user.name"
             :label_info="'imię i nazwisko'"
             :input_placeholder="'Imię i nazwisko'"
             :label_name="'name'"
         ></FormTextField>
 
         <FormTextField
-            v-model:input_value="username"
+            v-model:input_value="user.username"
             :label_info="'nazwę użytkownika'"
             :input_placeholder="'Nazwa użytkownika'"
             :label_name="'username'"
         ></FormTextField>
 
         <FormTextField
-            v-model:input_value="email"
+            v-model:input_value="user.email"
             :label_info="'Email'"
             :input_placeholder="'Adres email'"
             :label_name="'email'"
         ></FormTextField>
 
         <FormTextField
-            v-model:input_value="password"
+            v-model:input_value="user.password"
             v-model:show_password="show_password"
             :label_info="'Hasło'"
             :input_placeholder="'Hasło'"
             :label_name="'password'"
         ></FormTextField>
 
-        <FormRadioField v-model="usertype"></FormRadioField>
+        <FormRadioField v-model="user.usertype"></FormRadioField>
 
         <div class="buttons" style="border: none; height: 100px">
-          <button type="submit" class="router-link">Wyślij</button>
+          <button type="submit" class="router-link">Utwórz</button>
           <button type="button" class="router-link" @click="resetInputs">Wyczyść</button>
         </div>
       </form>

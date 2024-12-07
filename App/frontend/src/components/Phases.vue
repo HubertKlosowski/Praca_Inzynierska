@@ -6,20 +6,13 @@ const global_num_phase = ref(0)
 const phases_elements = document.getElementsByClassName('phase')
 
 const phases = [
-  // {
-  //   'title': 'Etap początkowy - konfiguracja modelu',
-  //   'description': [
-  //       'W tym etapie poznasz etapy, które należy przeprowadzić w konfiguracji.',
-  //       'Na początku należy przygotować model.'
-  //   ]
-  // },
   {
     'title': 'Przekaż dane',
     'description': [
         'Prześlij dane, na których chcesz przeprowadzić wykrywanie depresji.',
         'Istnieją dwa możliwe sposoby przekazania danych: z pliku lub jako pojedyńczy tekst.'
     ]
-  },
+  }
 ]
 
 watch(global_num_phase, (newValue, oldValue) => {

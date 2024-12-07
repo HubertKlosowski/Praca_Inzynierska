@@ -7,6 +7,8 @@ import MainPredictions from "@/components/MainPredictions.vue";
 import {inject, ref} from "vue";
 import CreateAccount from "@/components/CreateAccount.vue";
 import _ from "lodash"
+import UpdateAccount from "@/components/UpdateAccount.vue";
+import CreateFile from "@/components/CreateFile.vue";
 
 
 const routes = [
@@ -15,7 +17,9 @@ const routes = [
     { path: '/phases', component: Phases },
     { path: '/predict', component: MainPredictions },
     { path: '/login', component: Login },
-    { path: '/profile', component: Account }
+    { path: '/profile', component: Account },
+    { path: '/update', component: UpdateAccount },
+    { path: '/create_file', component: CreateFile }
 ]
 
 const router = createRouter({
@@ -29,7 +33,7 @@ router.beforeEach(async (to, from) => {
 
     if (!$cookies.isKey('made_submission') && to.path === '/predict') {
         return false
-    } else if (to.path === '/profile' && _.isEmpty(user.value)) {
+    } else if ((to.path === '/profile' || to.path === '/update') && _.isEmpty(user.value)) {
         return false
     }
 })

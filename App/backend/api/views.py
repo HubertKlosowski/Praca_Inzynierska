@@ -408,3 +408,22 @@ def get_submission(request, sub_uuid):
         'depressed': results['depressed'],
         'text': results['text'],
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['PATCH'])
+def change_name(request, sub_uuid):
+    submission = Submission.objects.get(id=sub_uuid)
+
+    name = request.data['name']
+
+    serializer = SubmissionSerializer(submission, data=request.data, partial=True)
+
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer.save()
+
+    return Response({
+        'success': 'Poprawnie ustawiono nazwę próby.',
+        'submission': serializer.data
+    }, status=status.HTTP_200_OK)
