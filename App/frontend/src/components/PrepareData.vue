@@ -44,7 +44,10 @@ const makePredictions = async () => {
       title.value = 'Problem z podanymi danymi'
       subtitle.value = 'Proszę poprawić wprowadzone dane w kreatorze.'
     }
+
+    localStorage.removeItem('to_file')
   } else {
+    console.log('xd')
     if (data.value === null) {
       after_create.value = ['Przekazane dane są puste!']
       response_status.value = 400
@@ -80,8 +83,6 @@ const makePredictions = async () => {
   }
 
   show_loading_screen.value = true
-
-  localStorage.removeItem('to_file')
 
   try {
     const response = await axios.post('http://localhost:8000/api/submission/make_submission', form_data, {

@@ -269,9 +269,11 @@ def make_submission(request):
     if request.FILES:
         file_size = request.FILES['content'].size
 
-        if file_size >= 1e5:
+        print(file_size)
+
+        if 'user' not in data.keys() and file_size >= 1e4:
             return Response({
-                'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000}KB > 100KB']
+                'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000}KB > 10KB']
             }, status=status.HTTP_400_BAD_REQUEST)
 
         extension = request.FILES['content'].name.split('.')[-1]
@@ -305,7 +307,7 @@ def make_submission(request):
     model = data['pl_model'] if lang == 'pl' else data['en_model']
     # path = f'D:/{model}'
 
-    if 'user' not in data.keys() and model == 'bert-large' or model == 'roberta-large':
+    if 'user' not in data.keys() and (model == 'bert-large' or model == 'roberta-large'):
         return Response({
             'error': ['Bez konta nie można korzystać z modeli LARGE.']
         }, status=status.HTTP_400_BAD_REQUEST)
@@ -345,17 +347,17 @@ def make_submission(request):
         if request.FILES:
             file_size = request.FILES['content'].size
 
-            if user.usertype == 0 and file_size >= 2e5:
+            if user.usertype == 0 and file_size >= 2e4:
                 return Response({
-                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 20KB']
+                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000} > 20KB']
                 }, status=status.HTTP_400_BAD_REQUEST)
-            elif user.usertype == 1 and file_size >= 1e6:
+            elif user.usertype == 1 and file_size >= 1e5:
                 return Response({
-                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 100KB']
+                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000} > 100KB']
                 }, status=status.HTTP_400_BAD_REQUEST)
-            elif user.usertype == 2 and file_size >= 1e7:
+            elif user.usertype == 2 and file_size >= 1e6:
                 return Response({
-                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size} > 1MB']
+                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000} > 1MB']
                 }, status=status.HTTP_400_BAD_REQUEST)
 
         data['content'] = result_file
