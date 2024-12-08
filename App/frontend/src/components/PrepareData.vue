@@ -1,15 +1,18 @@
 <script setup>
-import {inject, onMounted, ref} from "vue";
+import {inject, onMounted, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import _ from "lodash";
+import PopUp from "@/components/PopUp.vue";
 
 
 const router = useRouter()
 const $cookies = inject('$cookies')
 
 const show_loading_screen = defineModel('show_loading_screen')
+const show_popup = ref(JSON.parse(localStorage.getItem('show_popup')))
+const send_creator = ref(false)
 const user = ref(JSON.parse(localStorage.getItem('user')))
 const choose = ref(true)
 const data = ref(null)
@@ -24,29 +27,47 @@ const response_status = ref(0)
 
 const makePredictions = async () => {
   let form_data = new FormData()
+  show_popup.value = false
 
-  if (data.value === null) {
-    after_create.value = ['Przekazane dane są puste!']
-    response_status.value = 400
-    title.value = 'Problem z podanymi danymi'
-    subtitle.value = 'Modele nie są w stanie pracować na pustych danych. Proszę przesłać plik lub tekst.'
-    return
-  } else if (typeof data.value === 'object') {
-    const extension = data.value.name.split('.')[1]
-    if (extension !== 'csv' && extension !== 'json') {
-      data.value = null
-      after_create.value = ['Modele obsługują pliki z rozszerzeniem csv lub json.']
-      response_status.value = 403
+  if (localStorage.hasOwnProperty('to_file')) {
+    let to_csv = JSON.parse(localStorage.getItem('to_file'))
+    to_csv.unshift('text')
+    to_csv = to_csv.join('\n')
+
+    try {
+      data.value = new File([to_csv], 'creator.csv', {
+        type: 'text/csv'
+      })
+    } catch (e) {
+      after_create.value = ['Przekazane dane są niepoprawne!']
+      response_status.value = 400
       title.value = 'Problem z podanymi danymi'
-      subtitle.value = 'Nieprawidłowe rozszerzenie pliku. Proszę poprawić nazwę pliku i spróbować ponownie go przesłać.'
-      return
-    } else if (data.value.size > 10000 && _.isEmpty(user.value)) {
-      data.value = null
-      after_create.value = ['Limit wielkości pliku dla gościa wynosi 100KB.']
-      response_status.value = 403
+      subtitle.value = 'Proszę poprawić wprowadzone dane w kreatorze.'
+    }
+  } else {
+    if (data.value === null) {
+      after_create.value = ['Przekazane dane są puste!']
+      response_status.value = 400
       title.value = 'Problem z podanymi danymi'
-      subtitle.value = 'Zbyt duży plik. Proszę przesłać plik o mniejszej wielkości.'
+      subtitle.value = 'Modele nie są w stanie pracować na pustych danych. Proszę przesłać plik lub tekst.'
       return
+    } else if (typeof data.value === 'object') {
+      const extension = data.value.name.split('.')[1]
+      if (extension !== 'csv' && extension !== 'json') {
+        data.value = null
+        after_create.value = ['Modele obsługują pliki z rozszerzeniem csv lub json.']
+        response_status.value = 403
+        title.value = 'Problem z podanymi danymi'
+        subtitle.value = 'Nieprawidłowe rozszerzenie pliku. Proszę poprawić nazwę pliku i spróbować ponownie go przesłać.'
+        return
+      } else if (data.value.size > 10000 && _.isEmpty(user.value)) {
+        data.value = null
+        after_create.value = ['Limit wielkości pliku dla gościa wynosi 100KB.']
+        response_status.value = 403
+        title.value = 'Problem z podanymi danymi'
+        subtitle.value = 'Zbyt duży plik. Proszę przesłać plik o mniejszej wielkości.'
+        return
+      }
     }
   }
 
@@ -59,6 +80,8 @@ const makePredictions = async () => {
   }
 
   show_loading_screen.value = true
+
+  localStorage.removeItem('to_file')
 
   try {
     const response = await axios.post('http://localhost:8000/api/submission/make_submission', form_data, {
@@ -116,6 +139,12 @@ const getFile = () => {
   data.value = document.getElementById('data').files[0]
 }
 
+watch(send_creator, () => {
+  if (send_creator.value) {
+    makePredictions()
+  }
+})
+
 onMounted(() => {
   if (_.isEmpty(user.value)) {
     localStorage.setItem('choosen_models', JSON.stringify(models.value))
@@ -135,14 +164,25 @@ onMounted(() => {
       :subtitle="subtitle"
   ></ResponseOutput>
 
+  <PopUp
+      v-if="show_popup"
+      v-model:show_popup="show_popup"
+      v-model:send_creator="send_creator"
+  ></PopUp>
+
   <div class="main" :style="{
-    opacity: response_status < 200 ? '1' : '0.3',
-    pointerEvents: response_status < 200 ? 'auto' : 'none'
+    opacity: (show_popup || response_status > 200) ? '0.3' : '1',
+    pointerEvents: (show_popup || response_status > 200) ? 'none' : 'auto'
   }">
     <div class="header">
       <span>Plik</span>
-      <div class="choose" @click="choose = !choose">
-        <div :class="['circle', { active: choose }]"></div>
+      <div class="choose" @click="choose = !choose" :style="{ justifyContent: !choose ? 'start' : 'end' }">
+        <div
+            class="circle"
+            :style="{
+              backgroundColor: choose ? 'mediumblue' : 'whitesmoke',
+              borderColor: choose ? 'dodgerblue' : 'black'
+            }"></div>
       </div>
       <span>Tekst</span>
     </div>
@@ -255,14 +295,8 @@ form {
   border-radius: 50%;
   border: 2px solid black;
   margin-left: 0.25rem;
-  transition: transform 0.3s ease, background-color 0.3s ease;
+  transition: all 0.3s ease;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.circle.active {
-  transform: translateX(10vw);
-  background-color: mediumblue;
-  border-color: dodgerblue;
 }
 
 .depression-form {

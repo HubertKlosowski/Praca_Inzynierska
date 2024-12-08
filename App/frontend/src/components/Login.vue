@@ -111,7 +111,8 @@ const resetInputs = () => {
 
         <FormTextField
             v-model:input_value="username"
-            :label_info="'Nazwę użytkownika'"
+            :label_info="'nazwę użytkownika'"
+            :input_placeholder="'Nazwa użytkownika'"
             :label_name="'username'"
         ></FormTextField>
 
@@ -119,6 +120,7 @@ const resetInputs = () => {
             v-model:input_value="password"
             v-model:show_password="show_password"
             :label_info="'Hasło'"
+            :input_placeholder="'Hasło'"
             :label_name="'password'"
         ></FormTextField>
 

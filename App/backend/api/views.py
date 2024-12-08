@@ -285,7 +285,7 @@ def make_submission(request):
         my_file = request.FILES['content'].file
         my_file.seek(0)
 
-        df = pd.read_csv(my_file) if extension == 'csv' else pd.read_json(my_file)
+        df = pd.read_csv(my_file, delimiter='|', index_col=False) if extension == 'csv' else pd.read_json(my_file)
 
         if 'text' not in df.columns.tolist():
             return Response({

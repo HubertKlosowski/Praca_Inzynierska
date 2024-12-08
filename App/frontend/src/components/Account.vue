@@ -14,7 +14,6 @@ const $cookies = inject('$cookies')
 const user = ref(JSON.parse(localStorage.getItem('user')))
 const usertypes = ref(['Normal', 'Pro', 'Administrator'])
 
-const show_update_form = ref(false)
 const choose_polish = ref(false)
 const choose_english = ref(false)
 const history_submissions = ref(JSON.parse(localStorage.getItem('history_submissions')))
@@ -38,7 +37,6 @@ const logoutUser = async () => {
 const deleteUser = async () => {
   try {
     const response = await axios.delete('http://localhost:8000/api/user/delete_user/' + user.value['username'])
-
     after_create.value = [user.value['username'], user.value['email']]
     title.value = response.data.success
     subtitle.value = 'Użytkownik poprawnie usunięty.'
@@ -76,11 +74,9 @@ const setEnglishModel = () => {
 const showDetails = async (submission) => {
   try {
     const response = await axios.get('http://localhost:8000/api/submission/get_submission/' + submission['id'])
-
     localStorage.setItem('depressed', JSON.stringify(response.data['depressed']))
     localStorage.setItem('text', JSON.stringify(response.data['text']))
     localStorage.setItem('choosen_submission', JSON.stringify(submission))
-
     await router.push('/predict')
 
   } catch (e) {
@@ -117,12 +113,6 @@ const setPredictionName = async (submission) => {
     }
   }
 }
-
-watch(show_update_form, async () => {
-  if (show_update_form.value === true) {
-    await router.push('/update')
-  }
-})
 
 onMounted(() => {
   if (JSON.parse(localStorage.getItem('choosen_models')) === null) {
@@ -217,7 +207,7 @@ onMounted(() => {
     ></AdminPanel>
 
     <div class="buttons">
-      <button type="button" @click="show_update_form = true" class="update">Zmień dane</button>
+      <RouterLink to="/update" class="update">Zmień dane</RouterLink>
       <button type="button" @click="deleteUser" class="delete">Usuń konto</button>
       <RouterLink to="/" class="router-link">Wróć do strony głównej</RouterLink>
     </div>

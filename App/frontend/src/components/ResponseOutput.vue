@@ -34,8 +34,9 @@ const closeWindow = () => {
 <style scoped>
 .response {
   position: fixed;
-  top: 20%;
-  width: 90%;
+  top: 0;
+  width: 100%;
+  height: 50%;
   padding: 2rem;
   background-color: rgba(245, 245, 245, 0.95);
   border-radius: 1rem;
@@ -66,7 +67,7 @@ const closeWindow = () => {
 }
 
 .header h3 {
-  font-size: 1.25rem;
+  font-size: 1.5vw;
   margin: 0;
   color: darkred;
 }
@@ -92,12 +93,6 @@ const closeWindow = () => {
   border-radius: 0.5rem;
 }
 
-.content h4 {
-  font-size: 1rem;
-  margin: 0 0 1rem 0;
-  color: #333;
-}
-
 .content ul {
   list-style-type: disc;
   margin: 0;
@@ -105,7 +100,7 @@ const closeWindow = () => {
 }
 
 .content li {
-  font-size: 0.9rem;
+  font-size: 1.25vw;
   color: #333;
   margin-bottom: 0.5rem;
 }
@@ -123,10 +118,6 @@ const closeWindow = () => {
   .show-content {
     height: 35px;
     width: 35px;
-  }
-
-  .content h4 {
-    font-size: 1.5vh;
   }
 
   .content li {

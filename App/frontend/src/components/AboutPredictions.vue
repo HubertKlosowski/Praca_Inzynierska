@@ -5,6 +5,12 @@ import _ from "lodash";
 
 const $cookies = inject('$cookies')
 const user = ref(JSON.parse(localStorage.getItem('user')))
+
+const check = () => {
+  return (!_.isEmpty(user.value) && $cookies.isKey('made_submission')) ||
+    (_.isEmpty(user.value) && !$cookies.isKey('made_submission')) ||
+    (!_.isEmpty(user.value) && localStorage.hasOwnProperty('text'))
+}
 </script>
 
 <template>
@@ -33,9 +39,7 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
       <RouterLink
           to="/phases"
           class="router-link"
-          v-if="
-          (!_.isEmpty(user) && $cookies.isKey('made_submission')) ||
-          (_.isEmpty(user) && !$cookies.isKey('made_submission'))"
+          v-if="check"
       >Sprawdź posty</RouterLink>
       <RouterLink
           to="/predict"

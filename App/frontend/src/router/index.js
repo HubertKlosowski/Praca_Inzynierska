@@ -31,7 +31,9 @@ router.beforeEach(async (to, from) => {
     const $cookies = inject('$cookies')
     const user = ref(JSON.parse(localStorage.getItem('user')))
 
-    if (!$cookies.isKey('made_submission') && to.path === '/predict') {
+    if (from.path === '/profile' && to.path === '/predict') {
+        return true
+    } else if (!$cookies.isKey('made_submission') && to.path === '/predict') {
         return false
     } else if ((to.path === '/profile' || to.path === '/update') && _.isEmpty(user.value)) {
         return false

@@ -15,7 +15,7 @@ const changeSection = (param) => {
   let limit_up
   const limit_down = 0
 
-  if (user['usertype'] >= 1 && size.value > 1) {
+  if (user.value['usertype'] >= 1 && size.value > 1) {
     limit_up = 2
   } else {
     limit_up = 1

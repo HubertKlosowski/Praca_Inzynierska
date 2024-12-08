@@ -4,6 +4,7 @@ import _ from "lodash";
 
 
 const data = ref(JSON.parse(localStorage.getItem('to_file')))
+
 const next_post = ref('')
 const error = ref('')
 
@@ -16,6 +17,7 @@ const addPost = () => {
   } else {
     data.value.unshift(next_post.value)
     localStorage.setItem('to_file', JSON.stringify(data.value))
+    localStorage.setItem('show_popup', JSON.stringify(data.value.length !== 0))
     next_post.value = ''
   }
 }
@@ -25,6 +27,7 @@ const deletePost = (post) => {
     return p === post
   })
   localStorage.setItem('to_file', JSON.stringify(data.value))
+  localStorage.setItem('show_popup', JSON.stringify(data.value.length !== 0))
 }
 
 onMounted(() => {
@@ -33,8 +36,6 @@ onMounted(() => {
   }
   data.value = JSON.parse(localStorage.getItem('to_file'))
 })
-
-console.log(JSON.parse(localStorage.getItem('to_file')))
 </script>
 
 <template>
@@ -64,7 +65,7 @@ console.log(JSON.parse(localStorage.getItem('to_file')))
       </div>
     </div>
     <div class="buttons">
-      <RouterLink to="/phases" class="router-link">Wróć do przekazania danych</RouterLink>
+      <RouterLink to="/phases" class="router-link">Potwierdzam dane</RouterLink>
     </div>
   </div>
 </template>
@@ -72,6 +73,7 @@ console.log(JSON.parse(localStorage.getItem('to_file')))
 <style scoped>
 .field {
   width: 50%;
+  height: 90%;
   overflow-y: auto;
 }
 
