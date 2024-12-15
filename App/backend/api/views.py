@@ -316,7 +316,7 @@ def make_submission(request):
     prepared = preprocess_dataset(df.copy(deep=True), lang=lang)
 
     try:
-        stats = predict(path, prepared, False, login_token=save_model_token)
+        stats = predict(path, prepared, truncate=False, login_token=save_model_token)
         data['time_taken'] = (timezone.now() - time_start).total_seconds()
     except Exception as e:
         return Response({

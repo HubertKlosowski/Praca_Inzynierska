@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import time
@@ -6,6 +5,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
+import sklearn.decomposition
 from langdetect import DetectorFactory, detect
 
 DetectorFactory.seed = 0
@@ -22,6 +22,8 @@ from nltk.stem import PorterStemmer  # stemming dla języka angielskiego
 from praw.models import MoreComments
 from pystempel import Stemmer  # stemming dla języka polskiego
 from sklearn.model_selection import train_test_split
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 
 from model.api_keys import public_key, secret_key, microsoft_api_key, save_model_token
 
@@ -33,6 +35,7 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 from huggingface_hub import login, logout
+import math
 
 
 # Dla wpisów z języka polskiego z Reddita
@@ -114,51 +117,42 @@ def create_dataset(dataframe: pd.DataFrame, split_train_test: bool) -> DatasetDi
         testing = pd.DataFrame(x_test, columns=dataframe.columns).reset_index(drop=True)
         dt['train'] = Dataset.from_pandas(training)
         dt['test'] = Dataset.from_pandas(testing)
-
     else:
         dt['test'] = Dataset.from_pandas(dataframe)
     return dt
 
 
-# Połączenie zbiorów w jeden + ujednolicenie nazewnictwa kolumn
-def merge_datasets(lang: str = 'en', for_train: bool = False) -> pd.DataFrame:
+# Połączenie zbiorów w jeden
+def merge_dataframes(lang: str = 'en', for_train: bool = False) -> pd.DataFrame:
     merged = pd.DataFrame()
     columns = ['text', 'label'] if for_train and lang == 'en' else ['text']
+    path = os.path.join(os.path.join('data', lang, 'train')) if for_train \
+        else os.path.join(os.path.join('data', lang, 'test'))
 
-    for d in os.listdir(os.path.join('data', lang)):
-        dataframe = pd.read_csv(os.path.join('data', lang, d))
+    for d in os.listdir(path):
+        dataframe = pd.read_csv(os.path.join(path, d))
 
         if lang == 'pl' and d == 'polish_reddit_posts.csv':
             dataframe = dataframe[columns]
 
-        dataframe.dropna(inplace=True)
-
-        for i, source_col in enumerate(dataframe.columns):  # ujednolicenie nazewnictwa
-            dataframe.rename(columns={source_col: columns[i]}, inplace=True)
-
         dataframe = dataframe[columns].reset_index(drop=True)
-
         merged = pd.concat([merged, dataframe], axis=0)
 
     merged.drop_duplicates(subset=['text'], keep='first', inplace=True)  # usuniecie duplikatow
     merged.dropna(inplace=True)  # usuniecie wartosci NaN
-    merged['len'] = merged['text'].apply(lambda x: len(x.split()))
-
-    merged.drop(merged.loc[
-                    (merged['len'] <= merged['len'].quantile(0.05)) |
-                    (merged['len'] >= merged['len'].quantile(0.95))].index, inplace=True
-                )
-
-    if for_train:
-        merged = balance_dataset(merged)
-
-    merged.drop(columns=['len'], inplace=True)
+    merged['text'] = merged['text'].apply(lambda x: x.replace('\n', ' '))
+    # merged['len'] = merged['text'].apply(lambda x: len(x.split()))
+    # merged.drop(merged.loc[
+    #                 (merged['len'] <= merged['len'].quantile(0.05)) |
+    #                 (merged['len'] >= merged['len'].quantile(0.95))].index, inplace=True
+    #             )
+    # merged.drop(columns=['len'], inplace=True)
     merged.reset_index(drop=True, inplace=True)
 
     return merged
 
 
-def balance_dataset(dataframe: pd.DataFrame) -> pd.DataFrame:
+def balance_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
     dataframe['label'] = dataframe['label'].astype(int)
     counts = dataframe['label'].value_counts()
 
@@ -179,7 +173,7 @@ def balance_dataset(dataframe: pd.DataFrame) -> pd.DataFrame:
 # usuniecie znaków interpunkcyjnych
 # usuniecie stop-words
 # stemming
-def preprocess_dataset(dataframe: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:
+def preprocess_dataframe(dataframe: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:
     lang_resource = spacy.load('en_core_web_sm') if lang == 'en' else spacy.load('pl_core_news_sm')
     lang_resource.add_pipe('emoji', first=True)
 
@@ -222,26 +216,6 @@ def drop_too_long(df: pd.DataFrame, tokenizer) -> pd.DataFrame:
     return df_copy
 
 
-def read_json_tweet(file_name):
-    with open(os.path.join('data', 'tweets', file_name), 'r') as file:
-        data = json.load(file)
-    return {'text': data['text'], 'lang': data['lang']}
-
-
-def prepare_tweets():
-    posts = []
-    with ThreadPoolExecutor(max_workers=20) as executor:
-        res = [executor.submit(read_json_tweet, f) for f in os.listdir(os.path.join('data', 'tweets'))]
-        for f in as_completed(res):
-            posts.append(f.result())
-
-    tweets = pd.DataFrame(posts)
-    tweets = limit_lang(tweets)
-    tweets = preprocess_dataset(tweets, lang='en')
-
-    return tweets
-
-
 # Funkcja do realizacji tłumaczenia polskich wpisów na angielskie
 def translate_part(body, constructed_url, headers):
     request = requests.post(constructed_url, json=body, headers=headers)
@@ -254,7 +228,7 @@ def translate_part(body, constructed_url, headers):
 # 2) podziału zbioru na części z powodu ograniczeń dla request
 # 3) połączenia przetłumaczonych części w jeden zbiór
 # 4) zapis do pliku
-def translate_to_en(dataframe: pd.DataFrame):
+def translate_to_en(dataframe: pd.DataFrame, parts: int = 450):
     endpoint = 'https://api.cognitive.microsofttranslator.com'
     location = 'germanywestcentral'
     path = '/translate?api-version=3.0&from=pl&to=en'
@@ -272,7 +246,6 @@ def translate_to_en(dataframe: pd.DataFrame):
     # podział na części
     # API nie jest w stanie przyjąć całego zbioru naraz
     # i tylko przyjmuje dane w określonym formacie
-    parts = 300
     num_in_part = (len(text_polish) // parts) + 1
     text_polish = [text_polish[i * num_in_part : (i + 1) * num_in_part] for i in range(parts)]
     text_polish = [[{'text': row} for row in part] for part in text_polish]
@@ -286,25 +259,19 @@ def translate_to_en(dataframe: pd.DataFrame):
 
     # połączenie danych w jeden DataFrame
     translated = pd.DataFrame()
-    for translated_part in polish_translated:
+    for i, translated_part in enumerate(polish_translated):
         tmp1 = pd.DataFrame(translated_part)
+        if 'translations' not in tmp1.columns:
+            none_list = [{'translations': [{'text': '', 'to': 'en'}]} for _ in range(num_in_part)]
+            tmp1 = pd.DataFrame(none_list)
         tmp1['translations'] = tmp1['translations'].apply(lambda x: x[0]['text'])
-        tmp1.rename(columns={'translations': 'text'}, inplace=True)
+        tmp1.rename(columns={'translations': 'text_english'}, inplace=True)
         translated = pd.concat([translated, tmp1], axis=0)
 
     # Zapis przetłumaczonych wpisów
     translated.reset_index(drop=True, inplace=True)
-    translated.to_csv('data/final/polish_translated.csv', index=False)
 
     return translated
-
-
-# Predykcje modeli odpowiedzialnych za analizę
-# sentymentu, emocji w zbiorze polskim i depresji tego zbioru w języku angielskim
-def return_pred(model_path: str, dataframe: pd.DataFrame, result_column: str) -> pd.DataFrame:
-    res = predict(model_path, dataframe, True)
-    res = pd.DataFrame(np.argmax(res.to_numpy(), axis=1), columns=[result_column])
-    return res
 
 
 # Funkcja łączy rezultaty z modeli:
@@ -313,42 +280,31 @@ def return_pred(model_path: str, dataframe: pd.DataFrame, result_column: str) ->
 # 2) wykrycie emocji w wpisach po polsku:
 #       złość, strach, obrzydzenie, smutek, szczęście, żadna z wymienionych
 # 3) wykrycie depresji w wpisach przetłumaczonych na język angielski:
-#       posiada/nie posiada depresji (LABEL_1, LABEL_0)
+#       posiada/nie posiada depresji
 # Ostatecznie podjęty jest wybór, które podgrupy posiadają depresję na podstawie obliczonych składowych
-def tag_polish(dataframe: pd.DataFrame) -> pd.DataFrame:
+def get_features(polish, english):
     # rezultaty GPT2 dla sentymentu
-    sentiment = return_pred('nie3e/sentiment-polish-gpt2-large', dataframe, 'sentiment')
+    sentiment = predict('nie3e/sentiment-polish-gpt2-large', polish, truncate=True)
 
     # rezultaty RoBERTa dla emocji
-    emotion = return_pred('visegradmedia-emotion/Emotion_RoBERTa_polish6', dataframe, 'emotion')
+    emotion = predict('visegradmedia-emotion/Emotion_RoBERTa_polish6', polish, truncate=True)
 
     # rezultaty mojego BERT dla depresji w języku angielskim
-    # english = pd.read_csv('data/final/polish_translated.csv')
-    # en_depress = return_pred('depression-detect/bert-base', english, 'en_depress')
+    en_depress = predict('depression-detect/bert-base', english, truncate=True)
+
+    emotion.rename(columns={
+        'LABEL_0': 'anger',
+        'LABEL_1': 'fear',
+        'LABEL_2': 'disgust',
+        'LABEL_3': 'sadness',
+        'LABEL_4': 'joy',
+        'LABEL_5': 'none'
+    }, inplace=True)
+    sentiment = sentiment.round(3)
+    emotion = emotion.round(3)
 
     # złączenie cząstkowych rezultatów
-    polish_results = pd.concat([dataframe, sentiment, emotion], axis=1)
-
-    # wskazanie, które podgrupy danych uznaję za posiadające depresję
-    # Grupy:
-    # 1) ma negatywny sentyment, posiada depresję w języku angielskim i emocje lęku, smutku lub obrzydzenia
-    # 2) ma dwuznaczny sentyment, posiada depresję w języku angielskim i emocje lęku lub smutku
-    # 3) ma neutralny sentyment, posiada depresję w języku angielskim i emocje lęku lub smutku
-    polish_results.loc[(polish_results['sentiment'] == 3) & ((polish_results['emotion'] == 2) |
-                                                             (polish_results['emotion'] == 4) |
-                                                             (polish_results['emotion'] == 5)), 'label'] = 1
-    polish_results.loc[(polish_results['sentiment'] == 0) & ((polish_results['emotion'] == 2) |
-                                                             (polish_results['emotion'] == 4)), 'label'] = 1
-    polish_results.loc[(polish_results['sentiment'] == 1) & ((polish_results['emotion'] == 2) |
-                                                             (polish_results['emotion'] == 4)), 'label'] = 1
-
-    polish_results.fillna(0, inplace=True)
-    polish_results['label'] = polish_results['label'].astype(int)
-
-    polish_results.drop(columns=['emotion', 'sentiment'], inplace=True)  # usunięcie niepotrzebnych danych
-    polish_results.reset_index(drop=True, inplace=True)
-
-    return polish_results
+    return pd.concat([polish, sentiment, emotion, en_depress], axis=1)
 
 
 def apply_tokenizer(tokenizer, row):
@@ -370,14 +326,12 @@ def fine_tune(model_path: str):
     login(token=save_model_token)
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-
     dataset = create_dataset(
         pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'))
         if model_path == 'bert-base' or model_path == 'bert-large'
-        else pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_polish.csv')).dropna(),
+        else pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_polish.csv')),
         split_train_test=True
     )
-
     tokenized_dataset = dataset.map(lambda x: apply_tokenizer(tokenizer, x), batched=True)
     id2label = { 0: 'non-depressed', 1: 'depressed' }
     label2id = { 'non-depressed': 0, 'depressed': 1 }
@@ -392,7 +346,7 @@ def fine_tune(model_path: str):
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
     training_args = TrainingArguments(
-        output_dir=f'{model_path}-depression',
+        output_dir=f'{model_path}',
         learning_rate=2e-5,
         per_device_train_batch_size=32,
         per_device_eval_batch_size=64,
@@ -416,15 +370,14 @@ def fine_tune(model_path: str):
     )
 
     trainer.train()
-
     trainer.push_to_hub()
 
     logout()
 
 
-def predict(model_path: str, dataframe: pd.DataFrame, for_train: bool = True, login_token: str = None) -> pd.DataFrame:
+def predict(model_path: str, dataframe: pd.DataFrame, truncate: bool = True, login_token: str = None) -> pd.DataFrame:
     if login_token is not None:
-        login(token=save_model_token)
+        login(token=login_token)
 
     dataset = create_dataset(dataframe, split_train_test=False)
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -436,7 +389,7 @@ def predict(model_path: str, dataframe: pd.DataFrame, for_train: bool = True, lo
         device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     )
 
-    if for_train:
+    if truncate:
         predictions = prepare_predictions(
             pipe(dataset['test']['text'], **{'truncation': True, 'max_length': 512}),
             dataframe.index
@@ -471,31 +424,35 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
     return pd.DataFrame([{pair['label']: pair['score'] for pair in row} for row in pred], index=df_index)
 
 
-# fine_tune('depression-detect/bert-base')
-# fine_tune('depression-detect/bert-large')
+# fine_tune('bert-base')
+# fine_tune('bert-large')
 # fine_tune('roberta-base')
 # fine_tune('roberta-large')
 
 # Przetworzone wpisy dla języka angielskiego (zbiór treningowy)
 # if 'train_english.csv' in os.listdir(os.path.join('data', 'final')):
-#     train_english = pd.read_csv(os.path.join('data', 'final', 'train_english.csv'))
+#     train_english = pd.read_csv(os.path.join('data', 'final', 'train_english.csv'))  # tylko połączony zbiór
 # else:
-#     train_english = merge_datasets(lang='en', for_train=True)
+#     train_english = merge_dataframes(lang='en', for_train=True)
 #     train_english.to_csv(os.path.join('data', 'final', 'train_english.csv'), index=False)
 #
-# train_preprocessed_english = preprocess_dataset(train_english, lang='en').dropna()
+# train_english = balance_dataframe(train_english)
+# train_preprocessed_english = preprocess_dataframe(train_english, lang='en').dropna()
 # train_preprocessed_english.to_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'), index=False)
 
-# Wygenerowanie otagowanego zbioru polskiego
+# Przetworzone wpisy dla języka polskiego (zbiór treningowy)
 # if 'train_polish.csv' in os.listdir(os.path.join('data', 'final')):
-#     train_polish = pd.read_csv(os.path.join('data', 'final', 'train_polish.csv'))
-# else:
-#     train_polish = tag_polish(merge_datasets(lang='pl', for_train=False))
-#     train_polish.to_csv(os.path.join('data', 'final', 'train_polish.csv'), index=False)
-#
-# train_preprocessed_polish = balance_dataset(preprocess_dataset(train_polish, lang='pl')).dropna()
-# train_preprocessed_polish.to_csv(os.path.join('data', 'final', 'train_preprocessed_polish.csv'), index=False)
+#     train_polish = pd.read_csv(os.path.join('data', 'final', 'train_polish.csv'))  # tylko połączony zbiór
+#     train_preprocessed_polish = preprocess_dataframe(train_polish, lang='pl')
+#     train_preprocessed_polish.to_csv(os.path.join('data', 'final', 'train_preprocessed_polish.csv'), index=False)
 
 # Przetworzone wpisy w języku angielskim (zbiór testowy)
-# test_preprocessed_english_dataset = prepare_tweets()
-# test_preprocessed_english_dataset.to_csv(os.path.join('data', 'final', 'test_preprocessed_english.csv'), index=False)
+# if 'test_english.csv' in os.listdir(os.path.join('data', 'final')):
+#     test_preprocessed_english = preprocess_dataframe(pd.read_csv(os.path.join('data', 'final', 'test_english.csv')).dropna())
+#     test_preprocessed_english.to_csv(os.path.join('data', 'final', 'test_preprocessed_english.csv'), index=False)
+
+# Przetworzone wpisy dla języka polskiego (zbiór testowy)
+# if 'test_polish.csv' in os.listdir(os.path.join('data', 'final')):
+#     test_polish = pd.read_csv(os.path.join('data', 'final', 'test_polish.csv'))  # tylko połączony zbiór
+#     test_preprocessed_polish = preprocess_dataframe(test_polish, lang='pl')
+#     test_preprocessed_polish.to_csv(os.path.join('data', 'final', 'test_preprocessed_polish.csv'), index=False)
