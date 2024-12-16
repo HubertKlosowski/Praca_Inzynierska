@@ -1,5 +1,5 @@
 <script setup>
-import {inject, onMounted, ref, watch} from "vue";
+import {inject, onMounted, ref} from "vue";
 import polish from "@/assets/polski.png";
 import english from "@/assets/angielski.png";
 import {useRouter} from "vue-router";
@@ -17,6 +17,8 @@ const usertypes = ref(['Normal', 'Pro', 'Administrator'])
 const choose_polish = ref(false)
 const choose_english = ref(false)
 const history_submissions = ref(JSON.parse(localStorage.getItem('history_submissions')))
+const new_name = ref('')
+const change_name = ref(-1)
 
 const models = ref(['roberta-base', 'bert-base'])
 
@@ -95,10 +97,18 @@ const showDetails = async (submission) => {
   }
 }
 
-const setPredictionName = async (submission) => {
+const setPredictionName = async (submission, num) => {
+  change_name.value = -1
   try {
-    const response = await axios.patch('http://localhost:8000/api/submission/change_name/' + submission['id'])
+    const response = await axios.patch('http://localhost:8000/api/submission/change_name/' + submission['id'], {
+      'name': new_name.value
+    })
+    history_submissions.value[num]['name'] = new_name.value
+    localStorage.setItem('history_submissions', JSON.stringify(history_submissions.value))
+    new_name.value = ''
+
   } catch (e) {
+    console.log(e)
     if (typeof e.response === 'undefined') {
       after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
       response_status.value = 500
@@ -188,8 +198,14 @@ onMounted(() => {
       <div class="h-submissions">
         <div class="history-submission" v-for="(item, i) in history_submissions" :key="item">
           <div class="field" style="width: 10%">{{ i + 1 }}</div>
-          <div class="field" @click="setPredictionName(item)" v-if="item.name !== null">{{ item.name }}</div>
-          <div class="field" @click="setPredictionName(item)" v-else>Brak nazwy</div>
+          <div class="field" @click="change_name = i" v-if="item.name !== null" v-show="change_name !== i">{{ item.name }}</div>
+          <div class="field" @click="change_name = i" v-else v-show="change_name !== i">Brak nazwy</div>
+          <div class="field" v-if="change_name === i">
+            <form @submit.prevent="setPredictionName(item, i)">
+              <input type="text" v-model="new_name" :placeholder="item.name">
+              <button type="submit" class="update">Zatwierdź</button>
+            </form>
+          </div>
           <div class="field">
             <button type="button" class="details" @click="showDetails(item)">Pokaż szczegóły</button>
           </div>
@@ -215,6 +231,27 @@ onMounted(() => {
 </template>
 
 <style scoped>
+form {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+form > .update {
+  width: 50%;
+  height: 80%;
+  font-size: 1.5vw;
+}
+
+form > input {
+  width: 50%;
+  height: 20%;
+  box-sizing: border-box;
+  padding: 1rem;
+  border-radius: 0.75rem;
+}
+
 svg {
   width: 100%;
   height: 100%;
@@ -455,6 +492,46 @@ svg {
   .logout {
     width: 60%;
     height: 30%;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  form > .update {
+    width: 90%;
+    height: 50%;
+    font-size: 1.5vh;
+  }
+
+  form > input {
+    width: 90%;
+    height: 30%;
+    font-size: 1.5vh;
+  }
+}
+
+@media (max-height: 768px) {
+  form {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+
+  form > .update {
+    width: 50%;
+    height: 100%;
+    font-size: 1.5vw;
+  }
+
+  form > input {
+    width: 30%;
+    height: 100%;
+    font-size: 1.5vw;
   }
 }
 </style>

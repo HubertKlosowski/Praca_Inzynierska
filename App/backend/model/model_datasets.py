@@ -346,9 +346,9 @@ def fine_tune(model_path: str):
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
     training_args = TrainingArguments(
-        output_dir=f'{model_path}',
+        output_dir=f'{model_path}-depression',
         learning_rate=2e-5,
-        per_device_train_batch_size=32,
+        per_device_train_batch_size=16,
         per_device_eval_batch_size=64,
         num_train_epochs=10,
         weight_decay=0.01,

@@ -35,7 +35,7 @@ const closeWindow = () => {
 .response {
   position: fixed;
   top: 0;
-  width: 100%;
+  width: 90%;
   height: 50%;
   padding: 2rem;
   background-color: rgba(245, 245, 245, 0.95);

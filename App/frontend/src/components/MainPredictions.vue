@@ -63,6 +63,15 @@ const changeSection = (param) => {
 </template>
 
 <style scoped>
+.router-link {
+  width: 50%;
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+}
+
 .move {
   width: 15%;
   height: 100%;
@@ -92,7 +101,7 @@ const changeSection = (param) => {
   height: 20%;
   display: flex;
   flex-direction: row;
-  justify-content: space-evenly;
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -100,18 +109,6 @@ const changeSection = (param) => {
   .left-part {
     flex-direction: column;
     font-size: 1.5vh !important;
-  }
-
-  svg {
-    width: 5vw;
-    height: auto;
-  }
-}
-
-@media (max-height: 950px) {
-  svg {
-    width: 15vh;
-    height: auto;
   }
 }
 </style>

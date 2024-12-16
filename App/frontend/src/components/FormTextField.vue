@@ -108,10 +108,16 @@ input[type="text"], input[type="password"] {
     align-items: center;
   }
 
-  input[type="text"] {
+  input[type="text"], input[type="password"] {
     height: 70%;
     width: 100%;
     font-size: 1.75vh;
+  }
+
+  .show {
+    width: 20%;
+    height: 70%;
+    border-radius: 0.75rem;
   }
 
   .row {

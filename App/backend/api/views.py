@@ -15,7 +15,7 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
-from model.model_datasets import preprocess_dataset, detect_lang
+from model.model_datasets import preprocess_dataframe, detect_lang
 from model.model_datasets import predict
 from .models import User, Submission
 from .serializer import UserSerializer, SubmissionSerializer
@@ -56,10 +56,7 @@ def create_user(request):
 
     # haszowanie hasła
     data['password'] = make_password(data['password'])
-    data['submission_num'] = [10, 30, 100][data['usertype']]
-
-    if data['usertype'] == 2:
-        data['is_verified'] = True
+    data['submission_num'] = [10, 30, 100][int(data['usertype'])]
 
     serializer = UserSerializer(data=data)
 
@@ -146,6 +143,8 @@ def delete_user(request, username):
     user = User.objects.get(username=username)
     email = user.email
     user.delete()
+
+    Submission.objects.filter(user=user.id).delete()
 
     html_msg = loader.render_to_string(
         'mails/delete_account.html',
@@ -269,8 +268,6 @@ def make_submission(request):
     if request.FILES:
         file_size = request.FILES['content'].size
 
-        print(file_size)
-
         if 'user' not in data.keys() and file_size >= 1e4:
             return Response({
                 'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000}KB > 10KB']
@@ -313,7 +310,7 @@ def make_submission(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     path = f'depression-detect/{model}'
-    prepared = preprocess_dataset(df.copy(deep=True), lang=lang)
+    prepared = preprocess_dataframe(df.copy(deep=True), lang=lang)
 
     try:
         stats = predict(path, prepared, truncate=False, login_token=save_model_token)
@@ -415,8 +412,6 @@ def get_submission(request, sub_uuid):
 @api_view(['PATCH'])
 def change_name(request, sub_uuid):
     submission = Submission.objects.get(id=sub_uuid)
-
-    name = request.data['name']
 
     serializer = SubmissionSerializer(submission, data=request.data, partial=True)
 

@@ -44,10 +44,9 @@ const makePredictions = async () => {
       title.value = 'Problem z podanymi danymi'
       subtitle.value = 'Proszę poprawić wprowadzone dane w kreatorze.'
     }
-
     localStorage.removeItem('to_file')
+
   } else {
-    console.log('xd')
     if (data.value === null) {
       after_create.value = ['Przekazane dane są puste!']
       response_status.value = 400
