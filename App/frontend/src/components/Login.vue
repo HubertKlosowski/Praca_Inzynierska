@@ -5,6 +5,7 @@ import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import {useRouter} from "vue-router";
 import _ from "lodash";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
 
 const router = useRouter()
@@ -87,6 +88,10 @@ const resetInputs = () => {
   username.value = ''
   password.value = ''
 }
+
+const goHome = async () => {
+  await router.push('/')
+}
 </script>
 
 <template>
@@ -105,99 +110,93 @@ const resetInputs = () => {
   }">
     <div class="header">
       <h3>Witaj ponownie</h3>
+      <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
     </div>
-    <div class="form">
-      <form @submit.prevent="login">
+    <form @submit.prevent="login">
 
-        <FormTextField
-            v-model:input_value="username"
-            :label_info="'nazwę użytkownika'"
-            :input_placeholder="'Nazwa użytkownika'"
-            :label_name="'username'"
-        ></FormTextField>
+      <FormTextField
+          v-model:input_value="username"
+          :label_info="'nazwę użytkownika'"
+          :input_placeholder="'Nazwa użytkownika'"
+          :label_name="'username'"
+      ></FormTextField>
 
-        <FormTextField
-            v-model:input_value="password"
-            v-model:show_password="show_password"
-            :label_info="'Hasło'"
-            :input_placeholder="'Hasło'"
-            :label_name="'password'"
-        ></FormTextField>
+      <FormTextField
+          v-model:input_value="password"
+          v-model:show_password="show_password"
+          :label_info="'Hasło'"
+          :input_placeholder="'Hasło'"
+          :label_name="'password'"
+      ></FormTextField>
 
-        <div class="buttons" style="border: none;">
-          <button type="submit" class="router-link">Zaloguj się</button>
-        </div>
-      </form>
-    </div>
-    <div class="buttons">
-      <RouterLink to="/" class="router-link">Wróć do strony głównej</RouterLink>
-    </div>
+      <div class="form-row">
+        <button type="submit" class="router-link">Zaloguj się</button>
+      </div>
+    </form>
   </div>
 </template>
 
 <style scoped>
-li {
-  list-style-type: '👉';
+.router-link {
+  height: 20%;
+  padding: 1rem;
 }
 
-.header {
-  height: 10%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  font-size: 1.5vw;
-}
-
-.left-part {
-  width: 90%;
-  overflow-y: hidden;
-}
-
-.form {
-  width: 100%;
-  height: 70%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-form {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  margin: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow-y: auto;
-}
-
-.buttons {
-  border-top: 2px solid black;
-  width: 100%;
+.form-row {
+  width: 70%;
   height: 20%;
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  background-color: #f5f5f5;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+  margin: 1rem;
+  padding: 1rem;
 }
 
-.buttons > * {
+button[type="submit"] {
+  min-height: 70%;
+  width: 50%;
+}
+
+li {
+  list-style-type: '👉';
+}
+
+.header {
+  height: 20%;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  font-size: 1.5vw;
+}
+
+.left-part {
+  width: 90%;
+}
+
+form {
+  width: 100%;
+  height: 80%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header > * {
   font-size: 1.5vw;
 }
 
 @media (max-width: 768px) {
-  .buttons > * {
-    width: 70%;
-  }
-
   .router-link {
-    font-size: 1.75vh !important;
+    font-size: 1.75vh;
   }
 
-  .header {
+  .header > * {
     font-size: 1.75vh;
   }
 }

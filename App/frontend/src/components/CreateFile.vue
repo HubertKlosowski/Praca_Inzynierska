@@ -93,7 +93,7 @@ input[type="text"] {
   text-align: center;
   align-content: center;
   margin: 1rem;
-  font-size: 1.35vw;
+  font-size: 1.25vw;
   transition: 0.4s ease;
   cursor: pointer;
   background-color: white;
@@ -113,7 +113,7 @@ input[type="text"] {
 .add:hover, .delete:hover {
   color: white;
   border: 2px solid white;
-  box-shadow: 1rem 1rem dodgerblue;
+  box-shadow: 0.5rem 0.5rem dodgerblue;
 }
 
 .add:hover {
@@ -148,7 +148,7 @@ form {
 
 .router-link {
   width: 20%;
-  height: 100%;
+  height: 50%;
 }
 
 .left-part {
@@ -183,6 +183,18 @@ form {
 }
 
 @media (max-width: 768px) {
+  .main, input[type="text"] {
+    font-size: 2vh;
+  }
 
+  .header, button[type="button"] {
+    font-size: 1.5vh;
+  }
+
+  .router-link {
+    font-size: 2vh;
+    width: 80%;
+    height: 50%;
+  }
 }
 </style>

@@ -5,6 +5,7 @@ import ResponseOutput from "@/components/ResponseOutput.vue";
 import axios from "axios";
 import _ from "lodash";
 import {useRouter} from "vue-router";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
 
 const router = useRouter()
@@ -62,6 +63,10 @@ const resetInputs = () => {
   new_user.email = ''
   new_user.password = ''
 }
+
+const goHome = async () => {
+  await router.push('/')
+}
 </script>
 
 <template>
@@ -79,11 +84,14 @@ const resetInputs = () => {
     pointerEvents: response_status < 200 ? 'auto' : 'none'
   }">
     <div class="header">
-      <h3>Zmień dane konta</h3>
-      <ul>
-        <li>Nie wymagana jest zmiana wszystkich pól.</li>
-        <li>Typu użytkownika nie można zmienić, ze względu bezpieczeństwa.</li>
-      </ul>
+      <div class="content">
+        <h3>Zmień dane konta</h3>
+        <ul>
+          <li>Nie wymagana jest zmiana wszystkich pól.</li>
+          <li>Typu użytkownika nie można zmienić, ze względu bezpieczeństwa.</li>
+        </ul>
+      </div>
+      <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
     </div>
     <div class="form">
       <form @submit.prevent="updateAccount">
@@ -117,19 +125,24 @@ const resetInputs = () => {
             :label_name="'password'"
         ></FormTextField>
 
-        <div class="buttons" style="border: none">
-          <button type="submit" class="router-link">Zatwierdź</button>
-          <button type="button" class="router-link" @click="resetInputs">Wyczyść</button>
+        <div class="form-row">
+          <button type="submit" class="update">Zatwierdź</button>
+          <button type="button" class="delete" @click="resetInputs">Wyczyść</button>
         </div>
       </form>
-    </div>
-    <div class="buttons">
-      <RouterLink to="/" class="router-link">Wróć do strony głównej</RouterLink>
     </div>
   </div>
 </template>
 
 <style scoped>
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 80%;
+}
+
 li {
   list-style-type: '👉';
 }
@@ -138,7 +151,7 @@ li {
   height: 20%;
   width: 100%;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
   font-size: 1.5vw;
   padding-bottom: 1rem;
@@ -150,7 +163,7 @@ li {
 
 .form {
   width: 100%;
-  height: 60%;
+  height: 80%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -164,25 +177,68 @@ form {
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-y: auto;
 }
 
-.buttons {
-  border-top: 2px solid black;
-  width: 100%;
-  height: 15%;
+.form-row {
+  width: 80%;
+  height: 20%;
   display: flex;
   flex-direction: row;
-  justify-content: space-evenly;
+  justify-content: center;
   align-items: center;
+  background-color: #f5f5f5;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+  margin: 1rem;
+  padding: 1rem;
 }
 
-.buttons > * {
-  font-size: 1.5vw;
+.router-link {
+  width: 10%;
+  height: 20%;
+  padding: 1rem;
+}
+
+.update, .delete {
+  text-decoration: none;
+  text-align: center;
+  align-content: center;
+  margin: 1rem;
+  font-size: 1.25vw;
+  transition: 0.4s ease;
+  cursor: pointer;
+  background-color: white;
+  border-radius: 1rem;
+  width: 40%;
+  height: 70%;
+}
+
+.update:hover, .delete:hover {
+  color: white;
+  border: 2px solid white;
+  box-shadow: 0.5rem 0.5rem dodgerblue;
+}
+
+.update:hover {
+  background-color: darkgreen;
+}
+
+.delete:hover {
+  background-color: darkred;
+}
+
+.update {
+  border: 2px solid green;
+  color: green;
+}
+
+.delete {
+  border: 2px solid red;
+  color: red;
 }
 
 @media (max-width: 768px) {
-  .buttons > * {
+  .form-row > * {
     width: 70%;
     font-size: 1.75vh;
   }

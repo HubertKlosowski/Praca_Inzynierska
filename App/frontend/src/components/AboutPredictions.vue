@@ -51,8 +51,16 @@ const check = () => {
 </template>
 
 <style scoped>
+.predict-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .router-link {
   width: 50%;
+  height: 70%;
 }
 
 .info {
@@ -78,7 +86,7 @@ const check = () => {
   color: black;
   border: 2px solid white;
   background-color: #FF8C00;
-  box-shadow: 1rem 1rem dodgerblue;
+  box-shadow: 0.5rem 0.5rem dodgerblue;
 }
 
 ul {

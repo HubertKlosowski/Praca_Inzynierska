@@ -296,20 +296,20 @@ def make_submission(request):
 
     lang = detect_lang(df)
 
-    if lang != 'en' and lang != 'pl':
+    if lang != 'en':
         return Response({
-            'error': ['Wykryty język nie jest obsługiwany. Podaj dane w języku polskim lub angielskim.']
+            'error': ['Wykryty język nie jest obsługiwany. Podaj dane w języku angielskim.']
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    model = data['pl_model'] if lang == 'pl' else data['en_model']
-    # path = f'D:/{model}'
+    model = data['model']
+    path = f'D:/{model}'
 
-    if 'user' not in data.keys() and (model == 'bert-large' or model == 'roberta-large'):
+    if 'user' not in data.keys() and model == 'bert-large':
         return Response({
-            'error': ['Bez konta nie można korzystać z modeli LARGE.']
+            'error': ['Bez konta nie można korzystać z modelu LARGE.']
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    path = f'depression-detect/{model}'
+    # path = f'depression-detect/{model}'
     prepared = preprocess_dataframe(df.copy(deep=True), lang=lang)
 
     try:
@@ -319,10 +319,6 @@ def make_submission(request):
         return Response({
             'error': [f'{str(e)}']
         }, status=status.HTTP_404_NOT_FOUND)
-
-    data.pop('pl_model', None)
-    data.pop('en_model', None)
-    data['model'] = model
 
     concated = pd.concat([df, stats], axis=1)
     buffer = BytesIO()

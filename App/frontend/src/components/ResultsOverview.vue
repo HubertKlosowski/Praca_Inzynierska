@@ -26,7 +26,7 @@ const hardToAccess = () => {
       Liczba rekordów: {{ text.length }}
     </div>
     <div class="info" v-else>
-      Pojedyńczy wpis
+      Pojedynczy wpis
     </div>
     <div class="info" v-if="text.length > 1">
       Liczba "trudnych" rekordów : {{ hardToAccess() }}

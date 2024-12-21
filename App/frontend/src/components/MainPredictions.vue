@@ -3,8 +3,12 @@ import {ref} from "vue";
 import Results from "@/components/Results.vue";
 import ResultsPlot from "@/components/ResultsPlot.vue";
 import ResultsOverview from "@/components/ResultsOverview.vue";
+import {useRouter} from "vue-router";
 import _ from "lodash";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
+
+const router = useRouter()
 
 const inc = ref(0)
 const size = ref(JSON.parse(localStorage.getItem('text')).length)
@@ -29,6 +33,10 @@ const changeSection = (param) => {
     inc.value += param
   }
 }
+
+const goHome = async () => {
+  await router.push('/')
+}
 </script>
 
 <template>
@@ -46,27 +54,21 @@ const changeSection = (param) => {
      <div class="move" @click="changeSection(-1)" :style="{
        display: !_.isEmpty(user) ? 'initial' : 'none'
      }">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-        <path d="M512 256A256 256 0 1 0 0 256a256 256 0 1 0 512 0zM215 127c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-71 71L392 232c13.3 0 24 10.7 24 24s-10.7 24-24 24l-214.1 0 71 71c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0L103 273c-9.4-9.4-9.4-24.6 0-33.9L215 127z"/>
-      </svg>
+      <font-awesome-icon :icon="['fas', 'circle-arrow-left']" />
      </div>
-     <RouterLink to="/" class="router-link">Wróć do strony głównej</RouterLink>
+     <div class="move">
+       <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
+     </div>
      <div class="move" @click="changeSection(1)" :style="{
        display: !_.isEmpty(user) ? 'initial' : 'none'
      }">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-        <path d="M0 256a256 256 0 1 0 512 0A256 256 0 1 0 0 256zM297 385c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l71-71L120 280c-13.3 0-24-10.7-24-24s10.7-24 24-24l214.1 0-71-71c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0L409 239c9.4 9.4 9.4 24.6 0 33.9L297 385z"/>
-      </svg>
+      <font-awesome-icon :icon="['fas', 'circle-arrow-right']" />
      </div>
-    </div>
+   </div>
  </div>
 </template>
 
 <style scoped>
-.router-link {
-  width: 50%;
-}
-
 svg {
   width: 100%;
   height: 100%;
@@ -74,7 +76,7 @@ svg {
 
 .move {
   width: 15%;
-  height: 100%;
+  height: 50%;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -93,6 +95,7 @@ svg {
 
 .left-part {
   width: 90%;
+  overflow-y: hidden;
 }
 
 .buttons {
@@ -101,7 +104,7 @@ svg {
   height: 20%;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: space-evenly;
   align-items: center;
 }
 

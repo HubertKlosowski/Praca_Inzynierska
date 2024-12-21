@@ -45,7 +45,7 @@ const sendCreator = () => {
   text-align: center;
   align-content: center;
   margin: 1rem;
-  font-size: 1.35vw;
+  font-size: 1.25vw;
   transition: 0.4s ease;
   cursor: pointer;
   background-color: white;
@@ -60,7 +60,7 @@ const sendCreator = () => {
 .delete:hover {
   color: white;
   border: 2px solid white;
-  box-shadow: 1rem 1rem dodgerblue;
+  box-shadow: 0.5rem 0.5rem dodgerblue;
   background-color: darkred;
 }
 
@@ -135,7 +135,7 @@ const sendCreator = () => {
 }
 
 .content li {
-  font-size: 0.9rem;
+  font-size: 1vw;
   color: #333;
   margin-bottom: 0.5rem;
 }

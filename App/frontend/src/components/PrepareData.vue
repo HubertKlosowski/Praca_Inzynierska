@@ -17,7 +17,7 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
 const choose = ref(true)
 const data = ref(null)
 const is_dragging = ref(false)
-const models = ref(['roberta-base', 'bert-base'])
+const model = ref('bert-base')
 
 const after_create = ref({})
 const title = ref('')
@@ -74,8 +74,7 @@ const makePredictions = async () => {
   }
 
   form_data.append('content', data.value)
-  form_data.append('pl_model', models.value[0])
-  form_data.append('en_model', models.value[1])
+  form_data.append('model', model.value)
 
   if (!_.isEmpty(user.value)) {
     form_data.append('user', user.value['id'])
@@ -147,9 +146,9 @@ watch(send_creator, () => {
 
 onMounted(() => {
   if (_.isEmpty(user.value)) {
-    localStorage.setItem('choosen_models', JSON.stringify(models.value))
+    localStorage.setItem('choosen_model', JSON.stringify(model.value))
   } else {
-    models.value = JSON.parse(localStorage.getItem('choosen_models'))
+    model.value = JSON.parse(localStorage.getItem('choosen_model'))
   }
 })
 </script>
@@ -235,7 +234,7 @@ form {
 }
 
 .drag-in, .drag-out {
-  height: 80%;
+  height: 10rem;
   border-radius: 0.75rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
   text-align: center;
@@ -261,8 +260,9 @@ form {
   width: 100%;
   height: 20%;
   display: flex;
-  align-items: center;
+  flex-direction: row;
   justify-content: space-evenly;
+  align-items: center;
 }
 
 .header > span {
@@ -331,7 +331,7 @@ form {
   padding: 0.5rem;
   border-radius: 1rem;
   border: 2px solid black;
-  font-size: 1.35vw;
+  font-size: 1.5vw;
   background-color: lightgrey;
   transition: 0.4s ease;
 }
@@ -340,7 +340,7 @@ form {
   color: white;
   border: 2px solid white;
   background-color: darkgrey;
-  box-shadow: 1rem 1rem dodgerblue;
+  box-shadow: 0.5rem 0.5rem dodgerblue;
 }
 
 span {

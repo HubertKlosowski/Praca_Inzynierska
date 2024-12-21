@@ -8,39 +8,41 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
 
 <template>
   <div class="left-part">
-    <h3>Informacje o koncie</h3>
-    <p>Utworzenie konta umożliwia uzyskanie dostępu do nowych możliwości:</p>
-    <ol class="list">
-      <li>zapisanie wyników twoich analiz</li>
-      <li>udostępnienie ogólnych statystyk i wykresów do wyników</li>
-      <li>kreator plików w przypadku problemów z ich stworzeniem</li>
-    </ol>
-    <p>Korzystanie z konta jest proste, oraz w pełni przejrzyste &#128522;.</p>
-    <p>Poniżej znajdują się trzy dostępne typy kont:</p>
-    <div class="types-accounts">
-      <div class="account">
-        <h4>Standard</h4>
-        <ul>
-          <li>liczba dziennych prób: 10</li>
-          <li>analiza pojedyńczych wpisów</li>
-          <li>max. wielkość pliku: do 200KB</li>
-        </ul>
-      </div>
-      <div class="account">
-        <h4>Pro</h4>
-        <ul>
-          <li>liczba dziennych prób: 30</li>
-          <li>ogólne statystyki dla plików</li>
-          <li>max. wielkość pliku: do 1MB</li>
-        </ul>
-      </div>
-      <div class="account">
-        <h4>Admin</h4>
-        <ul>
-          <li>liczba dziennych prób: 100</li>
-          <li>wykresy dotyczące danych</li>
-          <li>max. wielkość pliku: do 10MB</li>
-        </ul>
+    <div class="content">
+      <h3>Informacje o koncie</h3>
+      <p>Utworzenie konta umożliwia uzyskanie dostępu do nowych możliwości:</p>
+      <ol class="list">
+        <li>zapisanie wyników twoich analiz</li>
+        <li>udostępnienie ogólnych statystyk i wykresów do wyników</li>
+        <li>kreator plików w przypadku problemów z ich stworzeniem</li>
+      </ol>
+      <p>Korzystanie z konta jest proste, oraz w pełni przejrzyste &#128522;.</p>
+      <p>Poniżej znajdują się trzy dostępne typy kont:</p>
+      <div class="types-accounts">
+        <div class="account">
+          <h4>Standard</h4>
+          <ul>
+            <li>liczba dziennych prób: 10</li>
+            <li>analiza pojedyńczych wpisów</li>
+            <li>max. wielkość pliku: do 200KB</li>
+          </ul>
+        </div>
+        <div class="account">
+          <h4>Pro</h4>
+          <ul>
+            <li>liczba dziennych prób: 30</li>
+            <li>ogólne statystyki dla plików</li>
+            <li>max. wielkość pliku: do 1MB</li>
+          </ul>
+        </div>
+        <div class="account">
+          <h4>Admin</h4>
+          <ul>
+            <li>liczba dziennych prób: 100</li>
+            <li>wykresy dotyczące danych</li>
+            <li>max. wielkość pliku: do 10MB</li>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="links">
@@ -52,12 +54,20 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
 </template>
 
 <style scoped>
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 li {
   font-size: 1.5vw;
 }
 
 .router-link {
   width: 50%;
+  height: 70%;
 }
 
 .types-accounts {
@@ -87,7 +97,7 @@ li {
   color: black;
   border: 2px solid white;
   background-color: #FF8C00;
-  box-shadow: 1rem 1rem dodgerblue;
+  box-shadow: 0.5rem 0.5rem dodgerblue;
 }
 
 .account h4 {

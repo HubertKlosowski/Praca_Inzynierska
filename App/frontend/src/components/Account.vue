@@ -6,6 +6,7 @@ import {useRouter} from "vue-router";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import AdminPanel from "@/components/AdminPanel.vue";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
 
 const router = useRouter()
@@ -14,13 +15,12 @@ const $cookies = inject('$cookies')
 const user = ref(JSON.parse(localStorage.getItem('user')))
 const usertypes = ref(['Normal', 'Pro', 'Administrator'])
 
-const choose_polish = ref(false)
-const choose_english = ref(false)
+const choose_model = ref(false)
 const history_submissions = ref(JSON.parse(localStorage.getItem('history_submissions')))
 const new_name = ref('')
 const change_name = ref(-1)
 
-const models = ref(['roberta-base', 'bert-base'])
+const model = ref('bert-base')
 
 const after_create = ref({})
 const title = ref('')
@@ -30,7 +30,7 @@ const response_status = ref(0)
 
 const logoutUser = async () => {
   localStorage.clear()
-  localStorage.setItem('choosen_models', JSON.stringify(['roberta-base', 'bert-base']))
+  localStorage.setItem('choosen_model', JSON.stringify('bert-base'))
   localStorage.setItem('user', JSON.stringify({}))
   $cookies.remove('made_submission')
   await router.push('/')
@@ -61,16 +61,10 @@ const deleteUser = async () => {
   }
 }
 
-const setPolishModel = () => {
-  choose_polish.value = !choose_polish.value
-  models.value[0] = choose_polish.value ? 'roberta-large' : 'roberta-base'
-  localStorage.setItem('choosen_models', JSON.stringify(models.value))
-}
-
 const setEnglishModel = () => {
-  choose_english.value = !choose_english.value
-  models.value[1] = choose_english.value ? 'bert-large' : 'bert-base'
-  localStorage.setItem('choosen_models', JSON.stringify(models.value))
+  choose_model.value = !choose_model.value
+  model.value = choose_model.value ? 'bert-large' : 'bert-base'
+  localStorage.setItem('choosen_model', JSON.stringify(model.value))
 }
 
 const showDetails = async (submission) => {
@@ -124,13 +118,16 @@ const setPredictionName = async (submission, num) => {
   }
 }
 
+const goHome = async () => {
+  await router.push('/')
+}
+
 onMounted(() => {
-  if (JSON.parse(localStorage.getItem('choosen_models')) === null) {
-    localStorage.setItem('choosen_models', JSON.stringify(models.value))
+  if (JSON.parse(localStorage.getItem('choosen_model')) === null) {
+    localStorage.setItem('choosen_model', JSON.stringify(model.value))
   } else {
-    models.value = JSON.parse(localStorage.getItem('choosen_models'))
-    choose_polish.value = models.value[0] !== 'roberta-base'
-    choose_english.value = models.value[1] !== 'bert-base'
+    model.value = JSON.parse(localStorage.getItem('choosen_model'))
+    choose_model.value = model.value !== 'bert-base'
   }
 })
 </script>
@@ -164,18 +161,7 @@ onMounted(() => {
         <div class="t-buttons">
           <div
               class="toggle-button"
-              :style="{ justifyContent: choose_polish ? 'start' : 'end' }"
-              @click="setPolishModel">
-            <div class="circle" :style="{
-              backgroundImage: `url(${polish})`,
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }"></div>
-          </div>
-          <div
-              class="toggle-button"
-              :style="{ justifyContent: choose_english ? 'start' : 'end' }"
+              :style="{ justifyContent: choose_model ? 'start' : 'end' }"
               @click="setEnglishModel">
             <div class="circle" :style="{
               backgroundImage: `url(${english})`,
@@ -191,7 +177,7 @@ onMounted(() => {
     <div class="history">
       <h3>Historia predykcji</h3>
       <div class="header-history">
-        <div class="field">Numer</div>
+        <div class="field" style="width: 10%">Numer</div>
         <div class="field">Nazwa</div>
         <div class="field">Szczegóły</div>
       </div>
@@ -203,7 +189,12 @@ onMounted(() => {
           <div class="field" v-if="change_name === i">
             <form @submit.prevent="setPredictionName(item, i)">
               <input type="text" v-model="new_name" :placeholder="item.name">
-              <button type="submit" class="update">Zatwierdź</button>
+              <button type="submit" class="update">
+                <font-awesome-icon :icon="['fas', 'check']" />
+              </button>
+              <button type="reset" class="cancel">
+                <font-awesome-icon :icon="['fas', 'xmark']" />
+              </button>
             </form>
           </div>
           <div class="field">
@@ -224,8 +215,8 @@ onMounted(() => {
 
     <div class="buttons">
       <RouterLink to="/update" class="update">Zmień dane</RouterLink>
-      <button type="button" @click="deleteUser" class="delete">Usuń konto</button>
-      <RouterLink to="/" class="router-link">Wróć do strony głównej</RouterLink>
+      <div @click="deleteUser" class="delete">Usuń konto</div>
+      <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
     </div>
   </div>
 </template>
@@ -252,18 +243,12 @@ form > input {
   border-radius: 0.75rem;
 }
 
-svg {
-  width: 100%;
-  height: 100%;
-}
-
 .history {
   border-top: 2px solid black;
   height: 60%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-y: auto;
 }
 
 .h-submissions {
@@ -273,12 +258,21 @@ svg {
   flex-direction: column;
   justify-content: start;
   align-items: center;
-  overflow-y: auto;
+  overflow-y: scroll;
+  scrollbar-gutter: stable both-edges;
+}
+
+.header-history {
+  width: 90%;
+  min-height: 20%;
+}
+
+.history-submission {
+  width: calc(90% + 24px);
+  min-height: 50%;
 }
 
 .history-submission, .header-history {
-  width: 90%;
-  min-height: 50%;
   margin: 1rem 0 1rem 0;
   display: flex;
   flex-direction: row;
@@ -289,11 +283,6 @@ svg {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
 }
 
-.header-history {
-  width: 100%;
-  min-height: 20%;
-}
-
 .field {
   width: 40%;
   height: 80%;
@@ -302,18 +291,12 @@ svg {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-}
-
-.field button {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
+  text-align: center;
 }
 
 .model-config {
   border-top: 2px solid black;
-  height: 40%;
+  height: 20%;
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
@@ -365,9 +348,10 @@ svg {
   height: 60%;
 }
 
-.update, .delete {
-  width: 30%;
-  height: 60%;
+.buttons > * {
+  width: 20%;
+  height: 50%;
+  padding: 1rem;
 }
 
 .update, .delete, .logout, .details {
@@ -375,7 +359,7 @@ svg {
   text-align: center;
   align-content: center;
   margin: 1rem;
-  font-size: 1.35vw;
+  font-size: 1.25vw;
   transition: 0.4s ease;
   cursor: pointer;
   background-color: white;
@@ -385,7 +369,7 @@ svg {
 .update:hover, .delete:hover, .logout:hover, .details:hover {
   color: white;
   border: 2px solid white;
-  box-shadow: 1rem 1rem dodgerblue;
+  box-shadow: 0.5rem 0.5rem dodgerblue;
 }
 
 .details:hover, .logout:hover {
@@ -417,7 +401,6 @@ svg {
 
 .left-part {
   width: 90%;
-  overflow-y: auto;
 }
 
 .header {
@@ -429,6 +412,7 @@ svg {
 }
 
 .buttons {
+  padding-top: 1rem;
   border-top: 2px solid black;
   height: 20%;
   display: flex;
@@ -445,9 +429,16 @@ svg {
   }
 
   .buttons > * {
-    width: 60%;
-    height: 30%;
+    width: 50%;
+    height: 10%;
     font-size: 2vh;
+    padding: 1rem;
+  }
+
+  .header-history, .history-submission {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .field {
