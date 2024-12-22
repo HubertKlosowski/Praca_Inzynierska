@@ -15,8 +15,8 @@ const check = () => {
 
 <template>
   <div class="left-part">
-    <div class="predict-content">
-      <h3>Twoje wyniki</h3>
+    <div class="content">
+      <h4>Twoje wyniki</h4>
       <p>Wyniki przedstawią wykryte stopnie depresji w przekazanych danych.</p>
       <p>Bez konta nie będą zapisywane w bazie danych uzyskane wyniki.</p>
       <p>Jeśli chcesz mieć możliwość powrotu do wcześniejszych wyników w przyszłości, zalecane jest utworzenie konta.</p>
@@ -24,13 +24,13 @@ const check = () => {
     </div>
     <div class="info">
       <div class="phase">
-        <h3>Przygotuj dane</h3>
+        <h4>Przygotuj dane</h4>
         <p>Analiza depresji wymaga posiadania danych tekstowych.</p>
         <p>Dane możesz wysłać w postaci pliku w rozszerzeniu "csv", "json" lub w formie pojedyńczego wpisu.</p>
         <p>Każdy wpis powinien być umieszczony w osobnych wierszach.</p>
       </div>
       <div class="phase">
-        <h3>Przeanalizuj wyniki</h3>
+        <h4>Przeanalizuj wyniki</h4>
         <p>Wyniki będą przypisane każdemu przesłanemu wpisowi.</p>
         <p>Dodatkowo, osoby posiadające konto otrzymają rozbudowane wyniki</p>
       </div>
@@ -51,7 +51,7 @@ const check = () => {
 </template>
 
 <style scoped>
-.predict-content {
+.content {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -66,12 +66,14 @@ const check = () => {
 .info {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 1.5rem;
+  padding: 1rem;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5vw;
 }
 
 .phase {
-  font-size: 1.5vw;
   width: 90%;
   padding: 1rem;
   background-color: #FFDAB9;
@@ -89,8 +91,14 @@ const check = () => {
   box-shadow: 0.5rem 0.5rem dodgerblue;
 }
 
-ul {
-  display: inline-block;
+.phase h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1.5vw;
+  font-weight: bold;
+}
+
+.phase p {
+  margin: 0.25rem 0;
 }
 
 @media (max-width: 768px) {

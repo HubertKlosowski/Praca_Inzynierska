@@ -6,6 +6,7 @@ import ResponseOutput from "@/components/ResponseOutput.vue";
 import {useRouter} from "vue-router";
 import _ from "lodash";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import FormButtonField from "@/components/FormButtonField.vue";
 
 
 const router = useRouter()
@@ -110,55 +111,52 @@ const goHome = async () => {
   }">
     <div class="header">
       <h3>Witaj ponownie</h3>
+    </div>
+    <div class="go-main">
       <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
     </div>
-    <form @submit.prevent="login">
+    <div class="form">
+      <form @submit.prevent="login">
 
-      <FormTextField
-          v-model:input_value="username"
-          :label_info="'nazwę użytkownika'"
-          :input_placeholder="'Nazwa użytkownika'"
-          :label_name="'username'"
-      ></FormTextField>
+        <FormTextField
+            v-model:input_value="username"
+            :label_info="'nazwę użytkownika'"
+            :input_placeholder="'Nazwa użytkownika'"
+            :label_name="'username'"
+        ></FormTextField>
 
-      <FormTextField
-          v-model:input_value="password"
-          v-model:show_password="show_password"
-          :label_info="'Hasło'"
-          :input_placeholder="'Hasło'"
-          :label_name="'password'"
-      ></FormTextField>
+        <FormTextField
+            v-model:input_value="password"
+            v-model:show_password="show_password"
+            :label_info="'Hasło'"
+            :input_placeholder="'Hasło'"
+            :label_name="'password'"
+        ></FormTextField>
 
-      <div class="form-row">
-        <button type="submit" class="router-link">Zaloguj się</button>
-      </div>
-    </form>
+        <FormButtonField :login="true">
+          <template v-slot:green>
+            Zaloguj się
+          </template>
+        </FormButtonField>
+
+      </form>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.router-link {
-  height: 20%;
-  padding: 1rem;
-}
-
-.form-row {
-  width: 70%;
-  height: 20%;
+.go-main {
+  width: 100%;
+  height: 10%;
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  background-color: #f5f5f5;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
-  margin: 1rem;
-  padding: 1rem;
 }
 
-button[type="submit"] {
-  min-height: 70%;
-  width: 50%;
+.router-link {
+  width: 10%;
+  padding: 1rem;
 }
 
 li {
@@ -166,11 +164,9 @@ li {
 }
 
 .header {
-  height: 20%;
-  width: 100%;
   display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
+  flex-direction: column;
+  justify-content: start;
   align-items: center;
   font-size: 1.5vw;
 }
@@ -179,25 +175,27 @@ li {
   width: 90%;
 }
 
-form {
+.form {
   width: 100%;
   height: 80%;
   display: flex;
   flex-direction: column;
+  justify-content: start;
   align-items: center;
 }
 
-.header > * {
-  font-size: 1.5vw;
+form {
+  width: 100%;
+  margin: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
 }
 
 @media (max-width: 768px) {
-  .router-link {
-    font-size: 1.75vh;
-  }
-
-  .header > * {
-    font-size: 1.75vh;
+  .header {
+    font-size: 1.5vh;
   }
 }
 </style>

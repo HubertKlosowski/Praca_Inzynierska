@@ -5,6 +5,8 @@ import FormRadioField from "@/components/FormRadioField.vue";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import axios from "axios";
 import {useRouter} from "vue-router";
+import FormButtonField from "@/components/FormButtonField.vue";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
 
 const router = useRouter()
@@ -68,7 +70,7 @@ const goHome = async () => {
   <ResponseOutput
       v-model:response_status="response_status"
       v-model:after_create="after_create"
-      :move_to="'/'"
+      :move_to="'/profile'"
       v-if="response_status >= 200"
       :title="title"
       :subtitle="subtitle"
@@ -79,14 +81,14 @@ const goHome = async () => {
     pointerEvents: response_status < 200 ? 'auto' : 'none'
   }">
     <div class="header">
-      <div class="content">
-        <h3>Utwórz konto</h3>
-        <ul>
-          <li>Poniżej znajduje się formularz, w którym należy podać własne dane osobowe.</li>
-          <li>Wszystkie pola muszą być wypełnione aby móc utworzyć konto.</li>
-          <li>Konto służy do przechowywania wyników analiz i zarządzania.</li>
-        </ul>
-      </div>
+      <h3>Utwórz konto</h3>
+      <ul>
+        <li>Poniżej znajduje się formularz, w którym należy podać własne dane osobowe.</li>
+        <li>Wszystkie pola muszą być wypełnione aby móc utworzyć konto.</li>
+        <li>Konto służy do przechowywania wyników analiz i zarządzania.</li>
+      </ul>
+    </div>
+    <div class="go-main">
       <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
     </div>
     <div class="form">
@@ -123,31 +125,32 @@ const goHome = async () => {
 
         <FormRadioField v-model="user.usertype"></FormRadioField>
 
-        <div class="form-row">
-          <button type="submit" class="create">Utwórz</button>
-          <button type="button" class="reset" @click="resetInputs">Wyczyść</button>
-        </div>
+        <FormButtonField :login="false" @redEvent="() => { resetInputs() }">
+          <template v-slot:green>
+            Utwórz
+          </template>
+          <template v-slot:red>
+            Wyczyść
+          </template>
+        </FormButtonField>
+
       </form>
     </div>
   </div>
 </template>
 
 <style scoped>
-.content {
+.go-main {
+  width: 100%;
+  height: 10%;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  width: 80%;
-}
-
-.left-part {
-  width: 90%;
 }
 
 .router-link {
   width: 10%;
-  height: 20%;
   padding: 1rem;
 }
 
@@ -156,13 +159,11 @@ li {
 }
 
 .header {
-  height: 20%;
-  width: 100%;
   display: flex;
-  flex-direction: row;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
   font-size: 1.5vw;
-  padding-bottom: 1rem;
 }
 
 .left-part {
@@ -174,79 +175,22 @@ li {
   height: 80%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: start;
   align-items: center;
 }
 
 form {
   width: 100%;
-  height: 100%;
   margin: 1rem;
   display: flex;
   flex-direction: column;
+  justify-content: start;
   align-items: center;
-}
-
-.form-row {
-  width: 80%;
-  height: 20%;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  background-color: #f5f5f5;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
-  margin: 1rem;
-  padding: 1rem;
-}
-
-.create, .reset {
-  text-decoration: none;
-  text-align: center;
-  align-content: center;
-  margin: 1rem;
-  font-size: 1.25vw;
-  transition: 0.4s ease;
-  cursor: pointer;
-  background-color: white;
-  border-radius: 1rem;
-  width: 40%;
-  height: 70%;
-}
-
-.create:hover, .reset:hover {
-  color: white;
-  border: 2px solid white;
-  box-shadow: 0.5rem 0.5rem dodgerblue;
-}
-
-.create:hover {
-  background-color: darkgreen;
-}
-
-.reset:hover {
-  background-color: darkred;
-}
-
-.create {
-  border: 2px solid green;
-  color: green;
-}
-
-.reset {
-  border: 2px solid red;
-  color: red;
 }
 
 @media (max-width: 768px) {
-  .buttons > * {
-    width: 70%;
-    font-size: 1.75vh;
-  }
-
   .header {
-    font-size: 1.75vh;
+    font-size: 1.5vh;
   }
 }
 </style>

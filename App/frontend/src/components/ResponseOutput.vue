@@ -34,7 +34,7 @@ const closeWindow = () => {
 <style scoped>
 .response {
   position: fixed;
-  top: 0;
+  top: 20%;
   width: 90%;
   height: 50%;
   padding: 2rem;

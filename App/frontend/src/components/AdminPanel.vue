@@ -150,12 +150,12 @@ svg {
 }
 
 .user-verify {
-  width: calc(90% + 24px);
+  width: 90%;
   min-height: 50%;
 }
 
 .header-user-verify {
-  width: 90%;
+  width: calc(90% - 24px);
   min-height: 20%;
 }
 

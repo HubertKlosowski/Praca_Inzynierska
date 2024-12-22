@@ -37,9 +37,8 @@ label, span {
 }
 
 .form-row {
-  max-width: 90%;
-  width: 70%;
-  height: 100px;
+  width: 80%;
+  height: 20%;
   display: flex;
   flex-direction: row;
   justify-content: space-around;

@@ -7,6 +7,8 @@ import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import AdminPanel from "@/components/AdminPanel.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import FormButtonField from "@/components/FormButtonField.vue";
+import FormTextField from "@/components/FormTextField.vue";
 
 
 const router = useRouter()
@@ -147,16 +149,29 @@ onMounted(() => {
     pointerEvents: response_status < 200 ? 'auto' : 'none'
   }" v-else>
     <div class="header">
-      <h3>Witaj {{ user['username'] }}!</h3>
-      <div class="info">{{ user['name'] }}</div>
-      <div class="info">{{ user['email'] }}</div>
-      <div class="info">{{ usertypes[user['usertype']] }}</div>
-      <div class="info">{{ user['submission_num'] }}</div>
-      <button type="button" class="logout" @click="logoutUser">Wyloguj się</button>
+      <div class="title">
+        <h3>Witaj {{ user['username'] }}!</h3>
+      </div>
+      <div class="rest">
+        <button type="button" class="logout" @click="logoutUser">Wyloguj się</button>
+      </div>
+    </div>
+    <div class="account-details">
+      <div class="title">
+        <h3>Szczegóły konta</h3>
+      </div>
+      <div class="rest">
+        <div class="info">{{ user['name'] }}</div>
+        <div class="info">{{ user['email'] }}</div>
+        <div class="info">{{ usertypes[user['usertype']] }}</div>
+        <div class="info">{{ user['submission_num'] }}</div>
+      </div>
     </div>
     <div class="model-config">
-      <h3>Konfiguracja modelu</h3>
-      <div class="models">
+      <div class="title">
+        <h3>Konfiguracja modelu</h3>
+      </div>
+      <div class="rest">
         <h3>LARGE</h3>
         <div class="t-buttons">
           <div
@@ -188,13 +203,23 @@ onMounted(() => {
           <div class="field" @click="change_name = i" v-else v-show="change_name !== i">Brak nazwy</div>
           <div class="field" v-if="change_name === i">
             <form @submit.prevent="setPredictionName(item, i)">
-              <input type="text" v-model="new_name" :placeholder="item.name">
-              <button type="submit" class="update">
-                <font-awesome-icon :icon="['fas', 'check']" />
-              </button>
-              <button type="reset" class="cancel">
-                <font-awesome-icon :icon="['fas', 'xmark']" />
-              </button>
+
+              <FormTextField
+                  v-model:input_value="new_name"
+                  :label_info="''"
+                  :input_placeholder="item.name"
+                  :label_name="''"
+              ></FormTextField>
+
+              <FormButtonField :login="false">
+                <template v-slot:green>
+                  <font-awesome-icon :icon="['fas', 'check']" />
+                </template>
+                <template v-slot:red>
+                  <font-awesome-icon :icon="['fas', 'xmark']" />
+                </template>
+              </FormButtonField>
+
             </form>
           </div>
           <div class="field">
@@ -262,14 +287,14 @@ form > input {
   scrollbar-gutter: stable both-edges;
 }
 
-.header-history {
+.history-submission {
   width: 90%;
-  min-height: 20%;
+  min-height: 50%;
 }
 
-.history-submission {
-  width: calc(90% + 24px);
-  min-height: 50%;
+.header-history {
+  width: calc(90% - 24px);
+  min-height: 20%;
 }
 
 .history-submission, .header-history {
@@ -292,24 +317,6 @@ form > input {
   justify-content: center;
   align-items: center;
   text-align: center;
-}
-
-.model-config {
-  border-top: 2px solid black;
-  height: 20%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-  align-items: center;
-}
-
-.models {
-  width: 50%;
-  height: 90%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-  align-items: center;
 }
 
 .t-buttons {
@@ -339,8 +346,8 @@ form > input {
 }
 
 .logout {
-  width: 10%;
-  height: 60%;
+  width: 30%;
+  height: 50%;
 }
 
 .details {
@@ -359,7 +366,7 @@ form > input {
   text-align: center;
   align-content: center;
   margin: 1rem;
-  font-size: 1.25vw;
+  font-size: 1.5vw;
   transition: 0.4s ease;
   cursor: pointer;
   background-color: white;
@@ -403,12 +410,32 @@ form > input {
   width: 90%;
 }
 
-.header {
+.account-details, .model-config {
+  border-top: 2px solid black;
+}
+
+.header, .account-details, .model-config {
   height: 20%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.title, .rest {
+  height: 100%;
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
   align-items: center;
+}
+
+.title {
+  width: 30%;
+}
+
+.rest {
+  width: 70%;
 }
 
 .buttons {
@@ -453,23 +480,29 @@ form > input {
     border: 2px solid black;
   }
 
-  .model-config, .header {
+  .model-config, .header, .account-details {
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .title, .rest {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
     align-items: center;
   }
 
-  .model-config, .header {
-    overflow-y: auto;
+  .title {
+    height: 20%;
   }
 
-  .toggle-button {
-    height: 30%;
-  }
-
-  .models {
-    width: 90%;
-    height: auto;
+  .rest {
+    height: 80%;
   }
 
   h3, .field, .details, .logout {
@@ -477,7 +510,7 @@ form > input {
   }
 
   .info {
-    font-size: 1.25vh;
+    font-size: 1.5vh;
   }
 
   .logout {
