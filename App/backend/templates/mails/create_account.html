@@ -52,13 +52,27 @@
             <div class="header">
                 <h2>Utworzenie konta</h2>
             </div>
-            <div class="info">
-                <p>Twoje konto zostało dodane do bazy danych.</p>
-                <p>Do dalszego działania poczekaj na zatwierdzenie konta przez administratora.</p>
-                <p>Stałeś/aś się częścią walki z depresją na świecie.</p>
-                <p>Życzę udanej pracy &#128516;</p>
-                <p>Hubert Kłosowski</p>
-            </div>
+            {% if usertype == 2 %}
+                <div class="info">
+                    <p>Twoje konto zostało dodane do bazy danych.</p>
+                    <p>Proszę kliknąć w podany poniżej link. Służy on do weryfikacji konta.</p>
+                    <p>
+                        <a href="{{ link }}">Zweryfikuj konto</a>
+                    </p>
+                    <p>Czas ważności to godzina.</p>
+                    <p>Z poważaniem</p>
+                    <p>Hubert Kłosowski</p>
+                </div>
+            {% else %}
+                <div class="info">
+                    <p>Twoje konto zostało dodane do bazy danych.</p>
+                    <p>Do dalszego działania poczekaj na zatwierdzenie konta przez administratora.</p>
+                    <p>Maksymalny czas na potwierdzenie przez administratora wynosi 24 godziny. 
+                        Po upływie tego czasu konto zostanie usunięte.</p>
+                    <p>Z poważaniem</p>
+                    <p>Hubert Kłosowski</p>
+                </div>
+            {% endif %}
         </div>
     </body>
 </html>

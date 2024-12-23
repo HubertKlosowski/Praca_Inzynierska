@@ -7,7 +7,7 @@ const $cookies = inject('$cookies')
 const user = ref(JSON.parse(localStorage.getItem('user')))
 
 const check = () => {
-  return (!_.isEmpty(user.value) && $cookies.isKey('made_submission')) ||
+  return (!_.isEmpty(user.value) && $cookies.isKey('made_submission')) &&
     (_.isEmpty(user.value) && !$cookies.isKey('made_submission')) ||
     (!_.isEmpty(user.value) && localStorage.hasOwnProperty('text'))
 }

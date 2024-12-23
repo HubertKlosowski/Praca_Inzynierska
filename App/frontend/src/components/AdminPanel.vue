@@ -15,7 +15,9 @@ const response_status = defineModel('response_status')
 
 const verifyUser = async (user) => {
   try {
-    const response = await axios.patch('http://localhost:8000/api/user/verify_user/' + user['username'])
+    const response = await axios.patch('http://localhost:8000/api/user/verify_user', {
+      'username': user['username']
+    })
 
     const index = _.indexOf(users_verify.value, user)
     users_verify.value[index]['is_verified'] = true
@@ -151,7 +153,7 @@ svg {
 
 .user-verify {
   width: 90%;
-  min-height: 50%;
+  min-height: 70%;
 }
 
 .header-user-verify {

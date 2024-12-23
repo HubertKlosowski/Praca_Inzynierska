@@ -1,12 +1,12 @@
 <script setup>
-const props = defineProps(['label_info', 'input_placeholder', 'label_name', 'reset', 'error'])
+const props = defineProps(['label_info', 'input_placeholder', 'label_name', 'reset', 'error', 'minimize'])
 const input_value = defineModel('input_value')
 const show_password = defineModel('show_password')
 </script>
 
 <template>
   <div class="form-row">
-    <div class="row">
+    <div class="row" v-if="minimize">
       <label :for="props.label_name">Podaj {{ props.label_info.toLowerCase() }}</label>
     </div>
     <div class="just-row">

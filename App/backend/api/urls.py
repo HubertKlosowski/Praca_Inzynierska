@@ -12,6 +12,6 @@ urlpatterns = [
     path('user/renew_submission/<str:username>', renew_submission, name='renew_submission'),
     path('submission/make_submission', make_submission, name='make_submission'),
     path('submission/get_submission/<str:sub_uuid>', get_submission, name='get_submission'),
-    path('user/verify_user/<str:username>', verify_user, name='verify_user'),
+    path('user/verify_user', verify_user, name='verify_user'),
     path('submission/change_name/<str:sub_uuid>', change_name, name='change_name'),
 ]

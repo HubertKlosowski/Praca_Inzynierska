@@ -7,7 +7,7 @@
             html, body {
                 margin: 0;
                 padding: 0;
-                height: 1000px;
+                height: 100%;
                 width: 100%;
             }
 
@@ -43,7 +43,7 @@
             }
 
             p {
-                font-size: 0.8rem;
+                font-size: 1.5vw;
             }
         </style>
     </head>
@@ -52,12 +52,21 @@
             <div class="header">
                 <h2>Weryfikacja konta</h2>
             </div>
+            {% if usertype == 2 %}
             <div class="info">
-                <p>Twoje konto zostało zatwierdzone przez administratora.</p>
-                <p>Od teraz możesz korzystać z wszystkich funkcjonalność dostępnych dla twojego typu konta. &#128512;</p>
-                <p>Z poważaniem</p>
+                <p>Weryfikacja konta przebiegła pomyślnie. Możesz zamknąć tą stronę.</p>
+                <p>Od teraz możesz korzystać z wszystkich funkcjonalność dostępnych dla twojego konta. &#128512;</p>
+                <p>Życzę udanej pracy &#128516;</p>
                 <p>Hubert Kłosowski</p>
             </div>
+            {% else %}
+                <div class="info">
+                    <p>Twoje konto zostało zatwierdzone przez administratora.</p>
+                    <p>Od teraz możesz korzystać z wszystkich funkcjonalność dostępnych dla twojego konta. &#128512;</p>
+                    <p>Życzę udanej pracy &#128516;</p>
+                    <p>Hubert Kłosowski</p>
+                </div>
+            {% endif %}
         </div>
     </body>
 </html>

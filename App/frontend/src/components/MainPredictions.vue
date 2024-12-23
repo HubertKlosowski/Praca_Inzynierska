@@ -69,6 +69,12 @@ const goHome = async () => {
 </template>
 
 <style scoped>
+.router-link {
+  width: 20%;
+  height: 50%;
+  padding: 1rem;
+}
+
 svg {
   width: 100%;
   height: 100%;

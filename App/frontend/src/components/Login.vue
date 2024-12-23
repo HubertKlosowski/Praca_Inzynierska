@@ -30,7 +30,7 @@ const login = async () => {
       password: password.value
     })
 
-    after_create.value = response.data.user
+    after_create.value = response.data['user']
     title.value = response.data.success
     subtitle.value = ''
     response_status.value = response.status
@@ -44,7 +44,6 @@ const login = async () => {
       await getUsers()
     }
     resetInputs()
-    await router.push('/profile')
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
@@ -101,6 +100,7 @@ const goHome = async () => {
       v-model:response_status="response_status"
       v-model:after_create="after_create"
       v-if="response_status >= 200"
+      :move_to="'/profile'"
       :title="title"
       :subtitle="subtitle"
   ></ResponseOutput>

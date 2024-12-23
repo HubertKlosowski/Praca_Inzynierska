@@ -43,7 +43,7 @@ const deleteUser = async () => {
     const response = await axios.delete('http://localhost:8000/api/user/delete_user/' + user.value['username'])
     after_create.value = [user.value['username'], user.value['email']]
     title.value = response.data.success
-    subtitle.value = 'Użytkownik poprawnie usunięty.'
+    subtitle.value = 'Użytkownik został poprawnie usunięty.'
     response_status.value = response.status
     await logoutUser()
 
@@ -206,6 +206,7 @@ onMounted(() => {
 
               <FormTextField
                   v-model:input_value="new_name"
+                  :minimize="true"
                   :label_info="''"
                   :input_placeholder="item.name"
                   :label_name="''"
@@ -487,6 +488,13 @@ form > input {
     align-items: center;
     overflow-y: auto;
     overflow-x: hidden;
+  }
+
+  .model-config > .rest {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
   }
 
   .title, .rest {

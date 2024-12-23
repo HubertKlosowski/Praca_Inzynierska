@@ -42,7 +42,7 @@ const goHome = async () => {
 
 <style scoped>
 .router-link {
-  height: 20%;
+  height: 40%;
   padding: 0.5rem;
 }
 

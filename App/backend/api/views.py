@@ -1,4 +1,7 @@
+import os.path
+import random
 import smtplib
+import string
 from io import BytesIO
 
 import pandas as pd
@@ -6,22 +9,23 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.core.mail import EmailMessage
-from django.template import loader
-from django.utils import timezone
 from django.core.files import File
+from django.core.mail import EmailMessage
+from django.shortcuts import render
+from django.template import loader
+from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
-from model.model_datasets import preprocess_dataframe, detect_lang
+from model.api_keys import save_model_token
 from model.model_datasets import predict
+from model.model_datasets import preprocess_dataframe, detect_lang
+from model.tokens import generate_verification_token, verify_token
 from .models import User, Submission
 from .serializer import UserSerializer, SubmissionSerializer
-import string
-import random
-from model.api_keys import save_model_token
 
 
 @api_view(['POST'])
@@ -63,14 +67,30 @@ def create_user(request):
     if serializer.is_valid():
         serializer.save()
 
-        html_msg = loader.render_to_string(
-            'mails/create_account.html',
-            context={'title': 'Utworzenie konta'}
-        )
+        if int(data['usertype']) == 2:
+            token = generate_verification_token(serializer.data['email'])
+            link = f'{settings.SITE_URL}{reverse('verify_user')}?token={token}'
+
+            message = loader.render_to_string(
+                'mails/create_account.html',
+                context={
+                    'title': 'Utworzenie konta',
+                    'usertype': int(data['usertype']),
+                    'link': link
+                }
+            )
+        else:
+            message = loader.render_to_string(
+                'mails/create_account.html',
+                context={
+                    'title': 'Utworzenie konta',
+                    'usertype': int(data['usertype'])
+                }
+            )
 
         email = EmailMessage(
             subject='Utworzenie konta',
-            body=html_msg,
+            body=message,
             from_email=settings.EMAIL_HOST_USER,
             to=[serializer.data['email']],
         )
@@ -141,19 +161,23 @@ def delete_user(request, username):
         }, status=status.HTTP_404_NOT_FOUND)
 
     user = User.objects.get(username=username)
+    submissions = Submission.objects.filter(user=user.id)
+
     email = user.email
+
+    for submission in submissions:
+        os.remove(submission.content.path)
+    submissions.delete()
     user.delete()
 
-    Submission.objects.filter(user=user.id).delete()
-
-    html_msg = loader.render_to_string(
+    message = loader.render_to_string(
         'mails/delete_account.html',
         context={'title': 'Usunięcie konta'}
     )
 
     email = EmailMessage(
         subject='Usuniecie konta',
-        body=html_msg,
+        body=message,
         from_email=settings.EMAIL_HOST_USER,
         to=[email],
     )
@@ -213,23 +237,64 @@ def update_user(request, username):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['PATCH'])
-def verify_user(request, username):
-    if not User.objects.filter(username=username).exists():
-        return Response({
-            'error': ['Użytkownik nie istnieje.']
-        }, status=status.HTTP_404_NOT_FOUND)
+@api_view(['PATCH', 'GET'])
+def verify_user(request):
+    if request.method == 'GET':
+        token = request.GET.get('token')
+        email = verify_token(token)
+        if not token:
+            return Response({'error': ['Token nie został dostarczony.']}, status=status.HTTP_400_BAD_REQUEST)
+        if not email:
+            return Response({'error': ['Link wygasł. Czas ważności wynosi 1h.']}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = User.objects.get(username=username)
-    serializer = UserSerializer(user, data={'is_verified': True}, partial=True)
+        user = User.objects.get(email=email)
+        serializer = UserSerializer(user, data={'is_verified': True}, partial=True)
 
-    if serializer.is_valid():
-        serializer.save()
-        return Response({
-            'success': 'Weryfikacja użytkownika powiodła się.'
-        }, status=status.HTTP_200_OK)
+        if serializer.is_valid():
+            serializer.save()
+            return render(request, os.path.join('mails', 'verify_account.html'), context={'usertype': serializer.data['usertype']})
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if request.method == 'PATCH':
+        username = request.data['username']
+        if not User.objects.filter(username=username).exists():
+            return Response({
+                'error': ['Użytkownik nie istnieje.']
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        user = User.objects.get(username=username)
+        serializer = UserSerializer(user, data={'is_verified': True}, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            message = loader.render_to_string(
+                'mails/verify_account.html',
+                context={
+                    'title': 'Weryfikacja konta',
+                    'usertype': serializer.data['usertype']
+                }
+            )
+
+            email = EmailMessage(
+                subject='Weryfikacja konta',
+                body=message,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[serializer.data['email']],
+            )
+            email.content_subtype = 'html'
+
+            try:
+                email.send()
+            except smtplib.SMTPException:
+                return Response({
+                    'error': ['Nie udało się wysłać wiadomości potwierdzającej weryfikację konta.']
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({
+                'success': 'Weryfikacja użytkownika powiodła się.'
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['PATCH'])
@@ -302,14 +367,14 @@ def make_submission(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     model = data['model']
-    path = f'D:/{model}'
+    # path = f'D:/{model}'
 
     if 'user' not in data.keys() and model == 'bert-large':
         return Response({
             'error': ['Bez konta nie można korzystać z modelu LARGE.']
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    # path = f'depression-detect/{model}'
+    path = f'depression-detect/{model}'
     prepared = preprocess_dataframe(df.copy(deep=True), lang=lang)
 
     try:
