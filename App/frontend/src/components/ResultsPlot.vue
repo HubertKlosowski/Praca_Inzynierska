@@ -2,22 +2,29 @@
 import * as d3 from "d3";
 import {onMounted, ref} from "vue";
 import _ from "lodash";
+import FormRadioField from "@/components/FormRadioField.vue";
+
 
 const stats = ref(JSON.parse(localStorage.getItem('depressed')))
+const choose_plot = ref(0)
 
-const createHist = (width, height) => {
-  const marginTop = 20
-  const marginRight = 20
-  const marginBottom = 30
-  const marginLeft = 40
 
-  stats.value = _.map(stats.value, (num) => { return num * 100 })
+const createHist = () => {
+  const marginTop = 100
+  const marginRight = 50
+  const marginBottom = 50
+  const marginLeft = 100
+  const svg = d3.select('#histplot')
+  const width = parseInt(svg.style('width'))
+  const height = parseInt(svg.style('height'))
+
+  const scaled = _.map(stats.value, (num) => { return num * 100 })
 
   const bins = d3
       .bin()
       .domain([0, 100])
       .thresholds(10)
-      (stats.value)
+      (scaled)
 
   // Declare the x (horizontal position) scale.
   const x = d3
@@ -29,12 +36,6 @@ const createHist = (width, height) => {
   const y = d3.scaleLinear()
       .domain([0, d3.max(bins, (d) => d.length) + 10])
       .range([height - marginBottom, marginTop])
-
-  // Create the SVG container.
-  const svg = d3.create("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("style", "max-width: 100%; height: auto;")
 
   // Add a rect for each bin.
   svg.append("g")
@@ -50,47 +51,68 @@ const createHist = (width, height) => {
   // Add the x-axis and label.
   svg.append("g")
       .attr("transform", `translate(0,${height - marginBottom})`)
-      .attr("style", "font-size: 15px")
+      .attr("style", "font-size: 1.5vw")
       .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
       .call((g) => g.append("text")
-          .attr("x", width)
-          .attr("y", 1.5 * marginBottom)
+          .attr("x", width / 2 + marginRight)
+          .attr("y", marginBottom)
           .attr("fill", "currentColor")
-          .attr("text-anchor", "end")
-          .attr("style", "font-size: 15px")
+          .attr("text-anchor", "center")
+          .attr("style", "font-size: 1.5vw;")
           .text("Kategorie depresji"))
 
   // Add the y-axis and label
   svg.append("g")
       .attr("transform", `translate(${marginLeft},0)`)
-      .attr("style", "font-size: 15px")
+      .attr("style", "font-size: 1.5vw")
       .call(d3.axisLeft(y).ticks(height / 40))
       .call((g) => g.append("text")
-          .attr("x", -marginLeft)
-          .attr("y", 10)
+          .attr("x", -(height / 2 - marginTop))
+          .attr("y", -marginRight)
           .attr("fill", "currentColor")
-          .attr("text-anchor", "start")
-          .attr("style", "font-size: 15px")
+          .attr("text-anchor", "center")
+          .attr("style", "font-size: 1.5vw; transform: rotate(-90deg);")
           .text("Liczebność kategorii depresji"))
-
-  return svg.node()
 }
 
 const createDonut = () => {
 
 }
 
-onMounted(() => {
-  const histplot = document.querySelector('.histplot')
+const createWordCloud = () => {
 
-  histplot.appendChild(createHist(window.innerWidth / 2, window.innerHeight / 2))
+}
+
+const setPlot = () => {
+  if (choose_plot.value === 0) {
+    createHist()
+  }
+}
+
+onMounted(() => {
+  setPlot()
 })
 </script>
 
 <template>
   <div class="plot">
-    <div class="donut"></div>
-    <div class="histplot"></div>
+    <div class="plots">
+      <svg id="histplot" v-if="choose_plot === 0" preserveAspectRatio="xMinYMid meet" viewBox="0 0 1000 500" width="100%" height="100%"></svg>
+      <svg id="donut" v-else-if="choose_plot === 1" viewBox="0 0 100 100"></svg>
+      <svg id="wordcloud" v-else viewBox="0 0 800 600"></svg>
+    </div>
+    <div class="form">
+      <form @change.prevent="setPlot">
+
+        <FormRadioField
+            v-model:input_value="choose_plot"
+            :title="'Wykres'"
+            :options="['histogram', 'kołowy', 'wordcloud']"
+            :values="[0, 1, 2]"
+        ></FormRadioField>
+
+      </form>
+    </div>
   </div>
 </template>
 
@@ -99,10 +121,55 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: space-evenly;
   align-items: center;
-  background-color: lightgray;
-  overflow-y: auto;
+}
+
+.plots {
+  width: 70%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.form {
+  width: 30%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+}
+
+form {
+  width: 100%;
+  margin: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .plot {
+    flex-direction: column-reverse;
+  }
+
+  .plots {
+    width: 100%;
+    height: 80%;
+  }
+
+  .form {
+    width: 100%;
+    height: 20%;
+  }
+
+  svg {
+    font-size: 2.5vh;
+  }
 }
 </style>

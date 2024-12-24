@@ -114,7 +114,7 @@ input[type="text"], input[type="password"] {
   input[type="text"], input[type="password"] {
     height: 70%;
     width: 100%;
-    font-size: 1.75vh;
+    font-size: 1.5vh;
   }
 
   .show {

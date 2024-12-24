@@ -71,7 +71,7 @@ const emits = defineEmits(['redEvent'])
 @media (max-width: 768px) {
   .form-row > * {
     width: 70%;
-    font-size: 1.75vh;
+    font-size: 1.5vh;
   }
 }
 </style>

@@ -15,7 +15,6 @@ const username = ref('')
 const password = ref('')
 const users_verify = ref([])
 const show_password = ref(false)
-const user = ref({})
 
 const after_create = ref({})
 const title = ref('')
@@ -30,18 +29,24 @@ const login = async () => {
       password: password.value
     })
 
-    after_create.value = response.data['user']
+    localStorage.setItem('history_submissions', JSON.stringify(response.data['submissions']))
+    const user = response.data['user']
+    const usertypes = ['Normal', 'Pro', 'Administrator']
+
+    after_create.value = {
+      'name': user['name'],
+      'username': user['username'],
+      'email': user['email'],
+      'usertype': usertypes[user['usertype']],
+    }
     title.value = response.data.success
     subtitle.value = ''
     response_status.value = response.status
 
-    localStorage.setItem('history_submissions', JSON.stringify(response.data['submissions']))
-    user.value = response.data['user']
+    localStorage.setItem('user', JSON.stringify(user))
 
-    localStorage.setItem('user', JSON.stringify(user.value))
-
-    if (user.value['usertype'] === 2) {
-      await getUsers()
+    if (user['usertype'] === 2) {
+      await getUsers(user)
     }
     resetInputs()
 
@@ -61,11 +66,11 @@ const login = async () => {
   }
 }
 
-const getUsers = async () => {
+const getUsers = async (user) => {
   try {
     const response = await axios.get('http://localhost:8000/api/get_users')
     users_verify.value = _.remove(response.data, function (n) {
-      return n['username'] !== user.value['username']
+      return n['username'] !== user['username']
     })
     localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
   } catch (e) {

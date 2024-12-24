@@ -1,22 +1,20 @@
 <script setup>
-const model = defineModel()
+const input_value = defineModel('input_value')
+
+const props = defineProps(['title', 'options', 'values'])
 </script>
 
 <template>
   <div class="form-row">
     <div class="title">
-      <span>Typ konta</span>
+      <span>{{ props.title }}</span>
     </div>
     <div class="radio-column">
       <div class="radio-row">
-        <label for="normal">Normal</label>
-        <label for="normal">Pro</label>
-        <label for="normal">Administrator</label>
+        <label :for="option" v-for="option in props.options" :key="option">{{ option }}</label>
       </div>
       <div class="radio-row">
-        <input type="radio" id="normal" value="0" v-model="model" checked="checked">
-        <input type="radio" id="pro" value="1" v-model="model">
-        <input type="radio" id="admin" value="2" v-model="model">
+        <input type="radio" :id="option" v-for="(option, i) in props.options" :value="props.values[i]" v-model="input_value" :key="option">
       </div>
     </div>
   </div>
@@ -65,13 +63,18 @@ label, span {
 input[type="radio"] {
   border: 0;
   width: 100%;
-  height: 1.25rem;
-  background-color: red;
+  height: 1.5vw;
 }
 
 @media (max-width: 768px) {
   label, span {
-    font-size: 1.75vh;
+    font-size: 1.5vh;
+  }
+
+  input[type="radio"] {
+    border: 0;
+    width: 100%;
+    height: 1.5vh;
   }
 }
 </style>

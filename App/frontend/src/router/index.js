@@ -33,7 +33,7 @@ router.beforeEach(async (to, from) => {
 
     if (from.path === '/profile' && to.path === '/predict') {
         return true
-    } else if (!$cookies.isKey('made_submission') && to.path === '/predict') {
+    } else if (!$cookies.isKey('made_submission') && to.path === '/predict' && _.isEmpty(user.value)) {
         return false
     } else if ((to.path === '/profile' || to.path === '/update') && _.isEmpty(user.value)) {
         return false

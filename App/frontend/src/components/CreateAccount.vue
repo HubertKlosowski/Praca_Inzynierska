@@ -123,7 +123,12 @@ const goHome = async () => {
             :label_name="'password'"
         ></FormTextField>
 
-        <FormRadioField v-model="user.usertype"></FormRadioField>
+        <FormRadioField
+            v-model:input_value="user.usertype"
+            :title="'Typ konta'"
+            :options="['Normal', 'Pro', 'Administrator']"
+            :values="[0, 1, 2]"
+        ></FormRadioField>
 
         <FormButtonField :login="false" @redEvent="() => { resetInputs() }">
           <template v-slot:green>

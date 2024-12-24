@@ -290,7 +290,7 @@ form > input {
 
 .history-submission {
   width: 90%;
-  min-height: 50%;
+  min-height: 70%;
 }
 
 .header-history {

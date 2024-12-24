@@ -85,8 +85,6 @@ onMounted(() => {
     <div class="header-user-verify">
       <div class="field">Nazwa</div>
       <div class="field">Adres email</div>
-      <div class="field">Typ konta</div>
-      <div class="field">Liczba prób</div>
       <div class="field">Zweryfikuj</div>
       <div class="field">Odnów próby</div>
     </div>
@@ -97,12 +95,6 @@ onMounted(() => {
         </div>
         <div class="field">
           <span>{{ u['email'] }}</span>
-        </div>
-        <div class="field">
-          <span>{{ props.usertypes[u['usertype']] }}</span>
-        </div>
-        <div class="field">
-          <span>{{ u['submission_num'] }}</span>
         </div>
         <div class="field">
           <button type="button" class="verify" @click="verifyUser(u)" :style="{
