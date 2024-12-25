@@ -6,6 +6,7 @@ import FormRadioField from "@/components/FormRadioField.vue";
 
 
 const stats = ref(JSON.parse(localStorage.getItem('depressed')))
+const text = ref(JSON.parse(localStorage.getItem('text')))
 const choose_plot = ref(0)
 
 
@@ -14,20 +15,17 @@ const createHist = () => {
   const marginRight = 50
   const marginBottom = 50
   const marginLeft = 100
-  const svg = d3.select('#hist')
-  const width = parseInt(svg.style('width'))
-  const height = parseInt(svg.style('height'))
-
+  const width = 600
+  const height = 600
+  const svg = d3.select('#hist').attr('viewBox', [0, 0, width, height])
   const scaled = _.map(stats.value, (num) => { return num * 100 })
 
-  const bins = d3
-      .bin()
+  const bins = d3.bin()
       .domain([0, 100])
       .thresholds(10)
       (scaled)
 
-  const x = d3
-      .scaleLinear()
+  const x = d3.scaleLinear()
       .domain([0, 100])
       .range([marginLeft, width - marginRight])
 
@@ -35,43 +33,117 @@ const createHist = () => {
       .domain([0, d3.max(bins, (d) => d.length) + 10])
       .range([height - marginBottom, marginTop])
 
-  svg.append("g")
-      .attr("fill", "steelblue")
+  svg.append('g')
+      .attr('fill', 'black')
     .selectAll()
     .data(bins)
-    .join("rect")
-      .attr("x", (d) => x(d.x0) + 1)
-      .attr("width", (d) => x(d.x1) - x(d.x0) - 1)
-      .attr("y", (d) => y(d.length))
-      .attr("height", (d) => y(0) - y(d.length))
+    .join('rect')
+      .attr('x', (d) => x(d.x0) + 1)
+      .attr('width', (d) => x(d.x1) - x(d.x0) - 1)
+      .attr('height', 0)
+      .attr('y', (d) => y(d.length))
 
-  svg.append("g")
-      .attr("transform", `translate(0,${height - marginBottom})`)
-      .attr("style", "font-size: 1.5vw")
+  svg.append('g')
+      .attr('transform', `translate(0,${height - marginBottom})`)
+      .attr('font-size', 12)
       .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
-      .call((g) => g.append("text")
-          .attr("x", width / 2 + marginRight)
-          .attr("y", marginBottom)
-          .attr("fill", "currentColor")
-          .attr("text-anchor", "center")
-          .attr("style", "font-size: 1.5vw;")
-          .text("Kategorie depresji"))
+      .call((g) => g.append('text')
+        .attr('x', width / 2 + marginRight)
+        .attr('y', marginBottom / 1.5)
+        .attr('fill', 'currentColor')
+        .attr('text-anchor', 'center')
+        .attr('font-size', 12)
+        .text('Przedziały depresji (%)'))
 
-  svg.append("g")
-      .attr("transform", `translate(${marginLeft},0)`)
-      .attr("style", "font-size: 1.5vw")
+  svg.append('g')
+      .attr('transform', `translate(${marginLeft},0)`)
+      .attr('font-size', 12)
       .call(d3.axisLeft(y).ticks(height / 40))
-      .call((g) => g.append("text")
-          .attr("x", -(height / 2 - marginTop))
-          .attr("y", -marginRight)
-          .attr("fill", "currentColor")
-          .attr("text-anchor", "center")
-          .attr("style", "font-size: 1.5vw; transform: rotate(-90deg);")
-          .text("Liczebność kategorii depresji"))
+      .call((g) => g.append('text')
+        .attr('x', -(height / 2 - marginTop))
+        .attr('y', -marginRight / 1.5)
+        .attr('fill', 'currentColor')
+        .attr('text-anchor', 'center')
+        .attr('font-size', 12)
+        .attr('style', 'transform: rotate(-90deg);')
+        .text('Liczebność w przedziale depresji'))
+
+  svg.selectAll('rect')
+      .transition()
+      .duration(1500)
+      .ease(d3.easeBounceOut)
+      .attr('height', (d) => y(0) - y(d.length))
+      .delay((_, i) => i * 100)
 }
 
 const createDonut = () => {
+  const avg_depressed = _.round(_.mean(stats.value) * 100, 2)
+  const data = [
+    { 'name': 'depresja', 'value': avg_depressed },
+    { 'name': 'brak depresji', 'value': _.round(100 - avg_depressed, 2) }
+  ]
 
+  const width = 300
+  const height = 300
+  const radius = Math.min(width, height) / 2
+  const svg = d3.select('#donut')
+      .attr('viewBox', [-width / 2, -height / 2, width, height])
+
+  const inner_arc = d3.arc()
+      .innerRadius(radius * 0.25)
+      .outerRadius(radius * 0.7)
+
+  const outer_arc = d3.arc()
+      .innerRadius(radius * 0.85)
+      .outerRadius(radius * 0.85)
+
+  const pie = d3.pie()
+      .padAngle(1 / radius)
+      .sort(null)
+      .value((d) => d.value)
+
+  const entries = pie(data)
+
+  const color = d3.scaleOrdinal(['black', 'white'])
+
+  svg.append('g')
+      .selectAll()
+      .data(entries)
+      .join('path')
+      .attr('fill', (d) => color(d.data))
+      .attr('stroke', 'black')
+      .attr('stroke-width', 1)
+      .attr('d', inner_arc)
+      .append('title')
+      .text((d) => `${d.data}: ${d.data.value.toLocaleString()}`)
+
+  svg.append('g')
+      .attr('font-size', 12)
+      .attr('text-anchor', 'middle')
+      .selectAll()
+      .data(entries)
+      .join('text')
+      .attr('transform', (d) => `translate(${outer_arc.centroid(d)})`)
+      .call(text => text.append('tspan')
+          .attr('y', '-0.4em')
+          .attr('font-weight', 'bold')
+          .text((d) => d.data['name']))
+      .call(text => text.filter((d) => (d.endAngle - d.startAngle) > 0.25).append('tspan')
+          .attr('x', 0)
+          .attr('y', '0.7em')
+          .attr('fill-opacity', 0.7)
+          .text((d) => d.data['value'].toLocaleString() + '%'))
+
+  svg.selectAll('path')
+      .transition()
+      .duration(1500)
+      .ease(d3.easeBounceOut)
+      .attrTween('d', (d) => {
+        const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, d)
+        return function (t) {
+          return inner_arc(i(t))
+        }
+      })
 }
 
 const createWordCloud = () => {
@@ -96,11 +168,14 @@ onMounted(() => {
 <template>
   <div class="plot">
     <div class="plots">
-      <svg id="hist" v-if="choose_plot === 0" preserveAspectRatio="xMinYMid meet" viewBox="0 0 1000 500" width="100%" height="100%"></svg>
-      <svg id="donut" v-else-if="choose_plot === 1" preserveAspectRatio="xMinYMid meet" viewBox="0 0 1000 500" width="100%" height="100%"></svg>
-      <svg id="wordcloud" v-else viewBox="0 0 800 600"></svg>
+      <svg id="hist" v-if="choose_plot === 0" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg id="donut" v-else-if="choose_plot === 1" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg id="wordcloud" v-else preserveAspectRatio="xMidYMid meet"></svg>
     </div>
     <div class="form">
+      <h4 v-if="choose_plot === 0">Liczba przypadków depresji w poszczególnych przedziałach</h4>
+      <h4 v-else-if="choose_plot === 1">Średnia wartość depresji</h4>
+      <h4 v-else>Chmura najczęściej występujących słów</h4>
       <form @change.prevent="setPlot">
 
         <FormRadioField
@@ -116,6 +191,19 @@ onMounted(() => {
 </template>
 
 <style scoped>
+h4 {
+  text-align: center;
+}
+
+.form-row {
+  height: 50%;
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+}
+
 .plot {
   width: 100%;
   height: 100%;
@@ -132,6 +220,7 @@ onMounted(() => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  border: 2px solid black;
 }
 
 .form {
