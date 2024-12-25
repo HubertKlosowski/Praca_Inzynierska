@@ -3,6 +3,8 @@ import * as d3 from "d3";
 import {onMounted, ref} from "vue";
 import _ from "lodash";
 import FormRadioField from "@/components/FormRadioField.vue";
+import {removeStopwords} from "stopword/dist/stopword.esm.mjs";
+import WordCloud from "wordcloud/src/wordcloud2.js";
 
 
 const stats = ref(JSON.parse(localStorage.getItem('depressed')))
@@ -147,7 +149,19 @@ const createDonut = () => {
 }
 
 const createWordCloud = () => {
+  let words = _.split(_.join(text.value, ' '), ' ')
 
+  words = removeStopwords(words)
+  for (let i = 0; i < words.length; i++) {
+    words[i] = words[i].split('').filter((char) => { return /[a-zA-Z0-9]/.test(char) }).join('')
+  }
+  words = _.filter(words, (value) => value.length !== 0)
+  words = _.map(words, (word) => word.toLowerCase())
+
+  let unique = _.countBy(words)
+  unique = _.pickBy(unique, (value, key) => (key.length < 100) && (key.length > 1))
+
+  //WordCloud(document.getElementById('wordcloud'), { list: unique });
 }
 
 const setPlot = () => {
@@ -168,14 +182,14 @@ onMounted(() => {
 <template>
   <div class="plot">
     <div class="plots">
+      <h4 v-if="choose_plot === 0">Liczba przypadków depresji w poszczególnych przedziałach</h4>
+      <h4 v-else-if="choose_plot === 1">Średnia wartość depresji</h4>
+      <h4 v-else>Chmura najczęściej występujących słów</h4>
       <svg id="hist" v-if="choose_plot === 0" preserveAspectRatio="xMidYMid meet"></svg>
       <svg id="donut" v-else-if="choose_plot === 1" preserveAspectRatio="xMidYMid meet"></svg>
       <svg id="wordcloud" v-else preserveAspectRatio="xMidYMid meet"></svg>
     </div>
     <div class="form">
-      <h4 v-if="choose_plot === 0">Liczba przypadków depresji w poszczególnych przedziałach</h4>
-      <h4 v-else-if="choose_plot === 1">Średnia wartość depresji</h4>
-      <h4 v-else>Chmura najczęściej występujących słów</h4>
       <form @change.prevent="setPlot">
 
         <FormRadioField
@@ -201,7 +215,6 @@ h4 {
 
 svg {
   width: 100%;
-  height: 100%;
 }
 
 .plot {
@@ -220,7 +233,6 @@ svg {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border: 2px solid black;
 }
 
 .form {
@@ -248,16 +260,12 @@ form {
 
   .plots {
     width: 100%;
-    height: 80%;
+    height: 70%;
   }
 
   .form {
     width: 100%;
-    height: 20%;
-  }
-
-  svg {
-    font-size: 2.5vh;
+    height: 30%;
   }
 }
 </style>
