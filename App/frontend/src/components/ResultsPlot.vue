@@ -14,7 +14,7 @@ const createHist = () => {
   const marginRight = 50
   const marginBottom = 50
   const marginLeft = 100
-  const svg = d3.select('#histplot')
+  const svg = d3.select('#hist')
   const width = parseInt(svg.style('width'))
   const height = parseInt(svg.style('height'))
 
@@ -26,18 +26,15 @@ const createHist = () => {
       .thresholds(10)
       (scaled)
 
-  // Declare the x (horizontal position) scale.
   const x = d3
       .scaleLinear()
       .domain([0, 100])
       .range([marginLeft, width - marginRight])
 
-  // Declare the y (vertical position) scale.
   const y = d3.scaleLinear()
       .domain([0, d3.max(bins, (d) => d.length) + 10])
       .range([height - marginBottom, marginTop])
 
-  // Add a rect for each bin.
   svg.append("g")
       .attr("fill", "steelblue")
     .selectAll()
@@ -48,7 +45,6 @@ const createHist = () => {
       .attr("y", (d) => y(d.length))
       .attr("height", (d) => y(0) - y(d.length))
 
-  // Add the x-axis and label.
   svg.append("g")
       .attr("transform", `translate(0,${height - marginBottom})`)
       .attr("style", "font-size: 1.5vw")
@@ -61,7 +57,6 @@ const createHist = () => {
           .attr("style", "font-size: 1.5vw;")
           .text("Kategorie depresji"))
 
-  // Add the y-axis and label
   svg.append("g")
       .attr("transform", `translate(${marginLeft},0)`)
       .attr("style", "font-size: 1.5vw")
@@ -86,6 +81,10 @@ const createWordCloud = () => {
 const setPlot = () => {
   if (choose_plot.value === 0) {
     createHist()
+  } else if (choose_plot.value === 1) {
+    createDonut()
+  } else {
+    createWordCloud()
   }
 }
 
@@ -97,8 +96,8 @@ onMounted(() => {
 <template>
   <div class="plot">
     <div class="plots">
-      <svg id="histplot" v-if="choose_plot === 0" preserveAspectRatio="xMinYMid meet" viewBox="0 0 1000 500" width="100%" height="100%"></svg>
-      <svg id="donut" v-else-if="choose_plot === 1" viewBox="0 0 100 100"></svg>
+      <svg id="hist" v-if="choose_plot === 0" preserveAspectRatio="xMinYMid meet" viewBox="0 0 1000 500" width="100%" height="100%"></svg>
+      <svg id="donut" v-else-if="choose_plot === 1" preserveAspectRatio="xMinYMid meet" viewBox="0 0 1000 500" width="100%" height="100%"></svg>
       <svg id="wordcloud" v-else viewBox="0 0 800 600"></svg>
     </div>
     <div class="form">
