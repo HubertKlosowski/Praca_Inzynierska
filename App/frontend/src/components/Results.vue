@@ -193,7 +193,7 @@ svg {
 .text {
   overflow-x: auto;
   padding: 1rem;
-  font-size: 1.2vw;
+  font-size: 1.5vw;
 }
 
 .row {
@@ -217,8 +217,12 @@ svg {
   overflow-y: auto;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .text {
+    font-size: 1.5vh !important;
+  }
+
+  .progress {
     font-size: 1.5vh !important;
   }
 }

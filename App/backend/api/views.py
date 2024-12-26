@@ -367,14 +367,14 @@ def make_submission(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     model = data['model']
-    path = f'D:/{model}'
+    # path = f'D:/{model}'
 
     if 'user' not in data.keys() and model == 'bert-large':
         return Response({
             'error': ['Bez konta nie można korzystać z modelu LARGE.']
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    # path = f'depression-detect/{model}'
+    path = f'depression-detect/{model}'
     prepared = preprocess_dataframe(df.copy(deep=True), lang=lang)
 
     try:

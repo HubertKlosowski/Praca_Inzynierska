@@ -93,7 +93,7 @@ input[type="text"] {
   text-align: center;
   align-content: center;
   margin: 1rem;
-  font-size: 1.25vw;
+  font-size: 1.5vw;
   transition: 0.4s ease;
   cursor: pointer;
   background-color: white;
@@ -184,7 +184,7 @@ form {
 
 @media (max-width: 768px) {
   .main, input[type="text"] {
-    font-size: 2vh;
+    font-size: 1.5vh;
   }
 
   .header, button[type="button"] {
@@ -192,7 +192,7 @@ form {
   }
 
   .router-link {
-    font-size: 2vh;
+    font-size: 1.5vh;
     width: 80%;
     height: 50%;
   }

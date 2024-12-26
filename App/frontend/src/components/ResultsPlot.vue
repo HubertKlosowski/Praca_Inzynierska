@@ -4,12 +4,12 @@ import {onMounted, ref} from "vue";
 import _ from "lodash";
 import FormRadioField from "@/components/FormRadioField.vue";
 import {removeStopwords} from "stopword/dist/stopword.esm.mjs";
-import WordCloud from "wordcloud/src/wordcloud2.js";
+import cloud from "d3-cloud";
 
 
 const stats = ref(JSON.parse(localStorage.getItem('depressed')))
 const text = ref(JSON.parse(localStorage.getItem('text')))
-const choose_plot = ref(0)
+const choose_plot = ref(2)
 
 
 const createHist = () => {
@@ -117,7 +117,7 @@ const createDonut = () => {
       .attr('stroke-width', 1)
       .attr('d', inner_arc)
       .append('title')
-      .text((d) => `${d.data}: ${d.data.value.toLocaleString()}`)
+      .text((d) => `${d.data}: ${d.data['value']}`)
 
   svg.append('g')
       .attr('font-size', 12)
@@ -130,11 +130,11 @@ const createDonut = () => {
           .attr('y', '-0.4em')
           .attr('font-weight', 'bold')
           .text((d) => d.data['name']))
-      .call(text => text.filter((d) => (d.endAngle - d.startAngle) > 0.25).append('tspan')
+      .call(text => text.append('tspan')
           .attr('x', 0)
           .attr('y', '0.7em')
           .attr('fill-opacity', 0.7)
-          .text((d) => d.data['value'].toLocaleString() + '%'))
+          .text((d) => d.data['value'] + '%'))
 
   svg.selectAll('path')
       .transition()
@@ -159,9 +159,51 @@ const createWordCloud = () => {
   words = _.map(words, (word) => word.toLowerCase())
 
   let unique = _.countBy(words)
-  unique = _.pickBy(unique, (value, key) => (key.length < 100) && (key.length > 1))
+  unique = _.pickBy(unique, (_, key) => (key.length < 50) && (key.length > 3))
+  unique = _.map(unique, (value, key) => [key, value])
+  const min = _.minBy(unique, (row) => row[1]), max = _.maxBy(unique, (row) => row[1])
+  const max_font = 50
+  const min_font = 10
+  for (let i = 0; i < unique.length; i++) {
+    const word = unique[i].at(0)
+    const size = (unique[i].at(1) - min[1]) / (max[1] - min[1]) * (max_font - min_font) + min_font
+    unique[i] = {'text': word, 'size': size}
+  }
 
-  //WordCloud(document.getElementById('wordcloud'), { list: unique });
+  const width = 400
+  const height = 400
+  const svg = d3.select('#wordcloud')
+      .attr('viewBox', [0, 0, width, height])
+
+  const layout = cloud()
+      .size([width, height])
+      .words(unique)
+      .rotate(function() { return ~~(Math.random() * 2) * 45 })
+      .font('Rubik')
+      .fontSize((d) => d.size)
+      .on('end', draw)
+
+  layout.start()
+
+  svg.selectAll('text')
+      .transition()
+      .ease(d3.easeLinear)
+      .style('opacity', 1)
+      .delay((_, i) => i * 20)
+
+  function draw(words) {
+    svg.append('g')
+        .attr('transform', 'translate(' + layout.size()[0] / 2 + ',' + layout.size()[1] / 2 + ')')
+      .selectAll()
+        .data(words)
+        .join('text')
+        .style('font-size', (d) => d.size)
+        .style('font-family', 'Rubik')
+        .style('opacity', 0)
+        .attr('text-anchor', 'middle')
+        .attr('transform', (d) => 'translate(' + [d.x, d.y] + ')rotate(' + d.rotate + ')')
+        .text((d) => d.text)
+  }
 }
 
 const setPlot = () => {
@@ -185,6 +227,7 @@ onMounted(() => {
       <h4 v-if="choose_plot === 0">Liczba przypadków depresji w poszczególnych przedziałach</h4>
       <h4 v-else-if="choose_plot === 1">Średnia wartość depresji</h4>
       <h4 v-else>Chmura najczęściej występujących słów</h4>
+
       <svg id="hist" v-if="choose_plot === 0" preserveAspectRatio="xMidYMid meet"></svg>
       <svg id="donut" v-else-if="choose_plot === 1" preserveAspectRatio="xMidYMid meet"></svg>
       <svg id="wordcloud" v-else preserveAspectRatio="xMidYMid meet"></svg>
