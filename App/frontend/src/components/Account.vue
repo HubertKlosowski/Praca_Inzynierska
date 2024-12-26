@@ -124,6 +124,10 @@ const goHome = async () => {
   await router.push('/')
 }
 
+const closeWindow = () => {
+  change_name.value = -1
+}
+
 onMounted(() => {
   if (JSON.parse(localStorage.getItem('choosen_model')) === null) {
     localStorage.setItem('choosen_model', JSON.stringify(model.value))
@@ -197,11 +201,11 @@ onMounted(() => {
         <div class="field">Szczegóły</div>
       </div>
       <div class="h-submissions">
-        <div class="history-submission" v-for="(item, i) in history_submissions" :key="item">
+        <div class="history-submission" v-for="(item, i) in history_submissions" :key="item" v-if="history_submissions.length !== 0">
           <div class="field" style="width: 10%">{{ i + 1 }}</div>
           <div class="field" @click="change_name = i" v-if="item.name !== null" v-show="change_name !== i">{{ item.name }}</div>
           <div class="field" @click="change_name = i" v-else v-show="change_name !== i">Brak nazwy</div>
-          <div class="field" v-if="change_name === i">
+          <div class="field" v-if="change_name === i" style="overflow-y: auto; align-items: start;">
             <form @submit.prevent="setPredictionName(item, i)">
 
               <FormTextField
@@ -212,7 +216,7 @@ onMounted(() => {
                   :label_name="''"
               ></FormTextField>
 
-              <FormButtonField :login="false">
+              <FormButtonField :login="false" @redEvent="() => { closeWindow() }">
                 <template v-slot:green>
                   <font-awesome-icon :icon="['fas', 'check']" />
                 </template>
@@ -226,6 +230,9 @@ onMounted(() => {
           <div class="field">
             <button type="button" class="details" @click="showDetails(item)">Pokaż szczegóły</button>
           </div>
+        </div>
+        <div class="history-submission" v-else>
+          Brak wykonanych prób
         </div>
       </div>
     </div>

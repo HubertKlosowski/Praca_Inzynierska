@@ -89,7 +89,7 @@ onMounted(() => {
       <div class="field">Odnów próby</div>
     </div>
     <div class="u-verify">
-      <div class="user-verify" v-for="u in users_verify" :key="u">
+      <div class="user-verify" v-for="u in users_verify" :key="u" v-if="users_verify.length !== 0">
         <div class="field">
           <span>{{ u['username'] }}</span>
         </div>
@@ -112,6 +112,9 @@ onMounted(() => {
             <font-awesome-icon :icon="['fas', 'rotate']" />
           </button>
         </div>
+      </div>
+      <div class="user-verify" v-else>
+        Brak użytkowników
       </div>
     </div>
   </div>
