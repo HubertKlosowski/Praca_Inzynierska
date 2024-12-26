@@ -9,7 +9,7 @@ import cloud from "d3-cloud";
 
 const stats = ref(JSON.parse(localStorage.getItem('depressed')))
 const text = ref(JSON.parse(localStorage.getItem('text')))
-const choose_plot = ref(2)
+const choose_plot = ref(0)
 
 
 const createHist = () => {

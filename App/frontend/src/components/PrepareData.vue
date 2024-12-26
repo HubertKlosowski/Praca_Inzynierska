@@ -4,7 +4,10 @@ import {useRouter} from "vue-router";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import _ from "lodash";
-import PopUp from "@/components/PopUp.vue";
+import CreateFileOutput from "@/components/CreateFileOutput.vue";
+import FormButtonField from "@/components/FormButtonField.vue";
+import FormTextAreaField from "@/components/FormTextAreaField.vue";
+import FormFileField from "@/components/FormFileField.vue";
 
 
 const router = useRouter()
@@ -125,19 +128,6 @@ const makePredictions = async () => {
   }
 }
 
-const changeDragging = () => {
-  is_dragging.value = !is_dragging.value
-}
-
-const drop = (event) => {
-  changeDragging()
-  data.value = event.dataTransfer.files[0]
-}
-
-const getFile = () => {
-  data.value = document.getElementById('data').files[0]
-}
-
 watch(send_creator, () => {
   if (send_creator.value) {
     makePredictions()
@@ -163,11 +153,11 @@ onMounted(() => {
       :subtitle="subtitle"
   ></ResponseOutput>
 
-  <PopUp
+  <CreateFileOutput
       v-if="show_popup"
       v-model:show_popup="show_popup"
       v-model:send_creator="send_creator"
-  ></PopUp>
+  ></CreateFileOutput>
 
   <div class="main" :style="{
     opacity: (show_popup || response_status > 200) ? '0.3' : '1',
@@ -187,29 +177,32 @@ onMounted(() => {
     </div>
     <div class="depression-form" v-if="choose">
       <form @submit.prevent="makePredictions">
-        <div class="form-row">
-          <label for="data" class="text-label">Wpisz tekst do klasyfikacji depresji</label>
-          <textarea id="data" v-model="data" placeholder="Tekst" class="form-textarea"></textarea>
-          <button type="submit" class="confirm">Zatwierdź</button>
-        </div>
+
+        <FormTextAreaField
+            v-model:data="data"
+        ></FormTextAreaField>
+
+        <FormButtonField :login="true">
+          <template v-slot:green>
+            Zatwierdź
+          </template>
+        </FormButtonField>
+
       </form>
     </div>
     <div class="depression-form" v-else>
       <form @submit.prevent="makePredictions">
-        <div class="form-row">
-          <div
-            @dragenter.prevent="changeDragging"
-            @dragleave.prevent="changeDragging"
-            @dragover.prevent
-            @drop.prevent="drop"
-            :class="{ 'drag-in': is_dragging, 'drag-out': !is_dragging }">
-              <span>Upuść plik</span>
-              <span>albo</span>
-              <label for="data" class="file-label">Wybierz plik</label>
-              <input type="file" id="data" @change="getFile" :style="{ display: 'none' }">
-          </div>
-          <button type="submit" class="confirm">Zatwierdź</button>
-        </div>
+
+        <FormFileField
+            v-model:is_dragging="is_dragging"
+            v-model:data="data"
+        ></FormFileField>
+
+        <FormButtonField :login="true">
+            <template v-slot:green>
+              Zatwierdź
+            </template>
+          </FormButtonField>
       </form>
     </div>
  </div>
@@ -228,32 +221,11 @@ onMounted(() => {
 }
 
 form {
-  height: 100%;
   width: 100%;
-  margin: 1rem;
-}
-
-.drag-in, .drag-out {
-  height: 10rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
-  text-align: center;
-  align-content: center;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-evenly;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.drag-in {
-  background-color: gray;
-  border: 3px dashed black;
-}
-
-.drag-out {
-  background-color: lightgray;
-  border: 3px solid black;
 }
 
 .header {
@@ -300,13 +272,7 @@ form {
 }
 
 .depression-form {
-  width: 70%;
-  height: 60%;
-  margin: 0 auto;
-  padding: 2rem;
-  background-color: #f5f5f5;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+  width: 90%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -314,76 +280,16 @@ form {
   gap: 1.5rem;
 }
 
-.form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  height: 100%;
-}
-
-.text-label {
-  font-size: 1.5vw;
-  color: #333;
-  font-weight: bold;
-}
-
-.file-label {
-  padding: 0.5rem;
-  border-radius: 1rem;
-  border: 2px solid black;
-  font-size: 1.5vw;
-  background-color: lightgrey;
-  transition: 0.4s ease;
-}
-
-.file-label:hover {
-  color: white;
-  border: 2px solid white;
-  background-color: darkgrey;
-  box-shadow: 0.5rem 0.5rem dodgerblue;
-}
-
 span {
   font-size: 1.5vw;
   color: #333;
 }
 
-.form-textarea {
-  width: auto;
-  height: 20%;
-  min-height: 10%;
-  max-height: 60%;
-  padding: 0.75rem;
-  font-size: 1.25vw;
-  border: 1px solid #ccc;
-  border-radius: 0.5rem;
-  resize: vertical;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.form-textarea:focus {
-  border-color: #4682B4;
-  box-shadow: 0 0 5px rgba(70, 130, 180, 0.5);
-  outline: none;
-}
-
-.confirm {
-  padding: 0.75rem 1.5rem;
-  font-size: 1.25vw;
-  color: white;
-  background-color: #4682B4;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.confirm:hover {
-  background-color: #3a6a9b;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
 @media (max-width: 768px) {
+  form {
+    flex-direction: column;
+  }
+
   .main {
     font-size: 1.5vh;
   }
@@ -395,6 +301,7 @@ span {
   .choose {
     width: 15vh;
     height: 5vh;
+    border-radius: 2.5vh;
   }
 
   .circle.active {
@@ -407,15 +314,7 @@ span {
   }
 }
 
-@media (max-height: 550px) {
-  .drag-in, .drag-out {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
-  }
-}
-
-@media (max-height: 650px) {
+@media (max-height: 600px) {
   .main {
     font-size: 3vh;
   }
@@ -427,6 +326,7 @@ span {
   .choose {
     width: 30vh;
     height: 10vh;
+    border-radius: 5vh;
   }
 
   .circle.active {

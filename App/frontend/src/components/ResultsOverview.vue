@@ -1,12 +1,15 @@
 <script setup>
 import _ from "lodash";
 import {ref} from "vue";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
 
 const stats = ref(JSON.parse(localStorage.getItem('depressed')))
 const text = ref(JSON.parse(localStorage.getItem('text')))
 const submission = ref(JSON.parse(localStorage.getItem('choosen_submission')))
 const user = ref(JSON.parse(localStorage.getItem('user')))
+
+const show_intro = ref(false)
 
 
 const hardToAccess = () => {
@@ -29,7 +32,8 @@ const hardToAccess = () => {
       Pojedynczy wpis
     </div>
     <div class="info" v-if="text.length > 1">
-      Liczba "trudnych" rekordów : {{ hardToAccess() }}
+      "Trudne" rekordy : {{ hardToAccess() }}
+      <font-awesome-icon :icon="['fas', 'circle-info']" class="router-link" @click="show_intro = !show_intro"/>
     </div>
     <div class="info" v-else>
       Brak "trudnych" rekordów
