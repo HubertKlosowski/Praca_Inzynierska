@@ -4,13 +4,11 @@ import {useRouter} from "vue-router";
 
 const router = useRouter()
 
-const after_create = defineModel('after_create')
 const response_status = defineModel('response_status')
+const props = defineProps(['title', 'subtitle', 'move_to', 'after_create'])
 
-const props = defineProps(['title', 'subtitle', 'move_to'])
 
 const closeWindow = async () => {
-  after_create.value = {}
   response_status.value = 0
 
   if (props.move_to !== undefined && response_status.value >= 200 && response_status.value <= 299) {

@@ -69,7 +69,7 @@ const goHome = async () => {
 
   <ResponseOutput
       v-model:response_status="response_status"
-      v-model:after_create="after_create"
+      :after_create="after_create"
       v-if="response_status >= 200"
       :move_to="'/'"
       :title="title"

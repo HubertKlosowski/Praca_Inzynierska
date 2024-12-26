@@ -14,7 +14,7 @@ const router = useRouter()
 const $cookies = inject('$cookies')
 
 const show_loading_screen = defineModel('show_loading_screen')
-const show_popup = ref(JSON.parse(localStorage.getItem('show_popup')))
+const show_popup = defineModel('show_popup')
 const send_creator = ref(false)
 const user = ref(JSON.parse(localStorage.getItem('user')))
 const choose = ref(true)
@@ -25,12 +25,11 @@ const model = ref('bert-base')
 const after_create = ref({})
 const title = ref('')
 const subtitle = ref('')
-const response_status = ref(0)
+const response_status = defineModel('response_status')
 
 
 const makePredictions = async () => {
   let form_data = new FormData()
-  show_popup.value = false
 
   if (localStorage.hasOwnProperty('to_file')) {
     let to_csv = JSON.parse(localStorage.getItem('to_file'))
@@ -83,6 +82,7 @@ const makePredictions = async () => {
     form_data.append('user', user.value['id'])
   }
 
+  data.value = null
   show_loading_screen.value = true
 
   try {
@@ -147,7 +147,7 @@ onMounted(() => {
 
   <ResponseOutput
       v-model:response_status="response_status"
-      v-model:after_create="after_create"
+      :after_create="after_create"
       v-if="response_status >= 200"
       :title="title"
       :subtitle="subtitle"
@@ -160,8 +160,8 @@ onMounted(() => {
   ></CreateFileOutput>
 
   <div class="main" :style="{
-    opacity: (show_popup || response_status > 200) ? '0.3' : '1',
-    pointerEvents: (show_popup || response_status > 200) ? 'none' : 'auto'
+    opacity: (show_loading_screen || show_popup || response_status > 200) ? '0.3' : '1',
+    pointerEvents: (show_loading_screen || show_popup || response_status > 200) ? 'none' : 'auto'
   }">
     <div class="header">
       <span>Plik</span>

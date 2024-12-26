@@ -75,8 +75,8 @@ const sendCreator = () => {
 
 .pop-up {
   position: fixed;
-  top: 0;
-  width: 100%;
+  top: 20%;
+  width: 90%;
   height: 50%;
   padding: 2rem;
   background-color: rgba(245, 245, 245, 0.95);

@@ -1,7 +1,7 @@
 <script setup>
 const props = defineProps(['phase'])
 
-const show_intro = defineModel()
+const show_intro = defineModel('show_intro')
 </script>
 
 <template>
