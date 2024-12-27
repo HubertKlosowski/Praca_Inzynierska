@@ -20,7 +20,10 @@ const closeWindow = async () => {
 <template>
   <div class="response">
     <div class="header">
-      <h3 :style="{ color: response_status >= 200 && response_status <= 299 ? 'darkgreen' : 'darkred' }">{{ props.title }}</h3>
+      <h3 v-if="response_status >= 100 && response_status <= 199" style="color: black">{{ props.title }}</h3>
+      <h3 v-else-if="response_status >= 200 && response_status <= 299" style="color: darkgreen">{{ props.title }}</h3>
+      <h3 v-else-if="response_status >= 300 && response_status <= 399" style="color: black">{{ props.title }}</h3>
+      <h3 v-else style="color: darkred">{{ props.title }}</h3>
       <div
         class="show-content"
         @click="closeWindow"
@@ -29,7 +32,7 @@ const closeWindow = async () => {
     </div>
     <div class="content">
       <h3>{{ props.subtitle }}</h3>
-      <ul>
+      <ul v-if="after_create.length >= 0">
         <li v-for="sentence in after_create" :key="sentence">
           {{ sentence }}
         </li>
@@ -41,9 +44,9 @@ const closeWindow = async () => {
 <style scoped>
 .response {
   position: fixed;
-  top: 20%;
+  top: 0;
   width: 90%;
-  height: 50%;
+  height: 70%;
   padding: 2rem;
   background-color: rgba(245, 245, 245, 0.95);
   border-radius: 1rem;
@@ -51,6 +54,7 @@ const closeWindow = async () => {
   z-index: 1000;
   color: #333;
   animation: slide-down 0.7s ease-in;
+  overflow-y: auto;
 }
 
 @keyframes slide-down {
@@ -65,12 +69,12 @@ const closeWindow = async () => {
 }
 
 .header {
+  height: 20%;
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
   border-bottom: 1px solid #ccc;
-  padding-bottom: 0.5rem;
 }
 
 .header h3 {
@@ -81,8 +85,8 @@ const closeWindow = async () => {
 
 .show-content {
   background-color: red;
-  height: 40px;
-  width: 40px;
+  height: 2.5vw;
+  width: 2.5vw;
   border-radius: 50%;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
@@ -98,6 +102,7 @@ const closeWindow = async () => {
   background-color: #f5f5f5;
   padding: 1rem;
   border-radius: 0.5rem;
+  overflow-y: auto;
 }
 
 .content ul {
@@ -123,8 +128,8 @@ const closeWindow = async () => {
   }
 
   .show-content {
-    height: 35px;
-    width: 35px;
+    height: 2.5vh;
+    width: 2.5vh;
   }
 
   .content li {

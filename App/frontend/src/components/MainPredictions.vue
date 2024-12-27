@@ -13,6 +13,7 @@ const router = useRouter()
 const inc = ref(0)
 const size = ref(JSON.parse(localStorage.getItem('text')).length)
 const user = ref(JSON.parse(localStorage.getItem('user')))
+const response_status = ref(0)
 
 
 const changeSection = (param) => {
@@ -45,22 +46,30 @@ const goHome = async () => {
 
      <Results v-if="inc === 0"></Results>
 
-     <ResultsOverview v-if="inc === 1"></ResultsOverview>
+     <ResultsOverview v-if="inc === 1" v-model:response_status="response_status"></ResultsOverview>
 
      <ResultsPlot v-if="inc === 2"></ResultsPlot>
 
    </div>
    <div class="buttons">
      <div class="move" @click="changeSection(-1)" :style="{
-       display: !_.isEmpty(user) ? 'initial' : 'none'
+       display: !_.isEmpty(user) ? 'initial' : 'none',
+       opacity: response_status === 0 ? '1' : '0.3',
+       pointerEvents: response_status === 0 ? 'auto' : 'none'
      }">
       <font-awesome-icon :icon="['fas', 'circle-arrow-left']" />
      </div>
-     <div class="move">
+     <div class="move" :style="{
+       width: '30%',
+       opacity: response_status === 0 ? '1' : '0.3',
+       pointerEvents: response_status === 0 ? 'auto' : 'none'
+     }">
        <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
      </div>
      <div class="move" @click="changeSection(1)" :style="{
-       display: !_.isEmpty(user) ? 'initial' : 'none'
+       display: !_.isEmpty(user) ? 'initial' : 'none',
+       opacity: response_status === 0 ? '1' : '0.3',
+       pointerEvents: response_status === 0 ? 'auto' : 'none'
      }">
       <font-awesome-icon :icon="['fas', 'circle-arrow-right']" />
      </div>
