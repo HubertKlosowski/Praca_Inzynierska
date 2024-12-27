@@ -285,7 +285,7 @@ span {
   color: #333;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   form {
     flex-direction: column;
   }

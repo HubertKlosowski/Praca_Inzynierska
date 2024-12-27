@@ -19,7 +19,7 @@ html, body {
     align-content: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
     #app {
         flex-direction: column;
         justify-content: center;

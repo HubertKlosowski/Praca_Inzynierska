@@ -50,7 +50,7 @@ button {
   margin: 1%;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .right-part {
     width: 90%;
     height: 45%;

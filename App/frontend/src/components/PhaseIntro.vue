@@ -77,7 +77,7 @@ svg {
   height: 50%;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .model {
     font-size: 1.75vh;
   }

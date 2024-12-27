@@ -66,7 +66,7 @@ input[type="radio"] {
   height: 1.5vw;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   label, span {
     font-size: 1.5vh;
   }

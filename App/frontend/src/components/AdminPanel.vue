@@ -149,6 +149,7 @@ svg {
 .user-verify {
   width: 90%;
   min-height: 70%;
+  font-size: 1.5vw;
 }
 
 .header-user-verify {
@@ -225,7 +226,7 @@ svg {
   color: black;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .buttons > * {
     width: 60%;
     height: 30%;
@@ -245,7 +246,7 @@ svg {
     height: 50%;
   }
 
-  h3, .field {
+  h3, .field, .user-verify {
     font-size: 1.5vh;
   }
 }

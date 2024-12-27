@@ -101,7 +101,7 @@ const check = () => {
   margin: 0.25rem 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .left-part {
     width: 90%;
     height: 45%;

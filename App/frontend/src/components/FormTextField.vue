@@ -100,7 +100,7 @@ input[type="text"], input[type="password"] {
   border-radius: 0.75rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .form-row {
     display: flex;
     flex-direction: column;

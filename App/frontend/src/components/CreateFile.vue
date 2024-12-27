@@ -1,6 +1,8 @@
 <script setup>
 import {onMounted, ref} from "vue";
 import _ from "lodash";
+import FormTextField from "@/components/FormTextField.vue";
+import FormButtonField from "@/components/FormButtonField.vue";
 
 
 const data = ref(JSON.parse(localStorage.getItem('to_file')))
@@ -50,9 +52,24 @@ onMounted(() => {
       </ul>
     </div>
     <div class="main">
-      <div class="post">
-        <input type="text" v-model="next_post" placeholder="Wpis">
-        <button type="button" class="add" @click="addPost">Dodaj</button>
+      <div class="form">
+        <form @submit.prevent="addPost">
+
+          <FormTextField
+              v-model:input_value="next_post"
+              :minimize="true"
+              :label_info="''"
+              :input_placeholder="'Wpis'"
+              :label_name="''"
+          ></FormTextField>
+
+          <FormButtonField :login="true">
+            <template v-slot:green>
+              Dodaj
+            </template>
+          </FormButtonField>
+
+        </form>
       </div>
       <div class="post" v-for="item in data" :key="item" v-if="data === null || data.length !== 0">
         <div class="field">
@@ -77,16 +94,7 @@ onMounted(() => {
   overflow-y: auto;
 }
 
-input[type="text"] {
-  width: 70%;
-  height: 70%;
-  font-size: 1.5vw;
-  box-sizing: border-box;
-  padding: 1rem;
-  border-radius: 0.75rem;
-}
-
-.add, .delete {
+.delete {
   width: 20%;
   height: 70%;
   text-decoration: none;
@@ -98,26 +106,14 @@ input[type="text"] {
   cursor: pointer;
   background-color: white;
   border-radius: 1rem;
-}
-
-.add {
-  border: 2px solid green;
-  color: green;
-}
-
-.delete {
   border: 2px solid red;
   color: red;
 }
 
-.add:hover, .delete:hover {
+.delete:hover {
   color: white;
   border: 2px solid white;
   box-shadow: 0.5rem 0.5rem dodgerblue;
-}
-
-.add:hover {
-  background-color: darkgreen;
 }
 
 .delete:hover {
@@ -141,9 +137,28 @@ li {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
 }
 
+.form {
+  width: 100%;
+  height: 40%;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+}
+
 form {
   width: 100%;
-  height: 10%;
+  height: 100%;
+  margin: 1rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-row {
+  width: 40%;
+  height: 40%;
 }
 
 .router-link {
@@ -182,7 +197,7 @@ form {
   height: 20%;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .main, input[type="text"] {
     font-size: 1.5vh;
   }

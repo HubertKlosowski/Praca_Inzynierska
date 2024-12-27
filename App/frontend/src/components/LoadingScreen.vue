@@ -85,7 +85,7 @@ watch(index, () => {
   padding: 1rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .text {
     font-size: 1.5vh;
   }

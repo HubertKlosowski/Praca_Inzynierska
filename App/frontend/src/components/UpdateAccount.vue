@@ -189,7 +189,7 @@ form {
   align-items: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .header {
     font-size: 1.5vh;
   }

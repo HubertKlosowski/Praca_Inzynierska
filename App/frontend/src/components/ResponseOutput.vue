@@ -117,7 +117,7 @@ const closeWindow = async () => {
   margin-bottom: 0.5rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .response {
     padding: 1.5rem;
     font-size: 1.75vh;

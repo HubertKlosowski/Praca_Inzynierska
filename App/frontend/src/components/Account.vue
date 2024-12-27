@@ -165,10 +165,22 @@ onMounted(() => {
         <h3>Szczegóły konta</h3>
       </div>
       <div class="rest">
-        <div class="info">{{ user['name'] }}</div>
-        <div class="info">{{ user['email'] }}</div>
-        <div class="info">{{ usertypes[user['usertype']] }}</div>
-        <div class="info">{{ user['submission_num'] }}</div>
+        <div class="info">
+          <span style="font-weight: bold">Imię i nazwisko</span>
+          <span>{{ user['name'] }}</span>
+        </div>
+        <div class="info">
+          <span style="font-weight: bold">Adres email</span>
+          <span>{{ user['email'] }}</span>
+        </div>
+        <div class="info">
+          <span style="font-weight: bold">Typ konta</span>
+          <span>{{ usertypes[user['usertype']] }}</span>
+        </div>
+        <div class="info">
+          <span style="font-weight: bold">Dzienne próby</span>
+          <span>{{ user['submission_num'] }}</span>
+        </div>
       </div>
     </div>
     <div class="model-config">
@@ -446,6 +458,18 @@ form > input {
   width: 70%;
 }
 
+.info {
+  margin: 0.5rem 0 0.5rem 0;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f5f5f5;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+
 .buttons {
   padding-top: 1rem;
   border-top: 2px solid black;
@@ -456,7 +480,7 @@ form > input {
   align-items: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .buttons {
     display: flex;
     flex-direction: column;
@@ -524,7 +548,7 @@ form > input {
     font-size: 1.5vh;
   }
 
-  .info {
+  span {
     font-size: 1.5vh;
   }
 

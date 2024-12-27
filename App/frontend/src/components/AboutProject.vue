@@ -13,7 +13,7 @@
 </template>
 
 <style scoped>
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .left-part {
     width: 90%;
     height: 45%;

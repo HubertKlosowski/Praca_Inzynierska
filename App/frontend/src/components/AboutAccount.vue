@@ -112,7 +112,7 @@ li {
   font-size: 1.5vw;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .left-part {
     width: 90%;
     height: 45%;

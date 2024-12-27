@@ -123,7 +123,7 @@ svg {
   align-items: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .left-part {
     flex-direction: column;
     font-size: 1.5vh !important;

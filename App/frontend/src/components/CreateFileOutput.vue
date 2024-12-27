@@ -140,7 +140,7 @@ const sendCreator = () => {
   margin-bottom: 0.5rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .buttons {
     display: flex;
     flex-direction: column;
