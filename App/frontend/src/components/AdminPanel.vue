@@ -4,7 +4,6 @@ import _ from "lodash";
 import {onMounted, ref} from "vue";
 
 
-const props = defineProps(['usertypes'])
 const users_verify = ref([])
 
 const after_create = defineModel('after_create')
@@ -96,7 +95,7 @@ onMounted(() => {
       <div class="field">Odnów próby</div>
     </div>
     <div class="u-verify">
-      <div class="user-verify" v-for="u in users_verify" :key="u" v-if="users_verify.length !== 0">
+      <div class="user-verify" v-for="u in users_verify" :key="u" v-if="!_.isEmpty(users_verify)">
         <div class="field">
           <span>{{ u['username'] }}</span>
         </div>

@@ -331,6 +331,8 @@ form > input {
 }
 
 .history-submission > * {
+  overflow-y: hidden;
+  overflow-x: auto;
   border-right: 2px solid black;
 }
 
@@ -520,6 +522,7 @@ form > input {
   .field {
     width: 80%;
     height: 40%;
+    border: none;
   }
 
   .circle {

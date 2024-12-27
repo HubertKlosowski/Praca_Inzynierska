@@ -16,19 +16,26 @@ from django.template import loader
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, parser_classes, throttle_classes, authentication_classes, \
+    permission_classes
 from rest_framework.parsers import MultiPartParser
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
 
+from api.custom_throttle import MakeSubmissionUserRateThrottle, MakeSubmissionAnonRateThrottle, UpdateUserRateThrottle, \
+    CreateUserRateThrottle, DeleteUserRateThrottle
+from api.tokens import generate_verification_token, verify_token
 from model.api_keys import save_model_token
 from model.model_datasets import predict
 from model.model_datasets import preprocess_dataframe, detect_lang
-from model.tokens import generate_verification_token, verify_token
 from .models import User, Submission
 from .serializer import UserSerializer, SubmissionSerializer
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
+@throttle_classes([CreateUserRateThrottle])
 def create_user(request):
     # sprawdzenie czy wartości pól są puste
     if any(len(str(el)) == 0 for el in request.data.values()):
@@ -111,6 +118,8 @@ def create_user(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTTokenUserAuthentication])
 def get_users(request):
     users = User.objects.all()
     serializer = UserSerializer(users, many=True)
@@ -154,6 +163,9 @@ def login_user(request):
 
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTTokenUserAuthentication])
+@throttle_classes([DeleteUserRateThrottle])
 def delete_user(request, username):
     if not User.objects.filter(username=username).exists():
         return Response({
@@ -197,6 +209,9 @@ def delete_user(request, username):
 
 
 @api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTTokenUserAuthentication])
+@throttle_classes([UpdateUserRateThrottle])
 def update_user(request, username):
     if not User.objects.filter(username=username).exists():
         return Response({
@@ -238,6 +253,8 @@ def update_user(request, username):
 
 
 @api_view(['PATCH', 'GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTTokenUserAuthentication])
 def verify_user(request):
     if request.method == 'GET':
         token = request.GET.get('token')
@@ -298,6 +315,8 @@ def verify_user(request):
 
 
 @api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTTokenUserAuthentication])
 def renew_submission(request, username):
     if not User.objects.filter(username=username).exists():
         return Response({
@@ -319,6 +338,8 @@ def renew_submission(request, username):
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
+@permission_classes([AllowAny])  # pozwala na wykonanie requesta dla użytkowników jak i anonów
+@throttle_classes([MakeSubmissionUserRateThrottle, MakeSubmissionAnonRateThrottle])
 def make_submission(request):
     data = request.data.copy()
 
@@ -453,12 +474,14 @@ def make_submission(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTTokenUserAuthentication])
 def get_submission(request, sub_uuid):
     submission = Submission.objects.get(id=sub_uuid)
 
     try:
         results = pd.read_csv(submission.content.path)
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         return Response({
             'error': [f'Plik z wskazanej próby nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
@@ -471,6 +494,8 @@ def get_submission(request, sub_uuid):
 
 
 @api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTTokenUserAuthentication])
 def change_name(request, sub_uuid):
     submission = Submission.objects.get(id=sub_uuid)
 

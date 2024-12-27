@@ -1,10 +1,11 @@
 import uuid
 
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, UserManager
 from django.utils import timezone
 
 
-class User(models.Model):
+class User(AbstractBaseUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     email = models.CharField(max_length=50)
@@ -15,6 +16,11 @@ class User(models.Model):
     submission_num = models.IntegerField(default=10, null=False)
     last_submission = models.DateTimeField(null=True)
     is_verified = models.BooleanField(default=False)
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'id'
+    REQUIRED_FIELDS = ['username', 'email', 'name', 'usertype']
 
     def __str__(self):
         return (f'User info\n name: {self.name}, email: {self.email}, '

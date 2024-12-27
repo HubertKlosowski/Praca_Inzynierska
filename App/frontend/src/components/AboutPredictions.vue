@@ -6,8 +6,9 @@ import _ from "lodash";
 const $cookies = inject('$cookies')
 const user = ref(JSON.parse(localStorage.getItem('user')))
 
+// do poprawy ZNOWU
 const check = () => {
-  return (_.isEmpty(user.value) && !$cookies.isKey('made_submission'))
+  return _.isEmpty(user.value) && !$cookies.isKey('made_submission')
 }
 </script>
 
@@ -37,7 +38,7 @@ const check = () => {
       <RouterLink
           to="/phases"
           class="router-link"
-          v-if="!check"
+          v-if="check === true"
       >Sprawdź posty</RouterLink>
       <RouterLink
           to="/predict"
