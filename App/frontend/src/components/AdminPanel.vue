@@ -23,14 +23,17 @@ const verifyUser = async (user) => {
     users_verify.value[index]['is_verified'] = true
     localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
 
-    after_create.value = [user['username'], user['email']]
+    after_create.value = [
+      ['Nazwa użytkownika', user['username']],
+      ['Adres email', user['email']]
+    ]
     title.value = response.data.success
     subtitle.value = 'Użytkownik został zweryfikowany.'
     response_status.value = response.status
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
@@ -53,14 +56,18 @@ const renewSubmission = async (user) => {
     users_verify.value[index]['submission_num'] = submission_num
     localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
 
-    after_create.value = [user['username'], user['email'], submission_num]
+    after_create.value = [
+      ['Nazwa użytkownika', user['username']],
+      ['Adres email', user['email']],
+      ['Dzienne próby', submission_num]
+    ]
     title.value = response.data.success
     subtitle.value = 'Liczba prób użytkownika została odnowiona.'
     response_status.value = response.status
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
@@ -83,7 +90,7 @@ onMounted(() => {
   <div class="users">
     <h3>Użytkownicy do zweryfikowania</h3>
     <div class="header-user-verify">
-      <div class="field">Nazwa</div>
+      <div class="field">Nazwa użytkownika</div>
       <div class="field">Adres email</div>
       <div class="field">Zweryfikuj</div>
       <div class="field">Odnów próby</div>

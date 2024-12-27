@@ -33,12 +33,12 @@ const login = async () => {
     const user = response.data['user']
     const usertypes = ['Normal', 'Pro', 'Administrator']
 
-    after_create.value = {
-      'name': user['name'],
-      'username': user['username'],
-      'email': user['email'],
-      'usertype': usertypes[user['usertype']],
-    }
+    after_create.value = [
+      ['Imię i nazwisko', user['name']],
+      ['Nazwa użytkownika', user['username']],
+      ['Adres email', user['email']],
+      ['Typ konta', usertypes[user['usertype']]],
+    ]
     title.value = response.data.success
     subtitle.value = ''
     response_status.value = response.status
@@ -52,7 +52,7 @@ const login = async () => {
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
@@ -75,7 +75,7 @@ const getUsers = async (user) => {
     localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
   } catch (e) {
     if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'

@@ -49,7 +49,7 @@ const makePredictions = async () => {
     localStorage.removeItem('to_file')
 
   } else {
-    if (data.value === null) {
+    if (data.value === null || (typeof data.value === 'string' && data.value.length === 0)) {
       after_create.value = ['Przekazane dane są puste!']
       response_status.value = 400
       title.value = 'Problem z podanymi danymi'
@@ -95,7 +95,7 @@ const makePredictions = async () => {
     localStorage.setItem('text', JSON.stringify(response.data['text']))
 
     if (!_.isEmpty(user.value)) {
-      // dodanie do histori predykcji ostatniego submission
+      // dodanie do historii predykcji ostatniego submission
       let previous_subs =  JSON.parse(localStorage.getItem('history_submissions'))
       previous_subs.unshift(response.data['submission'])
       localStorage.setItem('history_submissions', JSON.stringify(previous_subs))
@@ -114,7 +114,7 @@ const makePredictions = async () => {
     data.value = null
 
     if (typeof e.response === 'undefined' || e.status >= 500) {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'

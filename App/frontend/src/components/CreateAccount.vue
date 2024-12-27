@@ -30,7 +30,14 @@ const createAccount = async () => {
   try {
     const response = await axios.post('http://localhost:8000/api/user/create_user', user)
 
-    after_create.value = [user.username, user.email]
+    const usertypes = ['Normal', 'Pro', 'Administrator']
+
+    after_create.value = [
+      ['Imię i nazwisko', user['name']],
+      ['Nazwa użytkownika', user['username']],
+      ['Adres email', user['email']],
+      ['Typ konta', usertypes[user['usertype']]],
+    ]
     title.value = response.data.success
     subtitle.value = ''
     response_status.value = response.status
@@ -38,7 +45,7 @@ const createAccount = async () => {
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'

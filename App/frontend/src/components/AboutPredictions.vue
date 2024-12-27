@@ -7,9 +7,7 @@ const $cookies = inject('$cookies')
 const user = ref(JSON.parse(localStorage.getItem('user')))
 
 const check = () => {
-  return (!_.isEmpty(user.value) && $cookies.isKey('made_submission')) &&
-    (_.isEmpty(user.value) && !$cookies.isKey('made_submission')) ||
-    (!_.isEmpty(user.value) && localStorage.hasOwnProperty('text'))
+  return (_.isEmpty(user.value) && !$cookies.isKey('made_submission'))
 }
 </script>
 
@@ -39,7 +37,7 @@ const check = () => {
       <RouterLink
           to="/phases"
           class="router-link"
-          v-if="check"
+          v-if="!check"
       >Sprawdź posty</RouterLink>
       <RouterLink
           to="/predict"

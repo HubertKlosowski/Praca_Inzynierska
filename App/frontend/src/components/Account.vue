@@ -1,6 +1,5 @@
 <script setup>
 import {inject, onMounted, ref} from "vue";
-import polish from "@/assets/polski.png";
 import english from "@/assets/angielski.png";
 import {useRouter} from "vue-router";
 import axios from "axios";
@@ -41,7 +40,11 @@ const logoutUser = async () => {
 const deleteUser = async () => {
   try {
     const response = await axios.delete('http://localhost:8000/api/user/delete_user/' + user.value['username'])
-    after_create.value = [user.value['username'], user.value['email']]
+
+    after_create.value = [
+      ['Nazwa użytkownika', user.value['username']],
+      ['Adres email', user.value['email']],
+    ]
     title.value = response.data.success
     subtitle.value = 'Użytkownik został poprawnie usunięty.'
     response_status.value = response.status
@@ -49,7 +52,7 @@ const deleteUser = async () => {
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
@@ -79,7 +82,7 @@ const showDetails = async (submission) => {
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
@@ -96,7 +99,7 @@ const showDetails = async (submission) => {
 const setPredictionName = async (submission, num) => {
   change_name.value = -1
   try {
-    const response = await axios.patch('http://localhost:8000/api/submission/change_name/' + submission['id'], {
+    await axios.patch('http://localhost:8000/api/submission/change_name/' + submission['id'], {
       'name': new_name.value
     })
     history_submissions.value[num]['name'] = new_name.value
@@ -104,9 +107,8 @@ const setPredictionName = async (submission, num) => {
     new_name.value = ''
 
   } catch (e) {
-    console.log(e)
     if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
@@ -239,7 +241,7 @@ onMounted(() => {
 
             </form>
           </div>
-          <div class="field">
+          <div class="field" style="border: none">
             <button type="button" class="details" @click="showDetails(item)">Pokaż szczegóły</button>
           </div>
         </div>
@@ -326,6 +328,10 @@ form > input {
   background-color: #f5f5f5;
   border-radius: 0.75rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+
+.history-submission > * {
+  border-right: 2px solid black;
 }
 
 .field {
@@ -432,14 +438,18 @@ form > input {
 
 .account-details, .model-config {
   border-top: 2px solid black;
+  height: 20%;
 }
 
 .header, .account-details, .model-config {
-  height: 20%;
   display: flex;
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
+}
+
+.header {
+  height: 15%;
 }
 
 .title, .rest {
@@ -456,6 +466,13 @@ form > input {
 
 .rest {
   width: 70%;
+}
+
+.account-details > .rest {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  overflow-y: scroll;
+  scrollbar-gutter: both-edges stable;
 }
 
 .info {
@@ -574,6 +591,15 @@ form > input {
     width: 90%;
     height: 30%;
     font-size: 1.5vh;
+  }
+}
+
+@media (max-width: 500px) {
+  .account-details > .rest {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    overflow-y: scroll;
+    scrollbar-gutter: both-edges stable;
   }
 }
 

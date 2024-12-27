@@ -33,18 +33,25 @@ const updateAccount = async () => {
         _.pickBy(new_user, value => value && value.length > 0)
     )
 
-    after_create.value = response.data.user
+    const user = response.data['user']
+    const usertypes = ['Normal', 'Pro', 'Administrator']
+
+    after_create.value = [
+      ['Imię i nazwisko', user['name']],
+      ['Nazwa użytkownika', user['username']],
+      ['Adres email', user['email']],
+      ['Typ konta', usertypes[user['usertype']]],
+    ]
     title.value = response.data.success
     subtitle.value = ''
     response_status.value = response.status
 
-    localStorage.setItem('user', JSON.stringify(after_create.value))
-    await router.push('/profile')
+    localStorage.setItem('user', JSON.stringify(user))
     resetInputs()
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
-      after_create.value = ['BŁĄD!! Nie udało się połączyć z serwerem.']
+      after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
@@ -76,6 +83,7 @@ const goHome = async () => {
       v-model:response_status="response_status"
       :after_create="after_create"
       v-if="response_status >= 200"
+      :move_to="'/profile'"
       :title="title"
       :subtitle="subtitle"
   ></ResponseOutput>

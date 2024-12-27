@@ -31,17 +31,28 @@ const closeWindow = async () => {
       ></div>
     </div>
     <div class="content">
-      <h3>{{ props.subtitle }}</h3>
-      <ul v-if="after_create.length >= 0">
-        <li v-for="sentence in after_create" :key="sentence">
-          {{ sentence }}
-        </li>
-      </ul>
+      <h3 v-if="props.subtitle.length !== 0">{{ props.subtitle }}</h3>
+      <div class="text">
+        <div class="row" v-for="row in after_create" :key="row">
+          <div class="element" v-for="element in row" :key="element" v-if="typeof row !== 'string'">{{ element }}</div>
+          <div class="element" v-else>{{ row }}</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.header, .row, .text {
+  display: flex;
+  align-items: center;
+}
+
+.header, .row {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
 .response {
   position: fixed;
   top: 0;
@@ -57,23 +68,8 @@ const closeWindow = async () => {
   overflow-y: auto;
 }
 
-@keyframes slide-down {
-  0% {
-    transform: translateY(-60%);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0%);
-    opacity: 1;
-  }
-}
-
 .header {
   height: 20%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
   border-bottom: 1px solid #ccc;
 }
 
@@ -105,16 +101,25 @@ const closeWindow = async () => {
   overflow-y: auto;
 }
 
-.content ul {
-  list-style-type: disc;
-  margin: 0;
-  padding-left: 1.5rem;
+.text {
+  width: 100%;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.content li {
-  font-size: 1.25vw;
-  color: #333;
-  margin-bottom: 0.5rem;
+.row {
+  width: 100%;
+}
+
+@keyframes slide-down {
+  0% {
+    transform: translateY(-60%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0%);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 700px) {
@@ -123,17 +128,13 @@ const closeWindow = async () => {
     font-size: 1.75vh;
   }
 
-  .header h3 {
+  .header > h3 {
     font-size: 1.75vh;
   }
 
   .show-content {
     height: 2.5vh;
     width: 2.5vh;
-  }
-
-  .content li {
-    font-size: 1.5vh;
   }
 }
 </style>

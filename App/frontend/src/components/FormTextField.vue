@@ -10,7 +10,7 @@ const show_password = defineModel('show_password')
       <label :for="props.label_name">Podaj {{ props.label_info.toLowerCase() }}</label>
     </div>
     <div class="just-row" :style="{
-      width: !minimize ? '60%' : '90%'
+      width: minimize ? '60%' : '90%'
     }">
       <input
         v-model="input_value"
