@@ -24,14 +24,17 @@ const after_create = ref({})
 const title = ref('')
 const subtitle = ref('')
 const response_status = ref(0)
+const token = reactive(JSON.parse(localStorage.getItem('token')))
 
 
 const updateAccount = async () => {
   try {
+    const data = _.pickBy(new_user, value => value && value.length > 0)
     const response = await axios.patch(
-        'http://localhost:8000/api/user/update_user/' + logged_user.value['username'],
-        _.pickBy(new_user, value => value && value.length > 0)
-    )
+        'http://localhost:8000/api/user/update_user',
+        data, {
+          headers: {'Authorization' : `Bearer ${token['access']}`}
+        })
 
     const user = response.data['user']
     const usertypes = ['Normal', 'Pro', 'Administrator']
@@ -50,6 +53,7 @@ const updateAccount = async () => {
     resetInputs()
 
   } catch (e) {
+    console.log(e.response)
     if (typeof e.response === 'undefined') {
       after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500

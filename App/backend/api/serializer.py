@@ -106,9 +106,9 @@ class LoginSerializer(TokenObtainPairSerializer):
         try:
             user = User.objects.get(username=attrs['username'])
         except User.DoesNotExist:
-            raise exceptions.AuthenticationFailed({'error': self.error_messages['no_active_account']})
+            raise exceptions.AuthenticationFailed({'error': [self.error_messages['no_active_account']]})
 
         if not user.is_verified:
-            raise exceptions.AuthenticationFailed({'error': self.error_messages['not_verified']})
+            raise exceptions.AuthenticationFailed({'error': [self.error_messages['not_verified']]})
 
         return super().validate(attrs)

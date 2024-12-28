@@ -19,8 +19,8 @@ class CreateUserRateThrottle(throttling.AnonRateThrottle):
 
 class UpdateUserRateThrottle(throttling.UserRateThrottle):
     scope = 'update_user'
-    rate = '1/day'  # '1/day'
+    rate = '40/minute'  # '1/day'
 
 class DeleteUserRateThrottle(throttling.UserRateThrottle):
     scope = 'delete_user'
-    rate = '1/day'  # '1/day'
+    rate = '40/minute'  # '1/day'

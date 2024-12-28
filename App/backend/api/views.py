@@ -128,41 +128,6 @@ def get_users(request):
     return Response(serializer.data)
 
 
-# @api_view(['POST'])
-# @permission_classes([AllowAny])
-# def login_user(request):
-#     username = request.data['username']
-#     password = request.data['password']
-#
-#     if len(username) == 0 or len(password) == 0:
-#         return Response({
-#             'error': ['Żadne pole nie może być puste.']
-#         }, status=status.HTTP_406_NOT_ACCEPTABLE)
-#
-#     if not User.objects.filter(username=username).exists():
-#         return Response({
-#             'error': [f'Użytkownik o nazwie {username} nie istnieje.']
-#         }, status=status.HTTP_404_NOT_FOUND)
-#
-#     user = User.objects.get(username=username)
-#
-#     if not user.is_verified:
-#         return Response({
-#             'error': [f'Użytkownik o nazwie {username} nie został zweryfikowany.  Proszę skontaktować się z administratorem.']
-#         }, status=status.HTTP_403_FORBIDDEN)
-#
-#     if check_password(password, user.password):
-#         token = get_tokens_for_user(user)
-#
-#         return Response({
-#             'token': token
-#         }, status=status.HTTP_200_OK)
-#
-#     return Response({
-#         'error': ['Niepoprawne hasło.']
-#     }, status=status.HTTP_401_UNAUTHORIZED)
-
-
 # Zwrócenie tylko tokenów
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
@@ -170,19 +135,40 @@ class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTTokenUserAuthentication])
+@throttle_classes([LoginRateThrottle])
+def get_user_data(request):
+    user_id = request.user.user_id
+    if not User.objects.filter(id=user_id).exists():
+        return Response({
+            'error': ['Użytkownik nie istnieje.']
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    user = User.objects.get(id=user_id)
+    user_submissions = SubmissionSerializer(Submission.objects.filter(user=user_id), many=True).data
+
+    return Response({
+        'submissions': user_submissions,
+        'user': UserSerializer(user).data,
+        'success': 'Dane użytkownika'
+    }, status=status.HTTP_200_OK)
+
+
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTTokenUserAuthentication])
 @throttle_classes([DeleteUserRateThrottle])
-def delete_user(request, username):
-    if not User.objects.filter(username=username).exists():
+def delete_user(request):
+    user_id = request.user.user_id
+    if not User.objects.filter(id=user_id).exists():
         return Response({
-            'error': [f'Użytkownik o nazwie {username} nie istnieje.']
+            'error': ['Użytkownik nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
-    user = User.objects.get(username=username)
-    submissions = Submission.objects.filter(user=user.id)
-
+    user = User.objects.get(id=user_id)
+    submissions = Submission.objects.filter(user=user_id)
     email = user.email
 
     for submission in submissions:
@@ -212,7 +198,7 @@ def delete_user(request, username):
 
     return Response({
         'user': UserSerializer(user).data,
-        'success': f'Użytkownik o nazwie {username} został poprawnie usunięty.'
+        'success': f'Użytkownik o nazwie {user.username} został poprawnie usunięty.'
     }, status=status.HTTP_200_OK)
 
 
@@ -220,12 +206,7 @@ def delete_user(request, username):
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTTokenUserAuthentication])
 @throttle_classes([UpdateUserRateThrottle])
-def update_user(request, username):
-    if not User.objects.filter(username=username).exists():
-        return Response({
-            'error': ['Użytkownik nie istnieje.']
-        }, status=status.HTTP_404_NOT_FOUND)
-
+def update_user(request):
     data = request.data
 
     if {'username', 'email', 'name', 'password'} in set(data.keys()):
@@ -233,19 +214,24 @@ def update_user(request, username):
             'error': ['Można tylko zmienić tylko nazwę użytkownika, email, imię i hasło.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    if all(len(el) == 0 for el in data.values()) or len(data.keys()) == 0:
+    if any(len(el) == 0 for el in data.values()):
         return Response({
-            'error': ['Żadne pole nie może być puste.']
+            'error': ['Conajmniej jedno pole musi być wypełnione.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    user = User.objects.get(username=username)
+    user_id = request.user.user_id
+    if not User.objects.filter(id=user_id).exists():
+        return Response({
+            'error': ['Użytkownik nie istnieje.']
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    user = User.objects.get(id=user_id)
 
     if 'password' in data:
         try:
             validate_password(request.data['password'])
         except ValidationError as e:
             return Response({'error': e.messages}, status=status.HTTP_400_BAD_REQUEST)
-
         data['password'] = make_password(data['password'])
 
     serializer = UserSerializer(user, data=data, partial=True)

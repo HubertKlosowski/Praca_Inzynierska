@@ -33,13 +33,17 @@ const logoutUser = async () => {
   localStorage.clear()
   localStorage.setItem('choosen_model', JSON.stringify('bert-base'))
   localStorage.setItem('user', JSON.stringify({}))
+  localStorage.setItem('token', JSON.stringify({}))
   $cookies.remove('made_submission')
   await router.push('/')
 }
 
 const deleteUser = async () => {
   try {
-    const response = await axios.delete('http://localhost:8000/api/user/delete_user/' + user.value['username'])
+    const token = JSON.parse(localStorage.getItem('token'))
+    const response = await axios.delete('http://localhost:8000/api/user/delete_user', {
+      headers: {'Authorization' : `Bearer ${token['access']}`}
+    })
 
     after_create.value = [
       ['Nazwa użytkownika', user.value['username']],
@@ -131,7 +135,7 @@ const closeWindow = () => {
 }
 
 onMounted(() => {
-  if (JSON.parse(localStorage.getItem('choosen_model')) === null) {
+  if (localStorage.hasOwnProperty('choosen_model')) {
     localStorage.setItem('choosen_model', JSON.stringify(model.value))
   } else {
     model.value = JSON.parse(localStorage.getItem('choosen_model'))
@@ -262,6 +266,7 @@ onMounted(() => {
 
     <div class="buttons">
       <RouterLink to="/update" class="update">Zmień dane</RouterLink>
+<!--      czemu nie kolejny routerlink -->
       <div @click="deleteUser" class="delete">Usuń konto</div>
       <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
     </div>
@@ -312,6 +317,7 @@ form > input {
 .history-submission {
   width: 90%;
   min-height: 70%;
+  font-size: 1.5vw;
 }
 
 .header-history {
@@ -564,7 +570,7 @@ form > input {
     height: 80%;
   }
 
-  h3, .field, .details, .logout {
+  h3, .field, .details, .logout, .history-submission {
     font-size: 1.5vh;
   }
 

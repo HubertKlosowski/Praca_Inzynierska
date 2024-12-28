@@ -1,5 +1,5 @@
 <script setup>
-import {ref} from "vue";
+import {reactive, ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
@@ -15,6 +15,10 @@ const username = ref('')
 const password = ref('')
 const users_verify = ref([])
 const show_password = ref(false)
+const token = reactive({
+  access: '',
+  refresh: ''
+})
 
 const after_create = ref({})
 const title = ref('')
@@ -27,6 +31,21 @@ const login = async () => {
     const response = await axios.post('http://localhost:8000/api/user/login_user', {
       username: username.value,
       password: password.value
+    })
+
+    const tmp = response.data
+    token.access = tmp['access']
+    token.refresh = tmp['refresh']
+
+    localStorage.setItem('token', JSON.stringify(tmp))
+
+  } catch (e) {
+    console.log(e)  // odświeź lub odrzuć
+  }
+
+  try {
+    const response = await axios.get('http://localhost:8000/api/user/get_user_data', {
+      headers: {'Authorization' : 'Bearer ' + token['access']}
     })
 
     localStorage.setItem('history_submissions', JSON.stringify(response.data['submissions']))
@@ -68,11 +87,14 @@ const login = async () => {
 
 const getUsers = async (user) => {
   try {
-    const response = await axios.get('http://localhost:8000/api/get_users')
+    const response = await axios.get('http://localhost:8000/api/get_users', {
+      headers: {'Authorization' : 'Bearer ' + token['access']}
+    })
     users_verify.value = _.remove(response.data, function (n) {
       return n['username'] !== user['username']
     })
     localStorage.setItem('users_verify', JSON.stringify(users_verify.value))
+
   } catch (e) {
     if (typeof e.response === 'undefined') {
       after_create.value = ['Nie udało się połączyć z serwerem.']
@@ -84,7 +106,7 @@ const getUsers = async (user) => {
       after_create.value = error_response.data.error
       response_status.value = error_response.status
       title.value = 'Problem z dostępem do użytkowników'
-      subtitle.value = 'Podczas zbierania informacji o użytkownikach wystąpił błąd. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:'
+      subtitle.value = 'Podczas zbierania informacji o użytkownikach wystąpił błąd. Poniżej podano przyczyny wystąpienia błędu:'
     }
   }
 }
