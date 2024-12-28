@@ -20,9 +20,9 @@ from rest_framework.decorators import api_view, parser_classes, throttle_classes
     permission_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from api.custom_throttle import MakeSubmissionUserRateThrottle, MakeSubmissionAnonRateThrottle, UpdateUserRateThrottle, \
@@ -32,7 +32,7 @@ from model.api_keys import save_model_token
 from model.model_datasets import predict
 from model.model_datasets import preprocess_dataframe, detect_lang
 from .models import User, Submission
-from .serializer import UserSerializer, SubmissionSerializer, LoginSerializer
+from .serializer import UserSerializer, SubmissionSerializer
 
 
 @api_view(['POST'])
@@ -130,9 +130,36 @@ def get_users(request):
 
 # Zwrócenie tylko tokenów
 class LoginView(TokenObtainPairView):
-    serializer_class = LoginSerializer
+    serializer_class = TokenObtainPairSerializer
     throttle_classes = [LoginRateThrottle]
     permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        username = request.data['username']
+        password = request.data['password']
+
+        if len(username) == 0 or len(password) == 0:
+            return Response({
+                'error': ['Nie podano nazwy użytkownika/hasła.']
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not User.objects.filter(username=username).exists():
+            return Response({
+                'error': ['Próba logowania do niestniejącego konta.']
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        user = User.objects.get(username=username)
+
+        if not user.is_verified:
+            return Response({
+                'error': [
+                    f'Użytkownik {username} nie jest zweryfikowany.',
+                    'Jeśli konto jest administratorem link weryfikacyjny został wysłany na adres mail.',
+                    'W przeciwnym przypadku proszę skontaktować się z administratorem.'
+                ]
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        return super().post(request, *args, **kwargs)
 
 
 @api_view(['GET'])

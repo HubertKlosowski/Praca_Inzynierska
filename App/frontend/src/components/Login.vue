@@ -40,7 +40,29 @@ const login = async () => {
     localStorage.setItem('token', JSON.stringify(tmp))
 
   } catch (e) {
-    console.log(e)  // odświeź lub odrzuć
+    if (typeof e.response === 'undefined') {
+      after_create.value = ['Nie udało się połączyć z serwerem.']
+      response_status.value = 500
+      title.value = 'Problem z serwerem'
+      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
+    } else {
+      const error_response = e.response
+      after_create.value = error_response.data.error
+      response_status.value = error_response.status
+      subtitle.value = 'Próba logowania się nie powiodła. Proszę zapoznać się z komunikatami wyświetlanymi poniżej:'
+
+      if (response_status.value === 429) {
+        title.value = 'Przekroczony limit prób logowania'
+        after_create.value = ['Limit wynosi 5 prób na godzinę.', 'Proszę spróbować później.']  // docelowo w backendzie
+        return
+      } else if (response_status.value === 403) {
+        title.value = 'Problem z weryfikacją'
+        return
+      } else {
+        title.value = 'Problem z podanymi danymi'
+        return
+      }
+    }
   }
 
   try {

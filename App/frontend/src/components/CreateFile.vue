@@ -139,7 +139,6 @@ li {
 
 .form {
   width: 100%;
-  height: 40%;
   display: flex;
   flex-direction: column;
   justify-content: start;
@@ -210,6 +209,15 @@ form {
     font-size: 1.5vh;
     width: 80%;
     height: 50%;
+  }
+
+  form {
+    flex-direction: column;
+  }
+
+  .form-row {
+    width: 80%;
+    height: 20%;
   }
 }
 </style>

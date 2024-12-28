@@ -29,10 +29,15 @@ const response_status = defineModel('response_status')
 
 
 const makePredictions = async () => {
-  let form_data = new FormData()
+  if (_.isEmpty(user.value)) {
+    await makeSubmissionAnon()
+  } else {
+    await makeSubmissionUser()
+  }
+}
 
-  if (localStorage.hasOwnProperty('to_file')) {
-    let to_csv = JSON.parse(localStorage.getItem('to_file'))
+const fromFileToData = () => {
+  let to_csv = JSON.parse(localStorage.getItem('to_file'))
     to_csv.unshift('text')
     to_csv = to_csv.join('\n')
 
@@ -47,84 +52,132 @@ const makePredictions = async () => {
       subtitle.value = 'Proszę poprawić wprowadzone dane w kreatorze.'
     }
     localStorage.removeItem('to_file')
+}
 
-  } else {
-    if (data.value === null || (typeof data.value === 'string' && data.value.length === 0)) {
-      after_create.value = ['Przekazane dane są puste!']
-      response_status.value = 400
+const checkData = () => {
+  if (data.value === null || (typeof data.value === 'string' && data.value.length === 0)) {
+    after_create.value = ['Przekazane dane są puste!']
+    response_status.value = 400
+    title.value = 'Problem z podanymi danymi'
+    subtitle.value = 'Modele nie są w stanie pracować na pustych danych. Proszę przesłać plik lub tekst.'
+    return false
+  } else if (typeof data.value === 'object') {
+    const extension = data.value.name.split('.')[1]
+    if (extension !== 'csv' && extension !== 'json') {
+      data.value = null
+      after_create.value = ['Modele obsługują pliki z rozszerzeniem csv lub json.']
+      response_status.value = 403
       title.value = 'Problem z podanymi danymi'
-      subtitle.value = 'Modele nie są w stanie pracować na pustych danych. Proszę przesłać plik lub tekst.'
-      return
-    } else if (typeof data.value === 'object') {
-      const extension = data.value.name.split('.')[1]
-      if (extension !== 'csv' && extension !== 'json') {
-        data.value = null
-        after_create.value = ['Modele obsługują pliki z rozszerzeniem csv lub json.']
-        response_status.value = 403
-        title.value = 'Problem z podanymi danymi'
-        subtitle.value = 'Nieprawidłowe rozszerzenie pliku. Proszę poprawić nazwę pliku i spróbować ponownie go przesłać.'
-        return
-      } else if (data.value.size > 10000 && _.isEmpty(user.value)) {
-        data.value = null
-        after_create.value = ['Limit wielkości pliku dla gościa wynosi 100KB.']
-        response_status.value = 403
-        title.value = 'Problem z podanymi danymi'
-        subtitle.value = 'Zbyt duży plik. Proszę przesłać plik o mniejszej wielkości.'
-        return
-      }
+      subtitle.value = 'Nieprawidłowe rozszerzenie pliku. Proszę poprawić nazwę pliku i spróbować ponownie go przesłać.'
+      return false
+    } else if (data.value.size > 10000 && _.isEmpty(user.value)) {
+      data.value = null
+      after_create.value = ['Limit wielkości pliku dla gościa wynosi 100KB.']
+      response_status.value = 403
+      title.value = 'Problem z podanymi danymi'
+      subtitle.value = 'Zbyt duży plik. Proszę przesłać plik o mniejszej wielkości.'
+      return false
     }
   }
+  return true
+}
 
+const handleErrorForSubmission = (error) => {
+  show_loading_screen.value = false
+  data.value = null
+
+  if (typeof error.response === 'undefined' || error.status >= 500) {
+    after_create.value = ['Nie udało się połączyć z serwerem.']
+    response_status.value = 500
+    title.value = 'Problem z serwerem'
+    subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
+  } else {
+    const error_response = error.response
+    after_create.value = error_response.data.error
+    response_status.value = error_response.status
+    title.value = 'Problem z podanymi danymi'
+    subtitle.value = 'Przekazane dane zawierają błędy. Proszę się zapoznać z nimi i spróbować ponownie.'
+  }
+}
+
+const makeSubmissionUser = async () => {
+  if (localStorage.hasOwnProperty('to_file')) {
+    fromFileToData()
+  } else if (!checkData()) {
+    return
+  }
+
+  let form_data = new FormData()
   form_data.append('content', data.value)
   form_data.append('model', model.value)
-
-  if (!_.isEmpty(user.value)) {
-    form_data.append('user', user.value['id'])
-  }
+  form_data.append('user', user.value['id'])
 
   data.value = null
   show_loading_screen.value = true
 
   try {
-    const response = await axios.post('http://localhost:8000/api/submission/make_submission', form_data, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    const token = JSON.parse(localStorage.getItem('token'))
+    const response = await axios.post(
+        'http://localhost:8000/api/submission/make_submission',
+        form_data,
+        { headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization' : 'Bearer ' + token['access']
+        } }
+    )
     localStorage.setItem('depressed', JSON.stringify(response.data['depressed']))
     localStorage.setItem('text', JSON.stringify(response.data['text']))
 
-    if (!_.isEmpty(user.value)) {
-      // dodanie do historii predykcji ostatniego submission
-      let previous_subs =  JSON.parse(localStorage.getItem('history_submissions'))
-      previous_subs.unshift(response.data['submission'])
-      localStorage.setItem('history_submissions', JSON.stringify(previous_subs))
-      localStorage.setItem('choosen_submission', JSON.stringify(response.data['submission']))
+    // dodanie do historii predykcji ostatniego submission
+    let previous_subs =  JSON.parse(localStorage.getItem('history_submissions'))
+    previous_subs.unshift(response.data['submission'])
+    localStorage.setItem('history_submissions', JSON.stringify(previous_subs))
+    localStorage.setItem('choosen_submission', JSON.stringify(response.data['submission']))
 
-      // aktualizacja danych usera
-      user.value['submission_num'] -= 1
-      localStorage.setItem('user', JSON.stringify(user.value))
-    }
+    // aktualizacja danych usera
+    user.value['submission_num'] -= 1
+    localStorage.setItem('user', JSON.stringify(user.value))
     $cookies.set('made_submission', true)
     show_loading_screen.value = false
     await router.push('/predict')
 
   } catch (e) {
-    show_loading_screen.value = false
-    data.value = null
+    handleErrorForSubmission(e)
+  }
+}
 
-    if (typeof e.response === 'undefined' || e.status >= 500) {
-      after_create.value = ['Nie udało się połączyć z serwerem.']
-      response_status.value = 500
-      title.value = 'Problem z serwerem'
-      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
-    } else {
-      const error_response = e.response
-      after_create.value = error_response.data.error
-      response_status.value = error_response.status
-      title.value = 'Problem z podanymi danymi'
-      subtitle.value = 'Przekazane dane zawierają błędy. Proszę się zapoznać z nimi i spróbować ponownie.'
-    }
+const makeSubmissionAnon = async () => {
+  if (localStorage.hasOwnProperty('to_file')) {
+    fromFileToData()
+  } else if (!checkData()) {
+    return
+  }
+
+  let form_data = new FormData()
+  form_data.append('content', data.value)
+  form_data.append('model', model.value)
+  form_data.append('user', user.value['id'])
+
+  data.value = null
+  show_loading_screen.value = true
+
+  try {
+    const response = await axios.post(
+        'http://localhost:8000/api/submission/make_submission',
+        form_data,
+        { headers: {
+          'Content-Type': 'multipart/form-data'
+        } }
+    )
+    localStorage.setItem('depressed', JSON.stringify(response.data['depressed']))
+    localStorage.setItem('text', JSON.stringify(response.data['text']))
+
+    $cookies.set('made_submission', true)
+    show_loading_screen.value = false
+    await router.push('/predict')
+
+  } catch (e) {
+    handleErrorForSubmission(e)
   }
 }
 

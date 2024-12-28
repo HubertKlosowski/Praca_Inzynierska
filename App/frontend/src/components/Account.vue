@@ -32,8 +32,6 @@ const response_status = ref(0)
 const logoutUser = async () => {
   localStorage.clear()
   localStorage.setItem('choosen_model', JSON.stringify('bert-base'))
-  localStorage.setItem('user', JSON.stringify({}))
-  localStorage.setItem('token', JSON.stringify({}))
   $cookies.remove('made_submission')
   await router.push('/')
 }

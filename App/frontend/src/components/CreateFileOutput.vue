@@ -77,7 +77,7 @@ const sendCreator = () => {
   position: fixed;
   top: 20%;
   width: 90%;
-  height: 50%;
+  height: 70%;
   padding: 2rem;
   background-color: rgba(245, 245, 245, 0.95);
   border-radius: 1rem;
