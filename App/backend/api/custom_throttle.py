@@ -15,12 +15,16 @@ class LoginRateThrottle(throttling.UserRateThrottle):
 
 class CreateUserRateThrottle(throttling.AnonRateThrottle):
     scope = 'create_user'
-    rate = '40/minute'  # 1/day
+    rate = '1/day'  # 1/day
 
 class UpdateUserRateThrottle(throttling.UserRateThrottle):
     scope = 'update_user'
-    rate = '40/minute'  # '1/day'
+    rate = '1/day'  # '1/day'
 
 class DeleteUserRateThrottle(throttling.UserRateThrottle):
     scope = 'delete_user'
-    rate = '40/minute'  # '1/day'
+    rate = '1/day'  # '1/day'
+
+class RenewSubmissionUserRateThrottle(throttling.UserRateThrottle):
+    scope = 'renew_submission_user'
+    rate = '1/day'  # '1/day'

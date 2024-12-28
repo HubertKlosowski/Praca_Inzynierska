@@ -26,7 +26,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from api.custom_throttle import MakeSubmissionUserRateThrottle, MakeSubmissionAnonRateThrottle, UpdateUserRateThrottle, \
-    CreateUserRateThrottle, DeleteUserRateThrottle, LoginRateThrottle
+    CreateUserRateThrottle, DeleteUserRateThrottle, LoginRateThrottle, RenewSubmissionUserRateThrottle
 from api.tokens import generate_verification_token, verify_token
 from model.api_keys import save_model_token
 from model.model_datasets import predict
@@ -167,14 +167,14 @@ class LoginView(TokenObtainPairView):
 @authentication_classes([JWTTokenUserAuthentication])
 @throttle_classes([LoginRateThrottle])
 def get_user_data(request):
-    user_id = request.user.user_id
-    if not User.objects.filter(id=user_id).exists():
+    username = request.user.username
+    if not User.objects.filter(username=username).exists():
         return Response({
             'error': ['Użytkownik nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
-    user = User.objects.get(id=user_id)
-    user_submissions = SubmissionSerializer(Submission.objects.filter(user=user_id), many=True).data
+    user = User.objects.get(username=username)
+    user_submissions = SubmissionSerializer(Submission.objects.filter(user=user.id), many=True).data
 
     return Response({
         'submissions': user_submissions,
@@ -188,14 +188,14 @@ def get_user_data(request):
 @authentication_classes([JWTTokenUserAuthentication])
 @throttle_classes([DeleteUserRateThrottle])
 def delete_user(request):
-    user_id = request.user.user_id
-    if not User.objects.filter(id=user_id).exists():
+    username = request.user.username
+    if not User.objects.filter(username=username).exists():
         return Response({
             'error': ['Użytkownik nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
-    user = User.objects.get(id=user_id)
-    submissions = Submission.objects.filter(user=user_id)
+    user = User.objects.get(username=username)
+    submissions = Submission.objects.filter(user=user.id)
     email = user.email
 
     for submission in submissions:
@@ -246,13 +246,13 @@ def update_user(request):
             'error': ['Conajmniej jedno pole musi być wypełnione.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    user_id = request.user.user_id
-    if not User.objects.filter(id=user_id).exists():
+    username = request.user.username
+    if not User.objects.filter(username=username).exists():
         return Response({
             'error': ['Użytkownik nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
-    user = User.objects.get(id=user_id)
+    user = User.objects.get(username=username)
 
     if 'password' in data:
         try:
@@ -275,6 +275,7 @@ def update_user(request):
 
 @api_view(['PATCH', 'GET'])
 @permission_classes([AllowAny])
+@authentication_classes([JWTTokenUserAuthentication])
 def verify_user(request):
     if request.method == 'GET':
         token = request.GET.get('token')
@@ -293,7 +294,7 @@ def verify_user(request):
             return render(request, os.path.join('mails', 'verify_account.html'), context={'usertype': serializer.data['usertype']})
 
     if request.method == 'PATCH':
-        username = request.data['username']
+        username = request.user.username
         if not User.objects.filter(username=username).exists():
             return Response({
                 'error': ['Użytkownik nie istnieje.']
@@ -338,7 +339,9 @@ def verify_user(request):
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTTokenUserAuthentication])
-def renew_submission(request, username):
+@throttle_classes([RenewSubmissionUserRateThrottle])
+def renew_submission(request):
+    username = request.user.username
     if not User.objects.filter(username=username).exists():
         return Response({
             'error': ['Użytkownik nie istnieje.']
@@ -375,7 +378,7 @@ def make_submission(request):
     if request.FILES:
         file_size = request.FILES['content'].size
 
-        if 'user' not in data.keys() and file_size >= 1e4:
+        if request.user.username == '' and file_size >= 1e4:
             return Response({
                 'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000}KB > 10KB']
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -411,7 +414,7 @@ def make_submission(request):
     model = data['model']
     # path = f'D:/{model}'
 
-    if 'user' not in data.keys() and model == 'bert-large':
+    if request.user.username == '' and model == 'bert-large':
         return Response({
             'error': ['Bez konta nie można korzystać z modelu LARGE.']
         }, status=status.HTTP_400_BAD_REQUEST)
@@ -436,13 +439,14 @@ def make_submission(request):
 
     result_file = File(buffer, name=filename)
 
-    if 'user' in data.keys():
-        if not User.objects.filter(id=data['user']).exists():
+    if request.user.username != '':
+        username = request.user.username
+        if not User.objects.filter(username=username).exists():
             return Response({
                 'error': ['Użytkownik nie istnieje.']
             }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        user = User.objects.get(id=data['user'])
+        user = User.objects.get(username=username)
 
         if request.FILES:
             file_size = request.FILES['content'].size
