@@ -1,4 +1,8 @@
+from rest_framework import exceptions
+
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 from .models import User, Submission
 import re
 
@@ -41,6 +45,9 @@ class UserSerializer(serializers.ModelSerializer):
                 'write_only': True,
             },
             'created_at': {
+                'write_only': True,
+            },
+            'last_login': {
                 'write_only': True,
             }
         }
@@ -87,3 +94,21 @@ class SubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Submission
         fields = '__all__'
+
+
+class LoginSerializer(TokenObtainPairSerializer):
+    default_error_messages = {
+        'no_active_account': 'Użytkownik nie istnieje.',
+        'not_verified': 'Użytkownik nie został zweryfikowany.',
+    }
+
+    def validate(self, attrs):
+        try:
+            user = User.objects.get(username=attrs['username'])
+        except User.DoesNotExist:
+            raise exceptions.AuthenticationFailed({'error': self.error_messages['no_active_account']})
+
+        if not user.is_verified:
+            raise exceptions.AuthenticationFailed({'error': self.error_messages['not_verified']})
+
+        return super().validate(attrs)

@@ -6,7 +6,7 @@ from io import BytesIO
 
 import pandas as pd
 from django.conf import settings
-from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -20,17 +20,19 @@ from rest_framework.decorators import api_view, parser_classes, throttle_classes
     permission_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from api.custom_throttle import MakeSubmissionUserRateThrottle, MakeSubmissionAnonRateThrottle, UpdateUserRateThrottle, \
-    CreateUserRateThrottle, DeleteUserRateThrottle
+    CreateUserRateThrottle, DeleteUserRateThrottle, LoginRateThrottle
 from api.tokens import generate_verification_token, verify_token
 from model.api_keys import save_model_token
 from model.model_datasets import predict
 from model.model_datasets import preprocess_dataframe, detect_lang
 from .models import User, Submission
-from .serializer import UserSerializer, SubmissionSerializer
+from .serializer import UserSerializer, SubmissionSerializer, LoginSerializer
 
 
 @api_view(['POST'])
@@ -126,40 +128,46 @@ def get_users(request):
     return Response(serializer.data)
 
 
-@api_view(['POST'])
-def login_user(request):
-    username = request.data['username']
-    password = request.data['password']
+# @api_view(['POST'])
+# @permission_classes([AllowAny])
+# def login_user(request):
+#     username = request.data['username']
+#     password = request.data['password']
+#
+#     if len(username) == 0 or len(password) == 0:
+#         return Response({
+#             'error': ['Żadne pole nie może być puste.']
+#         }, status=status.HTTP_406_NOT_ACCEPTABLE)
+#
+#     if not User.objects.filter(username=username).exists():
+#         return Response({
+#             'error': [f'Użytkownik o nazwie {username} nie istnieje.']
+#         }, status=status.HTTP_404_NOT_FOUND)
+#
+#     user = User.objects.get(username=username)
+#
+#     if not user.is_verified:
+#         return Response({
+#             'error': [f'Użytkownik o nazwie {username} nie został zweryfikowany.  Proszę skontaktować się z administratorem.']
+#         }, status=status.HTTP_403_FORBIDDEN)
+#
+#     if check_password(password, user.password):
+#         token = get_tokens_for_user(user)
+#
+#         return Response({
+#             'token': token
+#         }, status=status.HTTP_200_OK)
+#
+#     return Response({
+#         'error': ['Niepoprawne hasło.']
+#     }, status=status.HTTP_401_UNAUTHORIZED)
 
-    if len(username) == 0 or len(password) == 0:
-        return Response({
-            'error': ['Żadne pole nie może być puste.']
-        }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    if not User.objects.filter(username=username).exists():
-        return Response({
-            'error': [f'Użytkownik o nazwie {username} nie istnieje.']
-        }, status=status.HTTP_404_NOT_FOUND)
-
-    user = User.objects.get(username=username)
-
-    if not user.is_verified:
-        return Response({
-            'error': [f'Użytkownik o nazwie {username} nie został zweryfikowany.  Proszę skontaktować się z administratorem.']
-        }, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-    if check_password(password, user.password):
-        user_submissions = SubmissionSerializer(Submission.objects.filter(user=user.id), many=True).data
-
-        return Response({
-            'submissions': user_submissions,
-            'user': UserSerializer(user).data,
-            'success': 'Poprawne logowanie.'
-        }, status=status.HTTP_200_OK)
-
-    return Response({
-        'error': ['Niepoprawne hasło.']
-    }, status=status.HTTP_400_BAD_REQUEST)
+# Zwrócenie tylko tokenów
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginSerializer
+    throttle_classes = [LoginRateThrottle]
+    permission_classes = [AllowAny]
 
 
 @api_view(['DELETE'])
@@ -253,19 +261,19 @@ def update_user(request, username):
 
 
 @api_view(['PATCH', 'GET'])
-@permission_classes([IsAuthenticated])
-@authentication_classes([JWTTokenUserAuthentication])
+@permission_classes([AllowAny])
 def verify_user(request):
     if request.method == 'GET':
         token = request.GET.get('token')
         email = verify_token(token)
-        if not token:
-            return Response({'error': ['Token nie został dostarczony.']}, status=status.HTTP_400_BAD_REQUEST)
-        if not email:
-            return Response({'error': ['Link wygasł. Czas ważności wynosi 1h.']}, status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(email=email)
         serializer = UserSerializer(user, data={'is_verified': True}, partial=True)
+        if not token:
+            return Response({'error': ['Token nie został dostarczony.']}, status=status.HTTP_400_BAD_REQUEST)
+        if not email:
+            user.delete()
+            return Response({'error': ['Link wygasł. Czas ważności wynosi 1h.']}, status=status.HTTP_400_BAD_REQUEST)
 
         if serializer.is_valid():
             serializer.save()
