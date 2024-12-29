@@ -26,7 +26,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from api.custom_throttle import MakeSubmissionUserRateThrottle, MakeSubmissionAnonRateThrottle, UpdateUserRateThrottle, \
-    CreateUserRateThrottle, DeleteUserRateThrottle, LoginRateThrottle, RenewSubmissionUserRateThrottle
+    CreateUserRateThrottle, DeleteUserRateThrottle, LoginRateThrottle, AdminPanelUserRateThrottle
 from api.tokens import generate_verification_token, verify_token
 from model.api_keys import save_model_token
 from model.model_datasets import predict
@@ -281,6 +281,7 @@ def update_user(request):
 @api_view(['PATCH', 'GET'])
 @permission_classes([AllowAny])
 @authentication_classes([JWTTokenUserAuthentication])
+@throttle_classes([AdminPanelUserRateThrottle])
 def verify_user(request):
     if request.method == 'GET':
         token = request.GET.get('token')
@@ -299,7 +300,7 @@ def verify_user(request):
             return render(request, os.path.join('mails', 'verify_account.html'), context={'usertype': serializer.data['usertype']})
 
     if request.method == 'PATCH':
-        username = request.user.username
+        username = request.data['username']
         if not User.objects.filter(username=username).exists():
             return Response({
                 'error': ['Użytkownik nie istnieje.']
@@ -344,9 +345,9 @@ def verify_user(request):
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTTokenUserAuthentication])
-@throttle_classes([RenewSubmissionUserRateThrottle])
+@throttle_classes([AdminPanelUserRateThrottle])
 def renew_submission(request):
-    username = request.user.username
+    username = request.data['username']
     if not User.objects.filter(username=username).exists():
         return Response({
             'error': ['Użytkownik nie istnieje.']
@@ -359,7 +360,7 @@ def renew_submission(request):
     if serializer.is_valid():
         serializer.save()
         return Response({
-            'success': 'Liczba prób została odnowiona.'
+            'success': 'Odnowienie prób użytkownika powiodło się.'
         }, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

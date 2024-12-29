@@ -1,22 +1,25 @@
 <script setup>
 import axios from "axios";
 import _ from "lodash";
-import {onMounted, ref} from "vue";
+import {reactive, ref} from "vue";
 
 
-const users_verify = ref([])
+const users_verify = ref(JSON.parse(localStorage.getItem('users_verify')))
 
 const after_create = defineModel('after_create')
 const title = defineModel('title')
 const subtitle = defineModel('subtitle')
-const response_status = defineModel('response_status')
+const response_status = defineModel('response_status', {required: true})
+const token = reactive(JSON.parse(localStorage.getItem('token')))
 
 
 const verifyUser = async (user) => {
+  let status
   try {
-    const response = await axios.patch('http://localhost:8000/api/user/verify_user', {
-      'username': user['username']
-    })
+    const response = await axios.patch('http://localhost:8000/api/user/verify_user',
+        {'username': user['username']},
+        {headers: {'Authorization' : `Bearer ${token['access']}`}}
+    )
 
     const index = _.indexOf(users_verify.value, user)
     users_verify.value[index]['is_verified'] = true
@@ -28,27 +31,42 @@ const verifyUser = async (user) => {
     ]
     title.value = response.data.success
     subtitle.value = 'Użytkownik został zweryfikowany.'
-    response_status.value = response.status
+    status = response.status
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
       after_create.value = ['Nie udało się połączyć z serwerem.']
-      response_status.value = 500
+      status = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
+      status = error_response.status
       after_create.value = error_response.data.error
-      response_status.value = error_response.status
-      title.value = 'Problem z weryfikacją'
-      subtitle.value = 'Próba weryfikacji użytkownika się nie powiodła. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
+      subtitle.value = 'Weryfikacja użytkownika ' + user['username'] + ' się nie powiodła. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
+
+      if (status === 429) {
+        title.value = 'Przekroczony limit weryfikacji innych użytkowników'
+      } else if (status === 403) {
+        title.value = 'Problem z weryfikacją użytkownika'
+        if (error_response.data.code === 'access_token_failed') {  // jeśli access_token wygaśnie
+          await refreshAccessToken()
+        }
+      } else {
+        title.value = 'Problem z danymi'
+      }
     }
   }
+  response_status.value = status
 }
 
 const renewSubmission = async (user) => {
+  let status
   try {
-    const response = await axios.patch('http://localhost:8000/api/user/renew_submission/' + user['username'])
+    const response = await axios.patch('http://localhost:8000/api/user/renew_submission',
+        {'username': user['username']},
+        {headers: {'Authorization' : `Bearer ${token['access']}`}}
+    )
 
     const index = _.indexOf(users_verify.value, user)
     const submission_num = [10, 30, 100][user['usertype']]
@@ -62,27 +80,54 @@ const renewSubmission = async (user) => {
     ]
     title.value = response.data.success
     subtitle.value = 'Liczba prób użytkownika została odnowiona.'
-    response_status.value = response.status
+    status = response.status
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
       after_create.value = ['Nie udało się połączyć z serwerem.']
-      response_status.value = 500
+      status = 500
       title.value = 'Problem z serwerem'
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
       after_create.value = error_response.data.error
-      response_status.value = error_response.status
-      title.value = 'Problem z odnowieniem prób'
-      subtitle.value = 'Próba odnowienia prób użytkownika się nie powiodła. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
+      status = error_response.status
+      subtitle.value = 'Odnowienie prób użytkownika ' + user['username'] + ' się nie powiodło. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
+
+      if (status === 429) {
+        title.value = 'Przekroczony limit odnowień prób innych użytkowników'
+      } else if (status === 403) {
+        title.value = 'Problem z weryfikacją użytkownika'
+        if (error_response.data.code === 'access_token_failed') {  // jeśli access_token wygaśnie
+          await refreshAccessToken()
+        }
+      } else {
+        title.value = 'Problem z danymi'
+      }
     }
   }
+  response_status.value = status
 }
 
-onMounted(() => {
-  users_verify.value = JSON.parse(localStorage.getItem('users_verify'))
-})
+const refreshAccessToken = async () => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/token/refresh', {
+      'refresh': token.refresh
+    })
+
+    token.access = response.data['access']
+    localStorage.setItem('token', JSON.stringify(token))
+
+    after_create.value = ['Należy ponownie wykonać weryfikację użytkownika.']
+    response_status.value = 199  // błąd nie spowodowany działaniem użytkownika
+
+  } catch (e) {
+    const error_response = e.response
+    response_status.value = error_response.status
+    after_create.value = error_response.data.error
+    title.value = 'Problem z danymi logowania'  // jeśli refresh_token wygaśnie
+  }
+}
 </script>
 
 <template>

@@ -17,9 +17,9 @@ const token = reactive(JSON.parse(localStorage.getItem('token')))
 const deleteUser = async () => {
   try {
     const token = JSON.parse(localStorage.getItem('token'))
-    const response = await axios.delete('http://localhost:8000/api/user/delete_user', {
-      headers: {'Authorization' : `Bearer ${token['access']}`}
-    })
+    const response = await axios.delete('http://localhost:8000/api/user/delete_user',
+        {headers: {'Authorization' : `Bearer ${token['access']}`}}
+    )
 
     after_create.value = [
       ['Nazwa użytkownika', user.value['username']],
@@ -66,7 +66,7 @@ const refreshAccessToken = async () => {
     token.access = response.data['access']
     localStorage.setItem('token', JSON.stringify(token))
 
-    after_create.value = ['Należy ponownie wykonać żądanie usunięcia konta użytkownika.']
+    after_create.value = ['Należy ponownie przeprowadzić usunięcie konta użytkownika.']
     response_status.value = 199  // błąd nie spowodowany działaniem użytkownika
 
   } catch (e) {

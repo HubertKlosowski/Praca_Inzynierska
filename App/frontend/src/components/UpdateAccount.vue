@@ -32,9 +32,8 @@ const updateAccount = async () => {
     const data = _.pickBy(new_user, value => value && value.length > 0)
     const response = await axios.patch(
         'http://localhost:8000/api/user/update_user',
-        data, {
-          headers: {'Authorization' : `Bearer ${token['access']}`}
-        })
+        data,
+        {headers: {'Authorization' : `Bearer ${token['access']}`}})
 
     const user = response.data['user']
     const usertypes = ['Normal', 'Pro', 'Administrator']
@@ -87,7 +86,7 @@ const refreshAccessToken = async () => {
     token.access = response.data['access']
     localStorage.setItem('token', JSON.stringify(token))
 
-    after_create.value = ['Należy ponownie wykonać żądanie zmiany danych użytkownika.']
+    after_create.value = ['Należy ponownie wprowadzić zmiany danych użytkownika.']
     response_status.value = 199  // błąd nie spowodowany działaniem użytkownika
 
   } catch (e) {
