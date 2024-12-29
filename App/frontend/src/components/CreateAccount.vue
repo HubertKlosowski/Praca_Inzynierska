@@ -53,7 +53,7 @@ const createAccount = async () => {
       const error_response = e.response
       after_create.value = error_response.data.error
       response_status.value = error_response.status
-      title.value = 'Problem z podanymi danymi'
+      title.value = 'Problem z danymi'
       subtitle.value = 'Dane przekazane do formularza są błędne. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:'
     }
   }

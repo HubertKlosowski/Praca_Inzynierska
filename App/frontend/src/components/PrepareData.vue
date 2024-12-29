@@ -48,7 +48,7 @@ const fromFileToData = () => {
     } catch (e) {
       after_create.value = ['Przekazane dane są niepoprawne!']
       response_status.value = 400
-      title.value = 'Problem z podanymi danymi'
+      title.value = 'Problem z danymi'
       subtitle.value = 'Proszę poprawić wprowadzone dane w kreatorze.'
     }
     localStorage.removeItem('to_file')
@@ -58,7 +58,7 @@ const checkData = () => {
   if (data.value === null || (typeof data.value === 'string' && data.value.length === 0)) {
     after_create.value = ['Przekazane dane są puste!']
     response_status.value = 400
-    title.value = 'Problem z podanymi danymi'
+    title.value = 'Problem z danymi'
     subtitle.value = 'Modele nie są w stanie pracować na pustych danych. Proszę przesłać plik lub tekst.'
     return false
   } else if (typeof data.value === 'object') {
@@ -67,14 +67,14 @@ const checkData = () => {
       data.value = null
       after_create.value = ['Modele obsługują pliki z rozszerzeniem csv lub json.']
       response_status.value = 403
-      title.value = 'Problem z podanymi danymi'
+      title.value = 'Problem z danymi'
       subtitle.value = 'Nieprawidłowe rozszerzenie pliku. Proszę poprawić nazwę pliku i spróbować ponownie go przesłać.'
       return false
     } else if (data.value.size > 10000 && _.isEmpty(user.value)) {
       data.value = null
       after_create.value = ['Limit wielkości pliku dla gościa wynosi 100KB.']
       response_status.value = 403
-      title.value = 'Problem z podanymi danymi'
+      title.value = 'Problem z danymi'
       subtitle.value = 'Zbyt duży plik. Proszę przesłać plik o mniejszej wielkości.'
       return false
     }
@@ -95,7 +95,7 @@ const handleErrorForSubmission = (error) => {
     const error_response = error.response
     after_create.value = error_response.data.error
     response_status.value = error_response.status
-    title.value = 'Problem z podanymi danymi'
+    title.value = 'Problem z danymi'
     subtitle.value = 'Przekazane dane zawierają błędy. Proszę się zapoznać z nimi i spróbować ponownie.'
   }
 }

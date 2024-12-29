@@ -145,7 +145,7 @@ class LoginView(TokenObtainPairView):
 
         if not User.objects.filter(username=username).exists():
             return Response({
-                'error': ['Próba logowania do niestniejącego konta.']
+                'error': ['Próba logowania do nieistniejącego konta.']
             }, status=status.HTTP_404_NOT_FOUND)
 
         user = User.objects.get(username=username)
@@ -159,6 +159,11 @@ class LoginView(TokenObtainPairView):
                 ]
             }, status=status.HTTP_403_FORBIDDEN)
 
+        if not user.check_password(password):
+            return Response({
+                'error': ['Niepoprawne hasło.']
+            }, status=status.HTTP_406_NOT_ACCEPTABLE)
+
         return super().post(request, *args, **kwargs)
 
 
@@ -167,14 +172,14 @@ class LoginView(TokenObtainPairView):
 @authentication_classes([JWTTokenUserAuthentication])
 @throttle_classes([LoginRateThrottle])
 def get_user_data(request):
-    username = request.user.username
-    if not User.objects.filter(username=username).exists():
+    user_id = request.user.user_id
+    if not User.objects.filter(id=user_id).exists():
         return Response({
             'error': ['Użytkownik nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
-    user = User.objects.get(username=username)
-    user_submissions = SubmissionSerializer(Submission.objects.filter(user=user.id), many=True).data
+    user = User.objects.get(id=user_id)
+    user_submissions = SubmissionSerializer(Submission.objects.filter(user=user_id), many=True).data
 
     return Response({
         'submissions': user_submissions,
@@ -246,13 +251,13 @@ def update_user(request):
             'error': ['Conajmniej jedno pole musi być wypełnione.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    username = request.user.username
-    if not User.objects.filter(username=username).exists():
+    user_id = request.user.user_id
+    if not User.objects.filter(id=user_id).exists():
         return Response({
             'error': ['Użytkownik nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
-    user = User.objects.get(username=username)
+    user = User.objects.get(id=user_id)
 
     if 'password' in data:
         try:

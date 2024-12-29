@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import {createRouter, createWebHistory} from "vue-router";
 import MainPage from "@/components/MainPage.vue";
 import Account from "@/components/Account.vue";
 import Phases from "@/components/Phases.vue";
@@ -9,6 +9,7 @@ import CreateAccount from "@/components/CreateAccount.vue";
 import _ from "lodash"
 import UpdateAccount from "@/components/UpdateAccount.vue";
 import CreateFile from "@/components/CreateFile.vue";
+import DeleteAccount from "@/components/DeleteAccount.vue";
 
 
 const routes = [
@@ -19,7 +20,8 @@ const routes = [
     { path: '/login', component: Login },
     { path: '/profile', component: Account },
     { path: '/update', component: UpdateAccount },
-    { path: '/create_file', component: CreateFile }
+    { path: '/create_file', component: CreateFile },
+    { path: '/delete', component: DeleteAccount }
 ]
 
 const router = createRouter({
@@ -32,6 +34,8 @@ router.beforeEach(async (to, from) => {
     const user = ref(JSON.parse(localStorage.getItem('user')))
 
     if (from.path === '/profile' && to.path === '/predict') {
+        return true
+    } else if ((from.path === '/delete' || from.path === '/update') && to.path === '/profile') {
         return true
     } else if (!$cookies.isKey('made_submission') && to.path === '/predict' && _.isEmpty(user.value)) {
         return false

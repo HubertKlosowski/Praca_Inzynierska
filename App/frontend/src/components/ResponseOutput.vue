@@ -11,7 +11,7 @@ const props = defineProps(['title', 'subtitle', 'move_to', 'after_create'])
 const closeWindow = async () => {
   response_status.value = 0
 
-  if (props.move_to !== undefined && response_status.value >= 200 && response_status.value <= 299) {
+  if (props.move_to !== undefined) {
     await router.push(props.move_to)
   }
 }

@@ -47,21 +47,20 @@ const login = async () => {
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
-      after_create.value = error_response.data.error
       response_status.value = error_response.status
-      subtitle.value = 'Próba logowania się nie powiodła. Proszę zapoznać się z komunikatami wyświetlanymi poniżej:'
 
       if (response_status.value === 429) {
         title.value = 'Przekroczony limit prób logowania'
-        after_create.value = ['Limit wynosi 5 prób na godzinę.', 'Proszę spróbować później.']  // docelowo w backendzie
-        return
       } else if (response_status.value === 403) {
-        title.value = 'Problem z weryfikacją'
-        return
+        title.value = 'Problem z weryfikacją użytkownika'
       } else {
-        title.value = 'Problem z podanymi danymi'
-        return
+        title.value = 'Problem z danymi'
       }
+
+      after_create.value = error_response.data.error
+      subtitle.value = 'Próba logowania się nie powiodła. Proszę zapoznać się z komunikatami wyświetlanymi poniżej:'
+
+      return
     }
   }
 
@@ -101,7 +100,7 @@ const login = async () => {
       const error_response = e.response
       after_create.value = error_response.data.error
       response_status.value = error_response.status
-      title.value = 'Problem z podanymi danymi'
+      title.value = 'Problem z danymi'
       subtitle.value = 'Dane przekazane do formularza są błędne. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:'
     }
   }

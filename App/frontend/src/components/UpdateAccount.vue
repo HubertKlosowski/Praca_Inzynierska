@@ -53,7 +53,6 @@ const updateAccount = async () => {
     resetInputs()
 
   } catch (e) {
-    console.log(e.response)
     if (typeof e.response === 'undefined') {
       after_create.value = ['Nie udało się połączyć z serwerem.']
       response_status.value = 500
@@ -61,11 +60,41 @@ const updateAccount = async () => {
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
-      after_create.value = error_response.data.error
       response_status.value = error_response.status
-      title.value = 'Problem z podanymi danymi'
-      subtitle.value = 'Dane przekazane do formularza są błędne. Proszę je poprawić, zgodnie z komunikatami wyświetlanymi poniżej:'
+      after_create.value = error_response.data.error
+      subtitle.value = 'Próba zmiany danych użytkownika się nie powiodła. Proszę zapoznać się z komunikatami wyświetlanymi poniżej:'
+
+      if (response_status.value === 429) {
+        title.value = 'Przekroczony limit zmian danych użytkownika'
+      } else if (response_status.value === 403) {
+        title.value = 'Problem z weryfikacją użytkownika'
+        if (error_response.data.code === 'access_token_failed') {  // jeśli access_token wygaśnie
+          await refreshAccessToken()
+        }
+      } else {
+        title.value = 'Problem z danymi'
+      }
     }
+  }
+}
+
+const refreshAccessToken = async () => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/token/refresh', {
+      'refresh': token.refresh
+    })
+
+    token.access = response.data['access']
+    localStorage.setItem('token', JSON.stringify(token))
+
+    after_create.value = ['Należy ponownie wykonać żądanie zmiany danych użytkownika.']
+    response_status.value = 199  // błąd nie spowodowany działaniem użytkownika
+
+  } catch (e) {
+    const error_response = e.response
+    response_status.value = error_response.status
+    after_create.value = error_response.data.error
+    title.value = 'Problem z danymi logowania'  // jeśli refresh_token wygaśnie
   }
 }
 
@@ -76,8 +105,8 @@ const resetInputs = () => {
   new_user.password = ''
 }
 
-const goHome = async () => {
-  await router.push('/')
+const goProfile = async () => {
+  await router.push('/profile')
 }
 </script>
 
@@ -86,15 +115,15 @@ const goHome = async () => {
   <ResponseOutput
       v-model:response_status="response_status"
       :after_create="after_create"
-      v-if="response_status >= 200"
+      v-if="response_status >= 100 && response_status !== 403"
       :move_to="'/profile'"
       :title="title"
       :subtitle="subtitle"
   ></ResponseOutput>
 
   <div class="left-part" :style="{
-    opacity: response_status < 200 ? '1' : '0.3',
-    pointerEvents: response_status < 200 ? 'auto' : 'none'
+    opacity: response_status >= 100 && response_status !== 403 ? '0.3' : '1',
+    pointerEvents: response_status >= 100 && response_status !== 403 ? 'none' : 'auto'
   }">
     <div class="header">
       <h3>Zmień dane konta</h3>
@@ -104,7 +133,7 @@ const goHome = async () => {
       </ul>
     </div>
     <div class="go-main">
-      <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
+      <font-awesome-icon :icon="['fas', 'user']" class="router-link" @click="goProfile" />
     </div>
     <div class="form">
       <form @submit.prevent="updateAccount">

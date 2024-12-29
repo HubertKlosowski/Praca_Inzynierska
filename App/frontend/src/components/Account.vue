@@ -36,38 +36,6 @@ const logoutUser = async () => {
   await router.push('/')
 }
 
-const deleteUser = async () => {
-  try {
-    const token = JSON.parse(localStorage.getItem('token'))
-    const response = await axios.delete('http://localhost:8000/api/user/delete_user', {
-      headers: {'Authorization' : `Bearer ${token['access']}`}
-    })
-
-    after_create.value = [
-      ['Nazwa użytkownika', user.value['username']],
-      ['Adres email', user.value['email']],
-    ]
-    title.value = response.data.success
-    subtitle.value = 'Użytkownik został poprawnie usunięty.'
-    response_status.value = response.status
-    await logoutUser()
-
-  } catch (e) {
-    if (typeof e.response === 'undefined') {
-      after_create.value = ['Nie udało się połączyć z serwerem.']
-      response_status.value = 500
-      title.value = 'Problem z serwerem'
-      subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
-    } else {
-      const error_response = e.response
-      after_create.value = error_response.data.error
-      response_status.value = error_response.status
-      title.value = 'Problem z usunięciem konta'
-      subtitle.value = 'Próba usunięcia konta się nie powiodła. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
-    }
-  }
-}
-
 const setEnglishModel = () => {
   choose_model.value = !choose_model.value
   model.value = choose_model.value ? 'bert-large' : 'bert-base'
@@ -264,8 +232,7 @@ onMounted(() => {
 
     <div class="buttons">
       <RouterLink to="/update" class="update">Zmień dane</RouterLink>
-<!--      czemu nie kolejny routerlink -->
-      <div @click="deleteUser" class="delete">Usuń konto</div>
+      <RouterLink to="/delete" class="delete">Usuń konto</RouterLink>
       <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
     </div>
   </div>
