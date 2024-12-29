@@ -1,5 +1,5 @@
 <script setup>
-import {inject, onMounted, ref} from "vue";
+import {inject, onMounted, reactive, ref} from "vue";
 import english from "@/assets/angielski.png";
 import {useRouter} from "vue-router";
 import axios from "axios";
@@ -27,6 +27,7 @@ const after_create = ref({})
 const title = ref('')
 const subtitle = ref('')
 const response_status = ref(0)
+const token = reactive(JSON.parse(localStorage.getItem('token')))
 
 
 const logoutUser = async () => {
@@ -44,7 +45,10 @@ const setEnglishModel = () => {
 
 const showDetails = async (submission) => {
   try {
-    const response = await axios.get('http://localhost:8000/api/submission/get_submission/' + submission['id'])
+    const response = await axios.get(
+        'http://localhost:8000/api/submission/get_submission/' + submission['id'],
+        {headers: {'Authorization' : `Bearer ${token['access']}`}}
+    )
     localStorage.setItem('depressed', JSON.stringify(response.data['depressed']))
     localStorage.setItem('text', JSON.stringify(response.data['text']))
     localStorage.setItem('choosen_submission', JSON.stringify(submission))
@@ -58,10 +62,20 @@ const showDetails = async (submission) => {
       subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
     } else {
       const error_response = e.response
-      after_create.value = error_response.data.error
       response_status.value = error_response.status
-      title.value = 'Problem z odczytaniem rezultatów'
-      subtitle.value = 'Podczas szukania rezultatów wystąpił błąd. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
+      after_create.value = error_response.data.error
+      subtitle.value = 'Podczas wyszukiwania rezultatów wystąpił błąd. Proszę zapoznać się z błędem podanym poniżej i spróbować ponownie.'
+
+      if (response_status.value === 429) {
+        title.value = 'Przekroczony limit zmian danych użytkownika'
+      } else if (response_status.value === 403) {
+        title.value = 'Problem z weryfikacją użytkownika'
+        if (error_response.data.code === 'access_token_failed') {  // jeśli access_token wygaśnie
+          await refreshAccessToken(['Twoje dane wygasły, ale zostały odświeżone.', 'Teraz możesz wyświetlić szczegóły próby.'])
+        }
+      } else {
+        title.value = 'Problem z danymi'
+      }
     }
   }
 }
@@ -69,9 +83,11 @@ const showDetails = async (submission) => {
 const setPredictionName = async (submission, num) => {
   change_name.value = -1
   try {
-    await axios.patch('http://localhost:8000/api/submission/change_name/' + submission['id'], {
-      'name': new_name.value
-    })
+    await axios.patch(
+        'http://localhost:8000/api/submission/change_name/' + submission['id'],
+        {'name': new_name.value},
+        {headers: {'Authorization' : `Bearer ${token['access']}`}}
+    )
     history_submissions.value[num]['name'] = new_name.value
     localStorage.setItem('history_submissions', JSON.stringify(history_submissions.value))
     new_name.value = ''
@@ -86,9 +102,40 @@ const setPredictionName = async (submission, num) => {
       const error_response = e.response
       after_create.value = error_response.data.error
       response_status.value = error_response.status
-      title.value = 'Problem z zmianą nazwy predykcji'
-      subtitle.value = 'Podczas zmiany nazwy wystąpił błąd. Wynika to z utraty danych o próbie w bazie danych.'
+      subtitle.value = 'Podczas zmiany nazwy próby wystąpił błąd.'
+
+      if (response_status.value === 429) {
+        title.value = 'Przekroczony limit zmian danych użytkownika'
+      } else if (response_status.value === 403) {
+        title.value = 'Problem z weryfikacją użytkownika'
+        if (error_response.data.code === 'access_token_failed') {  // jeśli access_token wygaśnie
+          await refreshAccessToken(['Twoje dane wygasły, ale zostały odświeżone.', 'Teraz możesz ustawić nazwę próby.'])
+        }
+      } else {
+        title.value = 'Problem z danymi'
+      }
     }
+  }
+}
+
+const refreshAccessToken = async (after_create_success) => {
+  try {
+    const response = await axios.post(
+        'http://localhost:8000/api/token/refresh',
+        {'refresh': token.refresh}
+    )
+
+    token.access = response.data['access']
+    localStorage.setItem('token', JSON.stringify(token))
+
+    after_create.value = after_create_success
+    response_status.value = 199  // błąd nie spowodowany działaniem użytkownika
+
+  } catch (e) {
+    const error_response = e.response
+    response_status.value = error_response.status
+    after_create.value = error_response.data.error
+    title.value = 'Problem z danymi logowania'  // jeśli refresh_token wygaśnie
   }
 }
 
@@ -121,8 +168,8 @@ onMounted(() => {
   ></ResponseOutput>
 
   <div class="left-part" :style="{
-    opacity: response_status < 200 ? '1' : '0.3',
-    pointerEvents: response_status < 200 ? 'auto' : 'none'
+    opacity: response_status >= 100 && response_status !== 403 ? '0.3' : '1',
+    pointerEvents: response_status >= 100 && response_status !== 403 ? 'none' : 'auto'
   }" v-else>
     <div class="header">
       <div class="title">

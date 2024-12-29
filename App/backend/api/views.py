@@ -25,8 +25,7 @@ from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from api.custom_throttle import MakeSubmissionUserRateThrottle, MakeSubmissionAnonRateThrottle, UpdateUserRateThrottle, \
-    CreateUserRateThrottle, DeleteUserRateThrottle, LoginRateThrottle, AdminPanelUserRateThrottle
+from api.custom_throttle import *
 from api.tokens import generate_verification_token, verify_token
 from model.api_keys import save_model_token
 from model.model_datasets import predict
@@ -281,7 +280,7 @@ def update_user(request):
 @api_view(['PATCH', 'GET'])
 @permission_classes([AllowAny])
 @authentication_classes([JWTTokenUserAuthentication])
-@throttle_classes([AdminPanelUserRateThrottle])
+@throttle_classes([VerifyUserUserRateThrottle])
 def verify_user(request):
     if request.method == 'GET':
         token = request.GET.get('token')
@@ -345,7 +344,7 @@ def verify_user(request):
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTTokenUserAuthentication])
-@throttle_classes([AdminPanelUserRateThrottle])
+@throttle_classes([RenewSubUserRateThrottle])
 def renew_submission(request):
     username = request.data['username']
     if not User.objects.filter(username=username).exists():
@@ -507,7 +506,13 @@ def make_submission(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTTokenUserAuthentication])
+@throttle_classes([GetSubUserRateThrottle])
 def get_submission(request, sub_uuid):
+    if not Submission.objects.filter(id=sub_uuid).exists():
+        return Response({
+            'error': ['Baza danych nie zawiera informacji o żądanej próbie.']
+        }, status=status.HTTP_404_NOT_FOUND)
+
     submission = Submission.objects.get(id=sub_uuid)
 
     try:
@@ -527,9 +532,14 @@ def get_submission(request, sub_uuid):
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTTokenUserAuthentication])
+@throttle_classes([ChangeSubNameUserRateThrottle])
 def change_name(request, sub_uuid):
-    submission = Submission.objects.get(id=sub_uuid)
+    if not Submission.objects.filter(id=sub_uuid).exists():
+        return Response({
+            'error': ['Baza danych nie zawiera informacji o żądanej próbie.']
+        }, status=status.HTTP_404_NOT_FOUND)
 
+    submission = Submission.objects.get(id=sub_uuid)
     serializer = SubmissionSerializer(submission, data=request.data, partial=True)
 
     if not serializer.is_valid():

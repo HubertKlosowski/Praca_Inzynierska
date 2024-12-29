@@ -16,7 +16,7 @@ def custom_exception_handler(exc, context):
 
     elif isinstance(exc, NotAuthenticated):
         response_data = {
-            'error': ['Brak danych uwierzytelniających.'],
+            'error': ['Brak danych uwierzytelniających.', 'Zaloguj się na konto aby korzystać z zasobów.'],
             'code': 'not_authenticated'
         }
         return Response(response_data, status=status.HTTP_403_FORBIDDEN)

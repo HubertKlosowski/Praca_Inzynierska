@@ -68,7 +68,7 @@ const updateAccount = async () => {
       } else if (response_status.value === 403) {
         title.value = 'Problem z weryfikacją użytkownika'
         if (error_response.data.code === 'access_token_failed') {  // jeśli access_token wygaśnie
-          await refreshAccessToken()
+          await refreshAccessToken(['Twoje dane wygasły, ale zostały odświeżone.', 'Teraz możesz zmienić dane użytkownika.'])
         }
       } else {
         title.value = 'Problem z danymi'
@@ -77,7 +77,7 @@ const updateAccount = async () => {
   }
 }
 
-const refreshAccessToken = async () => {
+const refreshAccessToken = async (after_create_success) => {
   try {
     const response = await axios.post('http://localhost:8000/api/token/refresh', {
       'refresh': token.refresh
@@ -86,7 +86,7 @@ const refreshAccessToken = async () => {
     token.access = response.data['access']
     localStorage.setItem('token', JSON.stringify(token))
 
-    after_create.value = ['Należy ponownie wprowadzić zmiany danych użytkownika.']
+    after_create.value = after_create_success
     response_status.value = 199  // błąd nie spowodowany działaniem użytkownika
 
   } catch (e) {
