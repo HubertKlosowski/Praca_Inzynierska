@@ -10,7 +10,7 @@ const show_info = ref(1)
 
 
 onMounted(() => {
-  if (!localStorage.hasOwnProperty('user')) {
+  if (localStorage.getItem('user') === null) {
     localStorage.setItem('user', JSON.stringify({}))
   }
 })

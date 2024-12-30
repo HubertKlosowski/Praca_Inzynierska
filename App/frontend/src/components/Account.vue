@@ -21,7 +21,7 @@ const history_submissions = ref(JSON.parse(localStorage.getItem('history_submiss
 const new_name = ref('')
 const change_name = ref(-1)
 
-const model = ref('bert-base')
+const model = ref('')
 
 const after_create = ref({})
 const title = ref('')
@@ -148,12 +148,16 @@ const closeWindow = () => {
 }
 
 onMounted(() => {
-  if (localStorage.hasOwnProperty('choosen_model')) {
-    localStorage.setItem('choosen_model', JSON.stringify(model.value))
+  console.log(localStorage.getItem('choosen_model'))
+  if (localStorage.getItem('choosen_model') === null) {
+    localStorage.setItem('choosen_model', JSON.stringify('bert-base'))
+    console.log('nie ma w localStorage: ', JSON.parse(localStorage.getItem('choosen_model')))
   } else {
     model.value = JSON.parse(localStorage.getItem('choosen_model'))
     choose_model.value = model.value !== 'bert-base'
+    console.log('jest w localStorage: ', JSON.parse(localStorage.getItem('choosen_model')))
   }
+  console.log(model.value)
 })
 </script>
 

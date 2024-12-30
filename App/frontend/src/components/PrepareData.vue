@@ -1,5 +1,5 @@
 <script setup>
-import {inject, onMounted, ref, watch} from "vue";
+import {inject, onMounted, reactive, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
@@ -16,11 +16,11 @@ const $cookies = inject('$cookies')
 const show_loading_screen = defineModel('show_loading_screen')
 const show_popup = defineModel('show_popup')
 const send_creator = ref(false)
-const user = ref(JSON.parse(localStorage.getItem('user')))
+const user = reactive(JSON.parse(localStorage.getItem('user')))
 const choose = ref(true)
 const data = ref(null)
 const is_dragging = ref(false)
-const model = ref('bert-base')
+const model = ref('')
 
 const after_create = ref({})
 const title = ref('')
@@ -29,7 +29,7 @@ const response_status = defineModel('response_status')
 
 
 const makePredictions = async () => {
-  if (_.isEmpty(user.value)) {
+  if (_.isEmpty(user)) {
     await makeSubmissionAnon()
   } else {
     await makeSubmissionUser()
@@ -38,20 +38,20 @@ const makePredictions = async () => {
 
 const fromFileToData = () => {
   let to_csv = JSON.parse(localStorage.getItem('to_file'))
-    to_csv.unshift('text')
-    to_csv = to_csv.join('\n')
+  to_csv.unshift('text')
+  to_csv = to_csv.join('\n')
 
-    try {
-      data.value = new File([to_csv], 'creator.csv', {
-        type: 'text/csv'
-      })
-    } catch (e) {
-      after_create.value = ['Przekazane dane są niepoprawne!']
-      response_status.value = 400
-      title.value = 'Problem z danymi'
-      subtitle.value = 'Proszę poprawić wprowadzone dane w kreatorze.'
-    }
-    localStorage.removeItem('to_file')
+  try {
+    data.value = new File([to_csv], 'creator.csv', {
+      type: 'text/csv'
+    })
+  } catch (e) {
+    after_create.value = ['Przekazane dane są niepoprawne!']
+    response_status.value = 400
+    title.value = 'Problem z danymi'
+    subtitle.value = 'Proszę poprawić wprowadzone dane w kreatorze.'
+  }
+  localStorage.removeItem('to_file')
 }
 
 const checkData = () => {
@@ -70,7 +70,7 @@ const checkData = () => {
       title.value = 'Problem z danymi'
       subtitle.value = 'Nieprawidłowe rozszerzenie pliku. Proszę poprawić nazwę pliku i spróbować ponownie go przesłać.'
       return false
-    } else if (data.value.size > 10000 && _.isEmpty(user.value)) {
+    } else if (data.value.size > 10000 && _.isEmpty(user)) {
       data.value = null
       after_create.value = ['Limit wielkości pliku dla gościa wynosi 100KB.']
       response_status.value = 403
@@ -101,7 +101,7 @@ const handleErrorForSubmission = (error) => {
 }
 
 const makeSubmissionUser = async () => {
-  if (localStorage.hasOwnProperty('to_file')) {
+  if (localStorage.getItem('to_file') !== null) {
     fromFileToData()
   } else if (!checkData()) {
     return
@@ -110,7 +110,7 @@ const makeSubmissionUser = async () => {
   let form_data = new FormData()
   form_data.append('content', data.value)
   form_data.append('model', model.value)
-  form_data.append('user', user.value['id'])
+  form_data.append('user', user.id)
 
   data.value = null
   show_loading_screen.value = true
@@ -135,8 +135,8 @@ const makeSubmissionUser = async () => {
     localStorage.setItem('choosen_submission', JSON.stringify(response.data['submission']))
 
     // aktualizacja danych usera
-    user.value['submission_num'] -= 1
-    localStorage.setItem('user', JSON.stringify(user.value))
+    user.submission_num -= 1
+    localStorage.setItem('user', JSON.stringify(user))
     $cookies.set('made_submission', true)
     show_loading_screen.value = false
     await router.push('/predict')
@@ -147,7 +147,7 @@ const makeSubmissionUser = async () => {
 }
 
 const makeSubmissionAnon = async () => {
-  if (localStorage.hasOwnProperty('to_file')) {
+  if (localStorage.getItem('to_file') !== null) {
     fromFileToData()
   } else if (!checkData()) {
     return
@@ -156,7 +156,7 @@ const makeSubmissionAnon = async () => {
   let form_data = new FormData()
   form_data.append('content', data.value)
   form_data.append('model', model.value)
-  form_data.append('user', user.value['id'])
+  form_data.append('user', user.id)
 
   data.value = null
   show_loading_screen.value = true
@@ -188,8 +188,8 @@ watch(send_creator, () => {
 })
 
 onMounted(() => {
-  if (_.isEmpty(user.value)) {
-    localStorage.setItem('choosen_model', JSON.stringify(model.value))
+  if (_.isEmpty(user)) {
+    localStorage.setItem('choosen_model', JSON.stringify('bert-base'))
   } else {
     model.value = JSON.parse(localStorage.getItem('choosen_model'))
   }

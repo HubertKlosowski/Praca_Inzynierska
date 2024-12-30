@@ -11,7 +11,7 @@ class MakeSubmissionAnonRateThrottle(throttling.AnonRateThrottle):
 
 class LoginRateThrottle(throttling.UserRateThrottle):
     scope = 'login_user'
-    rate = '5/hour'  # 5/hour
+    rate = '5/second'  # 5/hour
 
 class CreateUserRateThrottle(throttling.AnonRateThrottle):
     scope = 'create_user'

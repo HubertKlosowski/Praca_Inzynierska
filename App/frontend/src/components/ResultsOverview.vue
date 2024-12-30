@@ -79,11 +79,11 @@ onMounted(() => {
       Pojedynczy wpis
     </div>
     <div class="info" v-if="non_decisive_rows !== 0">
-      <span>
-        "Trudne" rekordy:
+      <span>"Trudne" rekordy:</span>
+      <span id="custom_icon">
+        {{ non_decisive_rows }}
         <font-awesome-icon :icon="['fas', 'circle-info']" class="router-link" @click="response_status = 100"/>
       </span>
-      <span>{{ non_decisive_rows }}</span>
     </div>
     <div class="info" v-else style="justify-content: center">
       Brak "trudnych" rekordów
@@ -101,6 +101,18 @@ onMounted(() => {
 </template>
 
 <style scoped>
+svg {
+  width: 5%;
+  height: 5%;
+}
+
+#custom_icon {
+  display: flex;
+  flex-direction: row;
+  justify-content: end;
+  align-items: center;
+}
+
 .router-link {
   height: 40%;
 }
