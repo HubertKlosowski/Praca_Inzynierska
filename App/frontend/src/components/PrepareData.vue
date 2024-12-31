@@ -72,7 +72,7 @@ const checkData = () => {
       return false
     } else if (data.value.size > 10000 && _.isEmpty(user)) {
       data.value = null
-      after_create.value = ['Limit wielkości pliku dla gościa wynosi 100KB.']
+      after_create.value = ['Limit wielkości pliku dla gościa wynosi 10KB.']
       response_status.value = 403
       title.value = 'Problem z danymi'
       subtitle.value = 'Zbyt duży plik. Proszę przesłać plik o mniejszej wielkości.'
@@ -85,19 +85,26 @@ const checkData = () => {
 const handleErrorForSubmission = (error) => {
   show_loading_screen.value = false
   data.value = null
+  let status
 
   if (typeof error.response === 'undefined' || error.status >= 500) {
     after_create.value = ['Nie udało się połączyć z serwerem.']
-    response_status.value = 500
+    status = 500
     title.value = 'Problem z serwerem'
     subtitle.value = 'Proszę poczekać, serwer nie jest teraz dostępny.'
   } else {
     const error_response = error.response
     after_create.value = error_response.data.error
-    response_status.value = error_response.status
-    title.value = 'Problem z danymi'
-    subtitle.value = 'Przekazane dane zawierają błędy. Proszę się zapoznać z nimi i spróbować ponownie.'
+    status = error_response.status
+
+    if (error_response.status === 429) {
+      title.value = 'Przekroczony limit zmian danych użytkownika'
+    } else {
+      title.value = 'Problem z danymi'
+      subtitle.value = 'Przekazane dane zawierają błędy. Proszę się zapoznać z nimi i spróbować ponownie.'
+    }
   }
+  response_status.value = status
 }
 
 const makeSubmissionUser = async () => {
@@ -190,9 +197,8 @@ watch(send_creator, () => {
 onMounted(() => {
   if (_.isEmpty(user)) {
     localStorage.setItem('choosen_model', JSON.stringify('bert-base'))
-  } else {
-    model.value = JSON.parse(localStorage.getItem('choosen_model'))
   }
+  model.value = JSON.parse(localStorage.getItem('choosen_model'))
 })
 </script>
 

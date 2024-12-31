@@ -5,7 +5,6 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
-import sklearn.decomposition
 from langdetect import DetectorFactory, detect
 
 DetectorFactory.seed = 0
@@ -22,8 +21,6 @@ from nltk.stem import PorterStemmer  # stemming dla języka angielskiego
 from praw.models import MoreComments
 from pystempel import Stemmer  # stemming dla języka polskiego
 from sklearn.model_selection import train_test_split
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
 
 from model.api_keys import public_key, secret_key, microsoft_api_key, save_model_token
 
@@ -35,7 +32,6 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 from huggingface_hub import login, logout
-import math
 
 
 # Dla wpisów z języka polskiego z Reddita
@@ -209,7 +205,7 @@ def preprocess_dataframe(dataframe: pd.DataFrame, lang: str = 'en') -> pd.DataFr
 # obsluga zbyt dlugich wpisow
 def drop_too_long(df: pd.DataFrame, tokenizer) -> pd.DataFrame:
     df_copy = df.copy(deep=True)
-    limit = 512
+    limit = 500
     df_copy['len'] = df_copy['text'].apply(lambda sentence: len(tokenizer.tokenize(sentence)))
     df_copy.drop(df_copy.loc[df_copy['len'] > limit, ['text']].index, inplace=True)  # wpisy zbyt dlugie
     df_copy.drop(columns=['len'], inplace=True)

@@ -148,16 +148,12 @@ const closeWindow = () => {
 }
 
 onMounted(() => {
-  console.log(localStorage.getItem('choosen_model'))
   if (localStorage.getItem('choosen_model') === null) {
     localStorage.setItem('choosen_model', JSON.stringify('bert-base'))
-    console.log('nie ma w localStorage: ', JSON.parse(localStorage.getItem('choosen_model')))
   } else {
     model.value = JSON.parse(localStorage.getItem('choosen_model'))
     choose_model.value = model.value !== 'bert-base'
-    console.log('jest w localStorage: ', JSON.parse(localStorage.getItem('choosen_model')))
   }
-  console.log(model.value)
 })
 </script>
 
