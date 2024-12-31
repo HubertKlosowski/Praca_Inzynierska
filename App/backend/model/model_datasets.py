@@ -137,12 +137,12 @@ def merge_dataframes(lang: str = 'en', for_train: bool = False) -> pd.DataFrame:
     merged.drop_duplicates(subset=['text'], keep='first', inplace=True)  # usuniecie duplikatow
     merged.dropna(inplace=True)  # usuniecie wartosci NaN
     merged['text'] = merged['text'].apply(lambda x: x.replace('\n', ' '))
-    # merged['len'] = merged['text'].apply(lambda x: len(x.split()))
-    # merged.drop(merged.loc[
-    #                 (merged['len'] <= merged['len'].quantile(0.05)) |
-    #                 (merged['len'] >= merged['len'].quantile(0.95))].index, inplace=True
-    #             )
-    # merged.drop(columns=['len'], inplace=True)
+    merged['len'] = merged['text'].apply(lambda x: len(x.split()))
+    merged.drop(merged.loc[
+                    (merged['len'] <= merged['len'].quantile(0.02)) |
+                    (merged['len'] >= merged['len'].quantile(0.98))].index, inplace=True
+                )
+    merged.drop(columns=['len'], inplace=True)
     merged.reset_index(drop=True, inplace=True)
 
     return merged
@@ -324,7 +324,7 @@ def fine_tune(model_path: str):
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     dataset = create_dataset(
         pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'))
-        if model_path == 'bert-base' or model_path == 'bert-large'
+        if 'bert-base' in model_path or 'bert-large' in model_path
         else pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_polish.csv')),
         split_train_test=True
     )
@@ -345,7 +345,7 @@ def fine_tune(model_path: str):
         output_dir=f'{model_path}-depression',
         learning_rate=2e-5,
         per_device_train_batch_size=16,
-        per_device_eval_batch_size=64,
+        per_device_eval_batch_size=32,
         num_train_epochs=10,
         weight_decay=0.01,
         eval_strategy='epoch',
@@ -420,8 +420,8 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
     return pd.DataFrame([{pair['label']: pair['score'] for pair in row} for row in pred], index=df_index)
 
 
-# fine_tune('bert-base')
-# fine_tune('bert-large')
+# fine_tune('google-bert/bert-base-cased')
+# fine_tune('google-bert/bert-large-uncased')
 # fine_tune('roberta-base')
 # fine_tune('roberta-large')
 
@@ -433,7 +433,8 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
 #     train_english.to_csv(os.path.join('data', 'final', 'train_english.csv'), index=False)
 #
 # train_english = balance_dataframe(train_english)
-# train_preprocessed_english = preprocess_dataframe(train_english, lang='en').dropna()
+# train_preprocessed_english = preprocess_dataframe(train_english, lang='en')
+# train_preprocessed_english.dropna(subset=['text'], inplace=True)
 # train_preprocessed_english.to_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'), index=False)
 
 # Przetworzone wpisy dla języka polskiego (zbiór treningowy)
@@ -444,7 +445,8 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
 
 # Przetworzone wpisy w języku angielskim (zbiór testowy)
 # if 'test_english.csv' in os.listdir(os.path.join('data', 'final')):
-#     test_preprocessed_english = preprocess_dataframe(pd.read_csv(os.path.join('data', 'final', 'test_english.csv')).dropna())
+#     test_preprocessed_english = preprocess_dataframe(pd.read_csv(os.path.join('data', 'final', 'test_english.csv')))
+#     test_preprocessed_english.dropna(subset=['text'], inplace=True)
 #     test_preprocessed_english.to_csv(os.path.join('data', 'final', 'test_preprocessed_english.csv'), index=False)
 
 # Przetworzone wpisy dla języka polskiego (zbiór testowy)

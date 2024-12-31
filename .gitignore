@@ -165,8 +165,5 @@ api_keys.py
 django_credentials.py
 *.csv
 *.ipynb
-/App/backend/model/bert-base/
-/App/backend/model/bert-large/
+/App/backend/model/google-bert/
 /App/backend/media/
-/App/backend/model/roberta-base/
-/App/backend/model/roberta-large/
