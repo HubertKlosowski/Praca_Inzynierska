@@ -420,7 +420,7 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
     return pd.DataFrame([{pair['label']: pair['score'] for pair in row} for row in pred], index=df_index)
 
 
-# fine_tune('google-bert/bert-base-cased')
+# fine_tune('google-bert/bert-base-uncased')
 # fine_tune('google-bert/bert-large-uncased')
 # fine_tune('roberta-base')
 # fine_tune('roberta-large')

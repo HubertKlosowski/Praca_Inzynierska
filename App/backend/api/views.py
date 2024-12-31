@@ -3,6 +3,7 @@ import random
 import smtplib
 import string
 from io import BytesIO
+import jwt
 
 import pandas as pd
 from django.conf import settings
@@ -26,12 +27,12 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from api.custom_throttle import *
-from api.tokens import generate_verification_token, verify_token
 from model.api_keys import save_model_token
 from model.model_datasets import predict
 from model.model_datasets import preprocess_dataframe, detect_lang
 from .models import User, Submission
 from .serializer import UserSerializer, SubmissionSerializer
+from backend.settings import SIMPLE_JWT
 
 
 @api_view(['POST'])
@@ -76,7 +77,7 @@ def create_user(request):
         serializer.save()
 
         if int(data['usertype']) == 2:
-            token = generate_verification_token(serializer.data['email'])
+            token = jwt.encode({'email': serializer.data['email']}, key=SIMPLE_JWT['SIGNING_KEY'], algorithm=SIMPLE_JWT['ALGORITHM'])
             link = f'{settings.SITE_URL}{reverse('verify_user')}?token={token}'
 
             message = loader.render_to_string(
@@ -107,6 +108,7 @@ def create_user(request):
         try:
             email.send()
         except smtplib.SMTPException:
+
             return Response({
                 'error': ['Nie udało się wysłać wiadomości potwierdzającej dodanie konto.']
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -284,16 +286,22 @@ def update_user(request):
 def verify_user(request):
     if request.method == 'GET':
         token = request.GET.get('token')
-        email = verify_token(token)
+        try:
+            payload = jwt.decode(token, SIMPLE_JWT['SIGNING_KEY'], algorithms=SIMPLE_JWT['ALGORITHM'])
+        except jwt.exceptions.InvalidTokenError:
+            return Response({
+                'error': ['Weryfikacja się nie powiodła.', 'Dokładny opis problemu: ']
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
-        user = User.objects.get(email=email)
-        serializer = UserSerializer(user, data={'is_verified': True}, partial=True)
+        user = User.objects.get(email=payload['email'])
+
         if not token:
             return Response({'error': ['Token nie został dostarczony.']}, status=status.HTTP_400_BAD_REQUEST)
-        if not email:
+        if not payload:
             user.delete()
             return Response({'error': ['Link wygasł. Czas ważności wynosi 1h.']}, status=status.HTTP_400_BAD_REQUEST)
 
+        serializer = UserSerializer(user, data={'is_verified': True}, partial=True)
         if serializer.is_valid():
             serializer.save()
             return render(request, os.path.join('mails', 'verify_account.html'), context={'usertype': serializer.data['usertype']})
@@ -424,7 +432,7 @@ def make_submission(request):
             'error': ['Bez konta nie można korzystać z modelu LARGE.']
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    path = f'depression-detect/{model}'
+    path = f'depression-detect/{model}-uncased-depression'
     prepared = preprocess_dataframe(df.copy(deep=True), lang=lang)
 
     try:

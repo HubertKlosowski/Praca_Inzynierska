@@ -53,15 +53,15 @@ class UserSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if self.instance:
             if 'submission_num' in data:
-                if data['submission_num'] > 10 and self.instance['usertype'] == 0:
+                if data['submission_num'] > 10 and self.instance.usertype == 0:
                     raise serializers.ValidationError({
                         'error': 'Dla zwykłego użytkownika liczba dziennych prób nie przekracza 10.'
                     })
-                elif data['submission_num'] > 30 and self.instance['usertype'] == 1:
+                elif data['submission_num'] > 30 and self.instance.usertype == 1:
                     raise serializers.ValidationError({
                         'error': 'Dla użytkownika PRO liczba dziennych prób nie przekracza 30.'
                     })
-                elif data['submission_num'] > 40 and self.instance['usertype'] == 2:
+                elif data['submission_num'] > 40 and self.instance.usertype == 2:
                     raise serializers.ValidationError({
                         'error': 'Dla administratora liczba dziennych prób nie przekracza 100.'
                     })
