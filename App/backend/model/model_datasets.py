@@ -434,7 +434,9 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
 #
 # train_english = balance_dataframe(train_english)
 # train_preprocessed_english = preprocess_dataframe(train_english, lang='en')
-# train_preprocessed_english.dropna(subset=['text'], inplace=True)
+# train_preprocessed_english['len'] = train_preprocessed_english['text'].str.len()
+# train_preprocessed_english.drop(index=train_preprocessed_english.loc[train_preprocessed_english['len'] == 0, :].index, inplace=True)
+# train_preprocessed_english.drop(columns=['len'], inplace=True)
 # train_preprocessed_english.to_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'), index=False)
 
 # Przetworzone wpisy dla języka polskiego (zbiór treningowy)

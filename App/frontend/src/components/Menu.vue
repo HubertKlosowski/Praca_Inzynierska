@@ -16,7 +16,7 @@ const show_info = defineModel('show_info')
     <div class="buttons">
       <button type="button" class="router-link" @click="show_info = 1">O projekcie</button>
       <button type="button" class="router-link" @click="show_info = 2">Twoje konto</button>
-      <button type="button" class="router-link" @click="show_info = 3">Sprawdź posty</button>
+      <button type="button" class="router-link" @click="show_info = 3">Twoje predykcje</button>
     </div>
   </div>
 </template>

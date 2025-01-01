@@ -91,6 +91,7 @@ const user = reactive(JSON.parse(localStorage.getItem('user')))
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  padding: 1rem 0 1rem 0;
 }
 
 .router-link {

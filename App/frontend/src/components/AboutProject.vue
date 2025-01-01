@@ -8,7 +8,7 @@
     <p>Aplikacja została stworzona z myślą o wsparciu osób dotkniętych zaburzeniami depresyjnymi.</p>
     <p>Jej główną funkcją jest wykorzystanie modeli językowych do wykrywania depresji na podstawie wpisów w mediach społecznościowych.</p>
     <p>Każdy użytkownik otrzyma informacje zwrotne na podstawie analizy poszczególnych postów.</p>
-    <p>Szczegółowe informacje dotyczące możliwości aplikacji można znaleźć w kartach "Twoje konto" i "Sprawdź posty".</p>
+    <p>Szczegółowe informacje dotyczące możliwości aplikacji można znaleźć w kartach "Twoje konto" i "Twoje predykcje".</p>
   </div>
 </template>
 

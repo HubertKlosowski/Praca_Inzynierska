@@ -9,13 +9,13 @@ import FormButtonField from "@/components/FormButtonField.vue";
 
 
 const show_password = ref(false)
-const new_user = reactive({
+const form_fields = reactive({
   name: '',
   username: '',
   email: '',
   password: ''
 })
-const logged_user = ref(JSON.parse(localStorage.getItem('user')))
+const logged_user = reactive(JSON.parse(localStorage.getItem('user')))
 
 const after_create = ref({})
 const title = ref('')
@@ -26,7 +26,7 @@ const token = reactive(JSON.parse(localStorage.getItem('token')))
 
 const updateAccount = async () => {
   try {
-    const data = _.pickBy(new_user, value => value && value.length > 0)
+    const data = _.pickBy(form_fields, value => value && value.length > 0)
     const response = await axios.patch(
         'http://localhost:8000/api/user/update_user',
         data,
@@ -77,7 +77,7 @@ const updateAccount = async () => {
 const refreshAccessToken = async (after_create_success) => {
   try {
     const response = await axios.post('http://localhost:8000/api/token/refresh', {
-      'refresh': token.refresh
+      'refresh': token['refresh']
     })
 
     token.access = response.data['access']
@@ -95,10 +95,10 @@ const refreshAccessToken = async (after_create_success) => {
 }
 
 const resetInputs = () => {
-  new_user.name = ''
-  new_user.username = ''
-  new_user.email = ''
-  new_user.password = ''
+  form_fields.name = ''
+  form_fields.username = ''
+  form_fields.email = ''
+  form_fields.password = ''
 }
 </script>
 
@@ -133,28 +133,28 @@ const resetInputs = () => {
       <form @submit.prevent="updateAccount">
 
         <FormTextField
-            v-model:input_value="new_user.name"
+            v-model:input_value="form_fields.name"
             :label_info="'imię i nazwisko'"
-            :input_placeholder="logged_user['name']"
+            :input_placeholder="logged_user.name"
             :label_name="'name'"
         ></FormTextField>
 
         <FormTextField
-            v-model:input_value="new_user.username"
+            v-model:input_value="form_fields.username"
             :label_info="'nazwę użytkownika'"
-            :input_placeholder="logged_user['username']"
+            :input_placeholder="logged_user.username"
             :label_name="'username'"
         ></FormTextField>
 
         <FormTextField
-            v-model:input_value="new_user.email"
+            v-model:input_value="form_fields.email"
             :label_info="'email'"
-            :input_placeholder="logged_user['email']"
+            :input_placeholder="logged_user.email"
             :label_name="'email'"
         ></FormTextField>
 
         <FormTextField
-            v-model:input_value="new_user.password"
+            v-model:input_value="form_fields.password"
             v-model:show_password="show_password"
             :label_info="'hasło'"
             :input_placeholder="'Wiesz jakie masz hasło 🙂'"
@@ -183,6 +183,7 @@ const resetInputs = () => {
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  padding-top: 1rem;
 }
 
 .router-link {
@@ -208,7 +209,7 @@ li {
 
 .form {
   width: 100%;
-  height: 80%;
+  height: 70%;
   display: flex;
   flex-direction: column;
   justify-content: start;

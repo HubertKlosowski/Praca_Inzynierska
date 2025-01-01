@@ -1,21 +1,21 @@
 <script setup>
-import {inject, ref} from "vue";
+import {inject, reactive} from "vue";
 import _ from "lodash";
 
 
 const $cookies = inject('$cookies')
-const user = ref(JSON.parse(localStorage.getItem('user')))
+const user = reactive(JSON.parse(localStorage.getItem('user')))
 
 
 const check = () => {
-  return (_.isEmpty(user.value) && !$cookies.isKey('made_submission')) || (!_.isEmpty(user.value))
+  return (_.isEmpty(user) && !$cookies.isKey('made_submission')) || (!_.isEmpty(user))
 }
 </script>
 
 <template>
   <div class="left-part">
     <div class="content">
-      <h4>Twoje wyniki</h4>
+      <h4>Informacje o predykcjach</h4>
       <p>Wyniki przedstawią wykryte stopnie depresji w przekazanych danych.</p>
       <p>Bez konta nie będą zapisywane w bazie danych uzyskane wyniki.</p>
       <p>Jeśli chcesz mieć możliwość powrotu do wcześniejszych wyników w przyszłości, zalecane jest utworzenie konta.</p>
