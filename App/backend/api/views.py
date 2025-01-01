@@ -3,8 +3,8 @@ import random
 import smtplib
 import string
 from io import BytesIO
-import jwt
 
+import jwt
 import pandas as pd
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -27,12 +27,12 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from api.custom_throttle import *
+from backend.settings import SIMPLE_JWT
 from model.api_keys import save_model_token
 from model.model_datasets import predict
 from model.model_datasets import preprocess_dataframe, detect_lang
 from .models import User, Submission
 from .serializer import UserSerializer, SubmissionSerializer
-from backend.settings import SIMPLE_JWT
 
 
 @api_view(['POST'])

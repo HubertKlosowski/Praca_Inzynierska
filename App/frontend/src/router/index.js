@@ -10,6 +10,7 @@ import _ from "lodash"
 import UpdateAccount from "@/components/UpdateAccount.vue";
 import CreateFile from "@/components/CreateFile.vue";
 import DeleteAccount from "@/components/DeleteAccount.vue";
+import AccountLimits from "@/components/AccountLimits.vue";
 
 
 const routes = [
@@ -21,7 +22,8 @@ const routes = [
     { path: '/profile', component: Account },
     { path: '/update', component: UpdateAccount },
     { path: '/create_file', component: CreateFile },
-    { path: '/delete', component: DeleteAccount }
+    { path: '/delete', component: DeleteAccount },
+    { path: '/limits', component: AccountLimits }
 ]
 
 const router = createRouter({

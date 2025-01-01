@@ -139,10 +139,6 @@ const refreshAccessToken = async (after_create_success) => {
   }
 }
 
-const goHome = async () => {
-  await router.push('/')
-}
-
 const closeWindow = () => {
   change_name.value = -1
 }
@@ -171,7 +167,7 @@ onMounted(() => {
     opacity: response_status >= 100 && response_status !== 403 ? '0.3' : '1',
     pointerEvents: response_status >= 100 && response_status !== 403 ? 'none' : 'auto'
   }" v-else>
-    <div class="header">
+    <div class="header" style="border: none">
       <div class="title">
         <h3>Witaj {{ user['username'] }}!</h3>
       </div>
@@ -280,7 +276,10 @@ onMounted(() => {
     <div class="buttons">
       <RouterLink to="/update" class="update">Zmień dane</RouterLink>
       <RouterLink to="/delete" class="delete">Usuń konto</RouterLink>
-      <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
+      <RouterLink to="/limits" class="router-link">Limity konta</RouterLink>
+      <RouterLink to="/" class="router-link">
+        <font-awesome-icon :icon="['fas', 'house']" />
+      </RouterLink>
     </div>
   </div>
 </template>
@@ -456,20 +455,18 @@ form > input {
   width: 90%;
 }
 
-.account-details, .model-config {
+.account-details, .model-config, .header {
   border-top: 2px solid black;
   height: 20%;
-}
-
-.header, .account-details, .model-config {
   display: flex;
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
 }
 
-.header {
-  height: 15%;
+svg {
+  width: 100%;
+  height: 100%;
 }
 
 .title, .rest {
@@ -521,7 +518,7 @@ form > input {
   .buttons {
     display: flex;
     flex-direction: column;
-    height: 40%;
+    height: 50%;
   }
 
   .buttons > * {

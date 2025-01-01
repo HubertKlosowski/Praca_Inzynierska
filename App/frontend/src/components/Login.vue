@@ -161,7 +161,9 @@ const goHome = async () => {
       <h3>Witaj ponownie</h3>
     </div>
     <div class="go-main">
-      <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
+      <RouterLink to="/" class="router-link">
+        <font-awesome-icon :icon="['fas', 'house']" />
+      </RouterLink>
     </div>
     <div class="form">
       <form @submit.prevent="login">

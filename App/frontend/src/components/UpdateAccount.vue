@@ -4,12 +4,9 @@ import FormTextField from "@/components/FormTextField.vue";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import axios from "axios";
 import _ from "lodash";
-import {useRouter} from "vue-router";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import FormButtonField from "@/components/FormButtonField.vue";
 
-
-const router = useRouter()
 
 const show_password = ref(false)
 const new_user = reactive({
@@ -103,10 +100,6 @@ const resetInputs = () => {
   new_user.email = ''
   new_user.password = ''
 }
-
-const goProfile = async () => {
-  await router.push('/profile')
-}
 </script>
 
 <template>
@@ -132,7 +125,9 @@ const goProfile = async () => {
       </ul>
     </div>
     <div class="go-main">
-      <font-awesome-icon :icon="['fas', 'user']" class="router-link" @click="goProfile" />
+      <RouterLink to="/profile" class="router-link">
+        <font-awesome-icon :icon="['fas', 'user']" />
+      </RouterLink>
     </div>
     <div class="form">
       <form @submit.prevent="updateAccount">

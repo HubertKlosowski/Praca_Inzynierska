@@ -4,12 +4,9 @@ import FormTextField from "@/components/FormTextField.vue";
 import FormRadioField from "@/components/FormRadioField.vue";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 import axios from "axios";
-import {useRouter} from "vue-router";
 import FormButtonField from "@/components/FormButtonField.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
-
-const router = useRouter()
 
 const user = reactive({
   name: '',
@@ -66,10 +63,6 @@ const resetInputs = () => {
   user.usertype = 0
   user.password = ''
 }
-
-const goHome = async () => {
-  await router.push('/')
-}
 </script>
 
 <template>
@@ -96,7 +89,9 @@ const goHome = async () => {
       </ul>
     </div>
     <div class="go-main">
-      <font-awesome-icon :icon="['fas', 'house']" class="router-link" @click="goHome" />
+      <RouterLink to="/" class="router-link">
+        <font-awesome-icon :icon="['fas', 'house']" />
+      </RouterLink>
     </div>
     <div class="form">
       <form @submit.prevent="createAccount">

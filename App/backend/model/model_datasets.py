@@ -139,8 +139,8 @@ def merge_dataframes(lang: str = 'en', for_train: bool = False) -> pd.DataFrame:
     merged['text'] = merged['text'].apply(lambda x: x.replace('\n', ' '))
     merged['len'] = merged['text'].apply(lambda x: len(x.split()))
     merged.drop(merged.loc[
-                    (merged['len'] <= merged['len'].quantile(0.02)) |
-                    (merged['len'] >= merged['len'].quantile(0.98))].index, inplace=True
+                    (merged['len'] <= merged['len'].quantile(0.04)) |
+                    (merged['len'] >= merged['len'].quantile(0.94))].index, inplace=True
                 )
     merged.drop(columns=['len'], inplace=True)
     merged.reset_index(drop=True, inplace=True)
