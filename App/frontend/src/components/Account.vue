@@ -1,5 +1,5 @@
 <script setup>
-import {inject, onMounted, reactive, ref} from "vue";
+import {inject, onMounted, reactive, ref, watch} from "vue";
 import english from "@/assets/angielski.png";
 import {useRouter} from "vue-router";
 import axios from "axios";
@@ -28,6 +28,8 @@ const title = ref('')
 const subtitle = ref('')
 const response_status = ref(0)
 const token = reactive(JSON.parse(localStorage.getItem('token')))
+
+const session = ref(JSON.parse(localStorage.getItem('session')))
 
 
 const logoutUser = async () => {
@@ -143,6 +145,24 @@ const closeWindow = () => {
   change_name.value = -1
 }
 
+const formatSeconds = () => {
+  let hours = Math.floor(session.value / 3600)
+  let minutes = Math.floor((session.value - (hours * 3600)) / 60)
+  let seconds = session.value - (hours * 3600) - (minutes * 60)
+  return hours.toString().padStart(2, '0') + ':' +
+        minutes.toString().padStart(2, '0') + ':' +
+        seconds.toString().padStart(2, '0')
+}
+
+watch(session, () => {
+  if (session.value >= 1) {
+    setTimeout(() => {
+      session.value -= 1
+      localStorage.setItem('session', JSON.stringify(session.value))
+    }, 1000)
+  }
+}, { immediate: true })
+
 onMounted(() => {
   if (localStorage.getItem('choosen_model') === null) {
     localStorage.setItem('choosen_model', JSON.stringify('bert-base'))
@@ -172,7 +192,8 @@ onMounted(() => {
         <h3>Witaj {{ user['username'] }}!</h3>
       </div>
       <div class="rest">
-        <button type="button" class="logout" @click="logoutUser">Wyloguj się</button>
+        <h3 :class="{ pulse: session === 0 }">Czas sesji: {{ formatSeconds() }}</h3>
+        <button type="button" class="logout" @click.prevent="logoutUser">Wyloguj się</button>
       </div>
     </div>
     <div class="account-details">
@@ -285,6 +306,40 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.pulse {
+  animation: pulse 1s linear infinite;
+  padding: 0.5rem;
+  border-radius: 1rem;
+}
+
+@keyframes pulse {
+  0% {
+    color: #ff0000;
+    border: 2px solid #ff0000;
+    transform: scale(1.0);
+  }
+  25% {
+    color: #ff2400;
+    border: 2px solid #ff2400;
+    transform: scale(1.15);
+  }
+  50% {
+    color: #e34234;
+    border: 2px solid #e34234;
+    transform: scale(1.3);
+  }
+  75% {
+    color: #ff3030;
+    border: 2px solid #ff3030;
+    transform: scale(1.15);
+  }
+  100% {
+    color: #b22222;
+    border: 2px solid #b22222;
+    transform: scale(1.0);
+  }
+}
+
 form {
   display: flex;
   flex-direction: row;
@@ -392,7 +447,7 @@ form > input {
 
 .logout {
   width: 30%;
-  height: 50%;
+  height: 60%;
 }
 
 .details {
@@ -455,6 +510,10 @@ form > input {
   width: 90%;
 }
 
+.header {
+  justify-content: center;
+}
+
 .account-details, .model-config, .header {
   border-top: 2px solid black;
   height: 20%;
@@ -514,7 +573,7 @@ svg {
   align-items: center;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 660px) {
   .buttons {
     display: flex;
     flex-direction: column;

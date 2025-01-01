@@ -3,13 +3,10 @@ import {reactive, ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import axios from "axios";
 import ResponseOutput from "@/components/ResponseOutput.vue";
-import {useRouter} from "vue-router";
 import _ from "lodash";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import FormButtonField from "@/components/FormButtonField.vue";
 
-
-const router = useRouter()
 
 const username = ref('')
 const password = ref('')
@@ -84,6 +81,7 @@ const login = async () => {
     response_status.value = response.status
 
     localStorage.setItem('user', JSON.stringify(user))
+    localStorage.setItem('session', JSON.stringify(3600))
 
     if (user['usertype'] === 2) {
       await getUsers(user)
@@ -135,10 +133,6 @@ const getUsers = async (user) => {
 const resetInputs = () => {
   username.value = ''
   password.value = ''
-}
-
-const goHome = async () => {
-  await router.push('/')
 }
 </script>
 
