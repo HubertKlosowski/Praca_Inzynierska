@@ -15,11 +15,9 @@ import requests
 import spacy
 import torch
 from datasets import Dataset, DatasetDict
-from deep_translator import GoogleTranslator  # tłumaczenie znaczenia emotek
 from googletrans import Translator
 from nltk.stem import PorterStemmer  # stemming dla języka angielskiego
 from praw.models import MoreComments
-from pystempel import Stemmer  # stemming dla języka polskiego
 from sklearn.model_selection import train_test_split
 
 from model.api_keys import public_key, secret_key, microsoft_api_key, save_model_token
@@ -170,10 +168,10 @@ def balance_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
 # usuniecie stop-words
 # stemming
 def preprocess_dataframe(dataframe: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:
-    lang_resource = spacy.load('en_core_web_sm') if lang == 'en' else spacy.load('pl_core_news_sm')
+    lang_resource = spacy.load('en_core_web_sm')
     lang_resource.add_pipe('emoji', first=True)
 
-    stemmer = PorterStemmer() if lang == 'en' else Stemmer.polimorf()
+    stemmer = PorterStemmer()
 
     url_pattern = r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?'
     dataframe['text'] = dataframe['text'].apply(lambda sentence: re.sub(url_pattern, '', sentence))
@@ -185,20 +183,17 @@ def preprocess_dataframe(dataframe: pd.DataFrame, lang: str = 'en') -> pd.DataFr
     dataframe['text'] = dataframe['text'].apply(
         lambda tokens: [token for token in tokens if not token.is_stop]
     )
-    if lang == 'pl':
-        translator = GoogleTranslator(source='auto', target='pl')  # do tłumaczenia znaczenia emotek
-        dataframe['text'] = dataframe['text'].apply(
-            lambda tokens: [translator.translate(token._.emoji_desc) if token._.is_emoji else token.text for token in tokens]
-        )
-        dataframe['text'] = dataframe['text'].apply(lambda tokens: [stemmer(token) for token in tokens])
-    else:
-        dataframe['text'] = dataframe['text'].apply(
-            lambda tokens: [token._.emoji_desc if token._.is_emoji else token.text for token in tokens]
-        )
-        dataframe['text'] = dataframe['text'].apply(lambda tokens: [stemmer.stem(token) for token in tokens])
+    dataframe['text'] = dataframe['text'].apply(
+        lambda tokens: [token._.emoji_desc if token._.is_emoji else token.text for token in tokens]
+    )
+    dataframe['text'] = dataframe['text'].apply(lambda tokens: [stemmer.stem(token) for token in tokens])
     dataframe['text'] = dataframe['text'].apply(
         lambda tokens: ' '.join([str(token) for token in tokens if token is not None])
     )
+
+    dataframe['len'] = dataframe['text'].str.len()
+    dataframe.drop(index=dataframe.loc[dataframe['len'] == 0, :].index, inplace=True)
+    dataframe.drop(columns=['len'], inplace=True)
 
     return dataframe
 
@@ -323,9 +318,7 @@ def fine_tune(model_path: str):
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     dataset = create_dataset(
-        pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'))
-        if 'bert-base' in model_path or 'bert-large' in model_path
-        else pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_polish.csv')),
+        pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv')),
         split_train_test=True
     )
     tokenized_dataset = dataset.map(lambda x: apply_tokenizer(tokenizer, x), batched=True)
@@ -434,9 +427,6 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
 #
 # train_english = balance_dataframe(train_english)
 # train_preprocessed_english = preprocess_dataframe(train_english, lang='en')
-# train_preprocessed_english['len'] = train_preprocessed_english['text'].str.len()
-# train_preprocessed_english.drop(index=train_preprocessed_english.loc[train_preprocessed_english['len'] == 0, :].index, inplace=True)
-# train_preprocessed_english.drop(columns=['len'], inplace=True)
 # train_preprocessed_english.to_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'), index=False)
 
 # Przetworzone wpisy dla języka polskiego (zbiór treningowy)
