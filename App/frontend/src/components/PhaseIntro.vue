@@ -22,7 +22,7 @@ const show_intro = defineModel('show_intro')
 
 <style scoped>
 .model {
-  height: 70%;
+  min-height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;

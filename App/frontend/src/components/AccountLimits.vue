@@ -113,17 +113,15 @@ li {
 
 .left-part {
   width: 90%;
-  overflow-y: hidden;
+  overflow-y: scroll;
+  scrollbar-gutter: stable both-edges;
 }
 
 .limits {
   width: 100%;
-  height: 70%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-y: scroll;
-  scrollbar-gutter: stable both-edges;
 }
 
 @media (max-width: 700px) {
