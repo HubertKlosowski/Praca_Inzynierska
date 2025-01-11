@@ -191,9 +191,13 @@ svg {
 }
 
 .text {
-  overflow-x: auto;
+  overflow: hidden;
   padding: 1rem;
   font-size: 1.5vw;
+}
+
+.text:hover {
+  overflow-y: visible;
 }
 
 .row {

@@ -66,17 +66,17 @@ const user = reactive(JSON.parse(localStorage.getItem('user')))
 
 <style scoped>
 .header-limit, .limit {
-  width: calc(90% - 24px);
-  min-height: 20%;
-  font-size: 1.5vw;
-  margin: 1rem 0 1rem 0;
+  width: 80%;
+  height: 20%;
   display: flex;
   flex-direction: row;
-  justify-content: space-evenly;
+  justify-content: center;
   align-items: center;
   background-color: #f5f5f5;
   border-radius: 0.75rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+  margin: 1rem;
+  padding: 1rem;
 }
 
 .info {
