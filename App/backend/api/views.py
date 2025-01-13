@@ -40,9 +40,14 @@ from .serializer import UserSerializer, SubmissionSerializer
 @throttle_classes([CreateUserRateThrottle])
 def create_user(request):
     # sprawdzenie czy wartości pól są puste
-    if any(len(str(el)) == 0 for el in request.data.values()):
+    if not all(request.data.values()):
         return Response({
             'error': ['Żadne pole nie może być puste.']
+        }, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+    if len(request.data) == 0:
+        return Response({
+            'error': ['Nie można dodać użytkownika bez jego danych.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # jeśli użytkownik już istnieje
@@ -65,6 +70,11 @@ def create_user(request):
     except ValidationError as e:
         return Response({
             'error': e.messages
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    if data['usertype'] not in ['0', '1', '2']:
+        return Response({
+            'error': ['Niepoprawny typ użytkownika.']
         }, status=status.HTTP_400_BAD_REQUEST)
 
     # haszowanie hasła
@@ -194,14 +204,14 @@ def get_user_data(request):
 @authentication_classes([JWTTokenUserAuthentication])
 @throttle_classes([DeleteUserRateThrottle])
 def delete_user(request):
-    username = request.user.username
-    if not User.objects.filter(username=username).exists():
+    user_id = request.user.user_id
+    if not User.objects.filter(id=user_id).exists():
         return Response({
             'error': ['Użytkownik nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
-    user = User.objects.get(username=username)
-    submissions = Submission.objects.filter(user=user.id)
+    user = User.objects.get(id=user_id)
+    submissions = Submission.objects.filter(user=user_id)
     email = user.email
 
     for submission in submissions:

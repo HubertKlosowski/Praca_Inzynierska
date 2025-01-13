@@ -40,3 +40,12 @@ class ChangeSubNameUserRateThrottle(throttling.UserRateThrottle):
 class GetSubUserRateThrottle(throttling.UserRateThrottle):
     scope = 'get_sub_user'
     rate = '50/day'  # 50/day
+
+
+def allow_request_for_test():
+    def _allow_request(self, request, view):
+        return True
+
+    CreateUserRateThrottle.allow_request = _allow_request
+    DeleteUserRateThrottle.allow_request = _allow_request
+    UpdateUserRateThrottle.allow_request = _allow_request
