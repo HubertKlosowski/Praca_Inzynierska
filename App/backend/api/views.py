@@ -438,7 +438,10 @@ def make_submission(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     model = data['model']
-    # path = f'D:/{model}'
+    if model != 'bert-base' and model != 'bert-large':
+        return Response({
+            'error': ['Niepoprawna nazwa modelu.']
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     if request.user.username == '' and model == 'bert-large':
         return Response({

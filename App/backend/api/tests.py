@@ -1,8 +1,11 @@
+import os
+
 from django.contrib.auth.hashers import make_password
+from django.core.files import File
 from django.test import TestCase, Client
 
 from api import custom_throttle
-from api.models import User
+from api.models import User, Submission
 
 custom_throttle.allow_request_for_test()
 
@@ -298,7 +301,7 @@ class TestUpdateUser(TestCase):
 
 class TestDeleteUser(TestCase):
     def setUp(self):
-        self.data = {
+        data = {
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'Abecadło123!',
@@ -307,8 +310,8 @@ class TestDeleteUser(TestCase):
             'is_verified': True
         }
         self.c = Client()
-        self.c.post('/api/user/create_user', data=self.data)
-        login = self.c.post('/api/user/login_user', data=self.data)
+        self.c.post('/api/user/create_user', data=data)
+        login = self.c.post('/api/user/login_user', data=data)
         self.token = login.json()['access']
 
     def test_delete_user(self):
@@ -326,7 +329,6 @@ class TestDeleteUser(TestCase):
 
 class TestReadUser(TestCase):
     def setUp(self):
-        self.c = Client()
         data = {
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
@@ -335,6 +337,7 @@ class TestReadUser(TestCase):
             'username': 'admin_account',
             'is_verified': True
         }
+        self.c = Client()
         self.c.post('/api/user/create_user', data=data)
         login = self.c.post('/api/user/login_user', data=data)
         self.token = login.json()['access']
@@ -356,3 +359,154 @@ class TestReadUser(TestCase):
         read_all_users = self.c.get('/api/get_users', headers={'Authorization': 'Bearer ' + self.token})
         self.assertEqual(read_all_users.status_code, 200)
         self.assertEqual(len(read_all_users.json()), 1)
+
+
+class TestAdminUser(TestCase):
+    def setUp(self):
+        admin = {
+            'name': 'Hubert Kłosowski',
+            'email': 'hklosowski@interia.pl',
+            'password': make_password('Abecadło123!'),
+            'usertype': 2,
+            'submission_num': 100,
+            'username': 'admin_account',
+            'is_verified': True
+        }
+        user = {
+            'name': 'Hubert Kłosowski',
+            'email': 'a@a.pl',
+            'password': make_password('Abecadło123!'),
+            'usertype': 1,
+            'submission_num': 20,
+            'username': 'pro_account',
+            'is_verified': False
+        }
+
+        self.admin = User.objects.create(**admin)
+        self.user = User.objects.create(**user)
+        self.c = Client()
+        admin['password'] = 'Abecadło123!'
+        login = self.c.post('/api/user/login_user', data=admin)
+        self.token = login.json()['access']
+
+    def test_renew_submission_forbidden(self):
+        admin_forbidden = self.c.patch(
+            '/api/user/renew_submission',
+            content_type='application/json'
+        )
+        self.assertEqual(admin_forbidden.status_code, 403)
+
+    def test_renew_submission_correct(self):
+        renew_submission = self.c.patch(
+            '/api/user/renew_submission',
+            data={'username': self.user.username},
+            headers={'Authorization': 'Bearer ' + self.token},
+            content_type='application/json'
+        )
+        response_data = renew_submission.json()
+        self.assertEqual(renew_submission.status_code, 200)
+        self.assertEqual('Odnowienie prób użytkownika powiodło się.', response_data['success'])
+        new_user = User.objects.get(username=self.user.username)
+        self.assertEqual(new_user.submission_num, 30)
+
+    def test_renew_submission_not_found(self):
+        self.user.delete()
+        renew_submission = self.c.patch(
+            '/api/user/renew_submission',
+            data={'username': self.user.username},
+            headers={'Authorization': 'Bearer ' + self.token},
+            content_type='application/json'
+        )
+        response_data = renew_submission.json()
+        self.assertEqual(renew_submission.status_code, 404)
+        self.assertIn('Użytkownik nie istnieje.', response_data['error'])
+
+
+class TestAnonSubmission(TestCase):
+    def setUp(self):
+        self.c = Client()
+        self.en = 'I dont want to do this!'
+
+    def test_submission_missing_content(self):
+        submission = self.c.post('/api/submission/make_submission', data={'model': 'bert-base'})
+        self.assertEqual(submission.status_code, 400)
+        self.assertEqual(submission.json()['error'], ['Pola \"content\" musi być podane.'])
+        self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_anonymous_bert_large(self):
+        submission = self.c.post('/api/submission/make_submission', data={'content': self.en, 'model': 'bert-large'})
+        self.assertEqual(submission.status_code, 400)
+        self.assertEqual(submission.json()['error'], ['Bez konta nie można korzystać z modelu LARGE.'])
+        self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_anonymous_file_too_big(self):
+        with open(os.path.join('model', 'data', 'unit_test', 'file_10.csv')) as fp:
+            submission = self.c.post(
+                '/api/submission/make_submission',
+                data={'model': 'bert-base', 'content': fp}
+            )
+            self.assertEqual(submission.status_code, 400)
+            self.assertEqual(len(submission.json()['error']), 1)
+            self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_anonymous_wrong_file_extension(self):
+        with open(os.path.join('model', 'data', 'unit_test', 'wrong_ext.txt')) as fp:
+            submission = self.c.post(
+                '/api/submission/make_submission',
+                data={'model': 'bert-base', 'content': fp}
+            )
+            self.assertEqual(submission.status_code, 400)
+            self.assertEqual(len(submission.json()['error']), 1)
+            self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_anonymous_wrong_column_name(self):
+        with open(os.path.join('model', 'data', 'unit_test', 'wrong_column.csv')) as fp:
+            submission = self.c.post(
+                '/api/submission/make_submission',
+                data={'model': 'bert-base', 'content': fp}
+            )
+            self.assertEqual(submission.status_code, 400)
+            self.assertEqual(len(submission.json()['error']), 1)
+            self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_anonymous_wrong_model(self):
+        submission = self.c.post(
+            '/api/submission/make_submission',
+            data={'model': 'bercik', 'content': self.en}
+        )
+        response_data = submission.json()
+        self.assertEqual(submission.status_code, 400)
+        self.assertEqual(response_data['error'], ['Niepoprawna nazwa modelu.'])
+        self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_wrong_language(self):
+        submission = self.c.post(
+            '/api/submission/make_submission',
+            data={'model': 'bert-base', 'content': 'Nie lubię tego robić.'}
+        )
+        response_data = submission.json()
+        self.assertEqual(submission.status_code, 400)
+        self.assertEqual(response_data['error'], ['Wykryty język nie jest obsługiwany. Podaj dane w języku angielskim.'])
+        self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_anonymous_correct(self):
+        submission = self.c.post('/api/submission/make_submission', data={'content': self.en, 'model': 'bert-base'})
+        self.assertEqual(submission.status_code, 201)
+        self.assertEqual(submission.json()['success'], 'Poprawnie przeprowadzono obliczenia.')
+
+
+class TestUserSubmission(TestCase):
+    def setUp(self):
+        self.c = Client()
+        normal = {
+            'name': 'Hubert Kłosowski',
+            'email': 'hklosowski@interia.pl',
+            'password': make_password('Abecadło123!'),
+            'usertype': 0,
+            'submission_num': 100,
+            'username': 'normal_account',
+            'is_verified': True
+        }
+
+        self.normal = User.objects.create(**normal)
+        self.c.login(username='admin_account', password='Abecadło123!')
