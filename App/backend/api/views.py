@@ -250,16 +250,19 @@ def delete_user(request):
 @authentication_classes([JWTTokenUserAuthentication])
 @throttle_classes([UpdateUserRateThrottle])
 def update_user(request):
-    data = request.data
+    data = request.data.copy()
 
-    if {'username', 'email', 'name', 'password'} in set(data.keys()):
+    allowed_keys = {'username', 'email', 'name', 'password'}
+    invalid_keys = set(data.keys()) - allowed_keys
+
+    if invalid_keys:
         return Response({
             'error': ['Można tylko zmienić tylko nazwę użytkownika, email, imię i hasło.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    if any(len(el) == 0 for el in data.values()):
+    if not all(data.values()):
         return Response({
-            'error': ['Conajmniej jedno pole musi być wypełnione.']
+            'error': ['Żadne pole nie może być puste.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     user_id = request.user.user_id
@@ -272,7 +275,7 @@ def update_user(request):
 
     if 'password' in data:
         try:
-            validate_password(request.data['password'])
+            validate_password(data['password'])
         except ValidationError as e:
             return Response({'error': e.messages}, status=status.HTTP_400_BAD_REQUEST)
         data['password'] = make_password(data['password'])

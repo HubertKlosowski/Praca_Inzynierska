@@ -49,3 +49,4 @@ def allow_request_for_test():
     CreateUserRateThrottle.allow_request = _allow_request
     DeleteUserRateThrottle.allow_request = _allow_request
     UpdateUserRateThrottle.allow_request = _allow_request
+    LoginRateThrottle.allow_request = _allow_request
