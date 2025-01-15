@@ -317,18 +317,16 @@ class TestUpdateUser(TestCase):
 
 class TestDeleteUser(TestCase):
     def setUp(self):
-        data = {
+        self.c = APIClient()
+        self.user = User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'Abecadło123!',
             'usertype': 2,
             'username': 'admin_account',
             'is_verified': True
-        }
-        self.c = Client()
-        self.c.post('/api/user/create_user', data=data)
-        login = self.c.post('/api/user/login_user', data=data)
-        self.token = login.json()['access']
+        })
+        self.token = get_tokens_for_user(user=self.user)['access']
 
     def test_delete_user(self):
         self.assertEqual(User.objects.count(), 1)
@@ -345,17 +343,16 @@ class TestDeleteUser(TestCase):
 
 class TestReadUser(TestCase):
     def setUp(self):
-        data = {
+        self.c = APIClient()
+        self.user = User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'Abecadło123!',
             'usertype': 2,
             'username': 'admin_account',
             'is_verified': True
-        }
-        self.c = Client()
-        self.c.post('/api/user/create_user', data=data)
-        self.token = self.c.post('/api/user/login_user', data=data).json()['access']
+        })
+        self.token = get_tokens_for_user(user=self.user)['access']
 
     def test_read_user_forbidden(self):
         read_forbidden = self.c.get('/api/user/get_user_data')
@@ -378,35 +375,30 @@ class TestReadUser(TestCase):
 
 class TestAdminUser(TestCase):
     def setUp(self):
-        admin = {
+        self.c = APIClient()
+        self.admin = User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
-            'password': make_password('Abecadło123!'),
+            'password': 'Abecadło123!',
             'usertype': 2,
             'submission_num': 100,
             'username': 'admin_account',
             'is_verified': True
-        }
-        user = {
+        })
+        self.user = User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'a@a.pl',
-            'password': make_password('Abecadło123!'),
+            'password': 'Abecadło123!',
             'usertype': 1,
             'submission_num': 20,
             'username': 'pro_account',
             'is_verified': False
-        }
-
-        self.admin = User.objects.create(**admin)
-        self.user = User.objects.create(**user)
-        self.c = Client()
-        admin['password'] = 'Abecadło123!'
-        self.token = self.c.post('/api/user/login_user', data=admin).json()['access']
+        })
+        self.token = get_tokens_for_user(user=self.admin)['access']
 
     def test_renew_submission_forbidden(self):
         admin_forbidden = self.c.patch(
-            '/api/user/renew_submission',
-            content_type='application/json'
+            '/api/user/renew_submission'
         )
         self.assertEqual(admin_forbidden.status_code, 403)
 
@@ -414,8 +406,7 @@ class TestAdminUser(TestCase):
         renew_submission = self.c.patch(
             '/api/user/renew_submission',
             data={'username': self.user.username},
-            headers={'Authorization': 'Bearer ' + self.token},
-            content_type='application/json'
+            headers={'Authorization': 'Bearer ' + self.token}
         )
         response_data = renew_submission.json()
         self.assertEqual(renew_submission.status_code, 200)
@@ -428,8 +419,7 @@ class TestAdminUser(TestCase):
         renew_submission = self.c.patch(
             '/api/user/renew_submission',
             data={'username': self.user.username},
-            headers={'Authorization': 'Bearer ' + self.token},
-            content_type='application/json'
+            headers={'Authorization': 'Bearer ' + self.token}
         )
         response_data = renew_submission.json()
         self.assertEqual(renew_submission.status_code, 404)
@@ -438,7 +428,7 @@ class TestAdminUser(TestCase):
 
 class VerifyUserTestCase(TestCase):
     def setUp(self):
-        self.c = Client()
+        self.c = APIClient()
         self.user = User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'a@a.pl',
@@ -485,7 +475,7 @@ class VerifyUserTestCase(TestCase):
 
 class TestAnonSubmission(TestCase):
     def setUp(self):
-        self.c = Client()
+        self.c = APIClient()
         self.en = 'I dont want to do this!'
 
     def test_submission_missing_content(self):
@@ -658,18 +648,16 @@ class TestUserSubmission(TestCase):
 
 class TestSubmissionReadUpdate(TestCase):
     def setUp(self):
-        normal = {
+        self.normal = User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
-            'password': make_password('Abecadło123!'),
+            'password': 'Abecadło123!',
             'usertype': 0,
             'username': 'normal_account',
             'is_verified': True
-        }
-        self.normal = User.objects.create(**normal)
-        self.c = Client()
-        normal['password'] = 'Abecadło123!'
-        self.token_normal = self.c.post('/api/user/login_user', data=normal).json()['access']
+        })
+        self.c = APIClient()
+        self.token_normal = get_tokens_for_user(user=self.normal)['access']
         self.submission = self.c.post(
             '/api/submission/make_submission',
             data={'content': 'Check if I have depression.', 'model': 'bert-base'},
@@ -700,8 +688,7 @@ class TestSubmissionReadUpdate(TestCase):
     def test_submission_read_correct(self):
         read = self.c.get(
             f'/api/submission/get_submission/{self.submission['submission']['id']}',
-            headers={'Authorization': f'Bearer {self.token_normal}'},
-            content_type='application/json'
+            headers={'Authorization': f'Bearer {self.token_normal}'}
         )
 
         self.assertEqual(read.status_code, 200)
@@ -721,8 +708,7 @@ class TestSubmissionReadUpdate(TestCase):
         change_name = self.c.patch(
             f'/api/submission/change_name/{self.submission['submission']['id']}',
             data={'not_name': 'abecadlo'},
-            headers={'Authorization': f'Bearer {self.token_normal}'},
-            content_type='application/json'
+            headers={'Authorization': f'Bearer {self.token_normal}'}
         )
 
         after = change_name.json()
@@ -733,8 +719,7 @@ class TestSubmissionReadUpdate(TestCase):
         change_name = self.c.patch(
             f'/api/submission/change_name/{self.submission['submission']['id']}',
             data={'name': 'abecadlo'},
-            headers={'Authorization': f'Bearer {self.token_normal}'},
-            content_type='application/json'
+            headers={'Authorization': f'Bearer {self.token_normal}'}
         )
 
         response = change_name.json()
