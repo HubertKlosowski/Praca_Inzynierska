@@ -1,8 +1,12 @@
 import os
 import uuid
+from datetime import datetime, timedelta
 
+import jwt
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.test import TestCase, Client
+from rest_framework.test import APIClient
 
 from api import custom_throttle
 from api.models import User, Submission
@@ -12,26 +16,29 @@ custom_throttle.allow_request_for_test()
 
 class TestLoginUser(TestCase):
     def setUp(self):
-        user_verified = {
+        self.c = APIClient()
+        self.user_verified = User.objects.create(**{
             'username': 'user_verified',
             'email': 'a@a.com',
             'password': make_password('passwd'),
             'name': 'test',
             'is_verified': True,
-        }
-        self.c = Client()
-        self.user_verified = User.objects.create(**user_verified)
-
-    def test_login_user_not_verified(self):
-        user_not_verified = {
+        })
+        self.user_not_verified = User.objects.create(**{
             'username': 'user_not_verified',
             'email': 'a1@a.com',
             'password': make_password('passwd'),
             'name': 'test1',
             'is_verified': False,
-        }
-        User.objects.create(**user_not_verified)
-        login_not_verified = self.c.post('/api/user/login_user', data=user_not_verified)
+        })
+
+    def test_login_user_empty_data(self):
+        no_data = self.c.post('/api/user/login_user', data={})
+        self.assertEqual(no_data.status_code, 400)
+        self.assertEqual(no_data.json(), ['Żadne pole nie może być puste.'])
+
+    def test_login_user_not_verified(self):
+        login_not_verified = self.c.post('/api/user/login_user', data={'username': 'user_not_verified', 'password': 'passwd'})
         self.assertEqual(login_not_verified.status_code, 403)
 
     def test_login_user_not_exists(self):
@@ -41,6 +48,7 @@ class TestLoginUser(TestCase):
     def test_login_user_bad_passsword(self):
         login_bad_passsword = self.c.post('/api/user/login_user', data={'username': 'user_verified', 'password': 'passwd123'})
         self.assertEqual(login_bad_passsword.status_code, 406)
+        self.assertEqual(login_bad_passsword.json()['error'], ['Niepoprawne hasło.'])
 
     def test_login_user_correct(self):
         login_correct = self.c.post('/api/user/login_user', data={'username': 'user_verified', 'password': 'passwd'})
@@ -78,7 +86,8 @@ class TestCreateUser(TestCase):
             'username': 'admin_account'
         }
         create_with_empty_fields = self.c.post('/api/user/create_user', data=data)
-        self.assertEqual(create_with_empty_fields.status_code, 406)
+        self.assertEqual(create_with_empty_fields.status_code, 400)
+        self.assertEqual(create_with_empty_fields.json(), ['Żadne pole nie może być puste.'])
 
     def test_create_user_too_short_password(self):
         data = {
@@ -418,6 +427,53 @@ class TestAdminUser(TestCase):
         response_data = renew_submission.json()
         self.assertEqual(renew_submission.status_code, 404)
         self.assertIn('Użytkownik nie istnieje.', response_data['error'])
+
+
+class VerifyUserTestCase(TestCase):
+    def setUp(self):
+        self.c = Client()
+        self.user = User.objects.create(**{
+            'name': 'Hubert Kłosowski',
+            'email': 'a@a.pl',
+            'password': make_password('Abecadło123!'),
+            'usertype': 1,
+            'submission_num': 20,
+            'username': 'pro_account',
+            'is_verified': False
+        })
+        self.token = jwt.encode(
+            {'email': self.user.email, 'exp': datetime.now() + timedelta(hours=1)},
+            settings.SIMPLE_JWT['SIGNING_KEY'],
+            algorithm=settings.SIMPLE_JWT['ALGORITHM']
+        )
+        self.expired_token = jwt.encode(
+            {'email': self.user.email, 'exp': datetime.now() - timedelta(hours=1)},
+            settings.SIMPLE_JWT['SIGNING_KEY'],
+            algorithm=settings.SIMPLE_JWT['ALGORITHM']
+        )
+        self.invalid_token = 'invalid.token.value'
+
+    def test_verify_user_no_token_provided(self):
+        response = self.c.get('/api/user/verify_user')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Token nie został dostarczony.', response.json()['error'])
+
+    def test_verify_user_invalid_token(self):
+        response = self.c.get('/api/user/verify_user', {'token': self.invalid_token})
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('Weryfikacja się nie powiodła.', response.json()['error'])
+
+    def test_verify_user_expired_token(self):
+        response = self.c.get('/api/user/verify_user', {'token': self.expired_token})
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual('Token wygasł (czas ważności: 1h).', response.json()['error'][1])
+        self.assertIn('Weryfikacja się nie powiodła.', response.json()['error'])
+
+    def test_verify_user_valid_token(self):
+        response = self.c.get('/api/user/verify_user', {'token': self.token})
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_verified)
 
 
 class TestAnonSubmission(TestCase):

@@ -39,15 +39,12 @@ from .serializer import UserSerializer, SubmissionSerializer
 @permission_classes([AllowAny])
 @throttle_classes([CreateUserRateThrottle])
 def create_user(request):
+    data = request.data
+
     # sprawdzenie czy wartości pól są puste
-    if not all(request.data.values()):
+    if not all(data.keys()) or not data:
         return Response({
             'error': ['Żadne pole nie może być puste.']
-        }, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-    if len(request.data) == 0:
-        return Response({
-            'error': ['Nie można dodać użytkownika bez jego danych.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # jeśli użytkownik już istnieje
@@ -64,7 +61,6 @@ def create_user(request):
 
     # walidacja hasła
     data = request.data.copy()
-
     try:
         validate_password(data['password'])
     except ValidationError as e:
@@ -118,7 +114,6 @@ def create_user(request):
         try:
             email.send()
         except smtplib.SMTPException:
-
             return Response({
                 'error': ['Nie udało się wysłać wiadomości potwierdzającej dodanie konto.']
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -146,13 +141,14 @@ class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        username = request.data['username']
-        password = request.data['password']
-
-        if len(username) == 0 or len(password) == 0:
+        data = request.data.copy()
+        if not all(data.keys()) or not data:
             return Response({
-                'error': ['Nie podano nazwy użytkownika/hasła.']
+                'error': ['Żadne pole nie może być puste.']
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        username = data['username']
+        password = data['password']
 
         if not User.objects.filter(username=username).exists():
             return Response({
@@ -260,7 +256,7 @@ def update_user(request):
             'error': ['Można tylko zmienić tylko nazwę użytkownika, email, imię i hasło.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    if not all(data.values()):
+    if not all(data.values()) or not data:
         return Response({
             'error': ['Żadne pole nie może być puste.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -299,21 +295,24 @@ def update_user(request):
 def verify_user(request):
     if request.method == 'GET':
         token = request.GET.get('token')
+        if token is None:
+            return Response({'error': ['Token nie został dostarczony.']}, status=status.HTTP_400_BAD_REQUEST)
         try:
             payload = jwt.decode(token, SIMPLE_JWT['SIGNING_KEY'], algorithms=SIMPLE_JWT['ALGORITHM'])
+        except jwt.exceptions.ExpiredSignatureError:
+            return Response({
+                'error': ['Weryfikacja się nie powiodła.', 'Token wygasł (czas ważności: 1h).']
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.exceptions.InvalidSignatureError:
+            return Response({
+                'error': ['Weryfikacja się nie powiodła.', 'Podpis tokena nie zgadza się z dostarczonym.']
+            }, status=status.HTTP_401_UNAUTHORIZED)
         except jwt.exceptions.InvalidTokenError:
             return Response({
-                'error': ['Weryfikacja się nie powiodła.', 'Dokładny opis problemu: ']
+                'error': ['Weryfikacja się nie powiodła.']
             }, status=status.HTTP_401_UNAUTHORIZED)
 
         user = User.objects.get(email=payload['email'])
-
-        if not token:
-            return Response({'error': ['Token nie został dostarczony.']}, status=status.HTTP_400_BAD_REQUEST)
-        if not payload:
-            user.delete()
-            return Response({'error': ['Link wygasł. Czas ważności wynosi 1h.']}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = UserSerializer(user, data={'is_verified': True}, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -566,7 +565,6 @@ def change_name(request, sub_uuid):
         }, status=status.HTTP_404_NOT_FOUND)
 
     data = request.data.copy()
-    print(data.keys())
     if not 'name' in data.keys():
         return Response({
             'error': ['Brak nowej nazwy do zmiany.']
