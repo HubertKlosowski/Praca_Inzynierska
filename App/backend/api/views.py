@@ -39,10 +39,10 @@ from .serializer import UserSerializer, SubmissionSerializer
 @permission_classes([AllowAny])
 @throttle_classes([CreateUserRateThrottle])
 def create_user(request):
-    data = request.data
+    data = request.data.copy()
 
     # sprawdzenie czy wartości pól są puste
-    if not all(data.keys()) or not data:
+    if not all(data.values()) or not data:
         return Response({
             'error': ['Żadne pole nie może być puste.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -142,7 +142,7 @@ class LoginView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         data = request.data.copy()
-        if not all(data.keys()) or not data:
+        if not all(data.values()) or not data:
             return Response({
                 'error': ['Żadne pole nie może być puste.']
             }, status=status.HTTP_400_BAD_REQUEST)

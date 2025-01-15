@@ -10,6 +10,15 @@ from rest_framework.test import APIClient
 
 from api import custom_throttle
 from api.models import User, Submission
+from rest_framework_simplejwt.tokens import RefreshToken
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
 custom_throttle.allow_request_for_test()
 
@@ -35,7 +44,7 @@ class TestLoginUser(TestCase):
     def test_login_user_empty_data(self):
         no_data = self.c.post('/api/user/login_user', data={})
         self.assertEqual(no_data.status_code, 400)
-        self.assertEqual(no_data.json(), ['Żadne pole nie może być puste.'])
+        self.assertEqual(no_data.json()['error'], ['Żadne pole nie może być puste.'])
 
     def test_login_user_not_verified(self):
         login_not_verified = self.c.post('/api/user/login_user', data={'username': 'user_not_verified', 'password': 'passwd'})
@@ -57,7 +66,7 @@ class TestLoginUser(TestCase):
 
 class TestCreateUser(TestCase):
     def setUp(self):
-        self.c = Client()
+        self.c = APIClient()
 
     def test_create_user_already_exists(self):
         data = {
@@ -78,152 +87,143 @@ class TestCreateUser(TestCase):
         self.assertEqual(test_create_user_empty.status_code, 406)
 
     def test_create_user_with_empty_fields(self):
-        data = {
+        create_with_empty_fields = self.c.post('/api/user/create_user', data={
             'name': '',
             'email': 'hklosowski@interia.pl',
             'password': 'Abecadło123!',
             'usertype': 2,
             'username': 'admin_account'
-        }
-        create_with_empty_fields = self.c.post('/api/user/create_user', data=data)
-        self.assertEqual(create_with_empty_fields.status_code, 400)
+        })
+        self.assertEqual(create_with_empty_fields.status_code, 406)
         self.assertEqual(create_with_empty_fields.json(), ['Żadne pole nie może być puste.'])
 
     def test_create_user_too_short_password(self):
-        data = {
+        create_too_short_password = self.c.post('/api/user/create_user', data={
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'New123!',
             'usertype': -1,
             'username': 'admin_account'
-        }
-        create_too_short_password = self.c.post('/api/user/create_user', data=data)
+        })
         response_data = create_too_short_password.json()
         self.assertEqual(create_too_short_password.status_code, 400)
         self.assertEqual(len(response_data['error']), 1)
         self.assertIn('Zbyt krótkie hasło (min. 8 znaków).', response_data['error'])
 
     def test_create_user_too_long_password(self):
-        data = {
+        create_too_long_password = self.c.post('/api/user/create_user', data={
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'New123!New123!New123!New123!New123!New123!New123!',
             'usertype': -1,
             'username': 'admin_account'
-        }
-        create_too_long_password = self.c.post('/api/user/create_user', data=data)
+        })
         response_data = create_too_long_password.json()
         self.assertEqual(create_too_long_password.status_code, 400)
         self.assertEqual(len(response_data['error']), 1)
         self.assertIn('Zbyt długie hasła (max. 32 znaków).', response_data['error'])
 
     def test_create_user_no_digits_in_password(self):
-        data = {
+        create_no_digits_in_password = self.c.post('/api/user/create_user', data={
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'New!New!New!',
             'usertype': -1,
             'username': 'admin_account'
-        }
-        create_no_digits_in_password = self.c.post('/api/user/create_user', data=data)
+        })
         response_data = create_no_digits_in_password.json()
         self.assertEqual(create_no_digits_in_password.status_code, 400)
         self.assertEqual(len(response_data['error']), 1)
         self.assertIn('Hasło nie zawiera cyfr.', response_data['error'])
 
     def test_create_user_no_capital_letters_in_password(self):
-        data = {
+        create_no_capital_letters_in_password = self.c.post('/api/user/create_user', data={
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'new123!new123!new123!',
             'usertype': -1,
             'username': 'admin_account'
-        }
-        create_no_capital_letters_in_password = self.c.post('/api/user/create_user', data=data)
+        })
         response_data = create_no_capital_letters_in_password.json()
         self.assertEqual(create_no_capital_letters_in_password.status_code, 400)
         self.assertEqual(len(response_data['error']), 1)
         self.assertIn('Hasło nie zawiera dużych liter.', response_data['error'])
 
     def test_create_user_no_special_characters_in_password(self):
-        data = {
+        create_no_special_characters_in_password = self.c.post('/api/user/create_user', data={
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'New123New123New123',
             'usertype': -1,
             'username': 'admin_account'
-        }
-        create_no_special_characters_in_password = self.c.post('/api/user/create_user', data=data)
+        })
         response_data = create_no_special_characters_in_password.json()
         self.assertEqual(create_no_special_characters_in_password.status_code, 400)
         self.assertEqual(len(response_data['error']), 1)
         self.assertIn('Hasło nie zawiera specjalnych znaków.', response_data['error'])
 
     def test_create_user_wrong_usertype(self):
-        data = {
+        create_wrong_usertype = self.c.post('/api/user/create_user', data={
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'Abecadło123!',
             'usertype': -1,
             'username': 'admin_account'
-        }
-        create_wrong_usertype = self.c.post('/api/user/create_user', data=data)
+        })
         self.assertEqual(create_wrong_usertype.status_code, 400)
 
     def test_create_user_wrong_email(self):
-        data = {
+        create_wrong_email = self.c.post('/api/user/create_user', data={
             'name': 'Hubert Kłosowski',
             'email': 'ainteria.pl',
             'password': 'Abecadło123!',
             'usertype': 2,
             'username': 'admin_account'
-        }
-        create_wrong_email = self.c.post('/api/user/create_user', data=data)
+        })
         self.assertEqual(create_wrong_email.status_code, 400)
 
     def test_create_user_correct(self):
-        data = {
+        create_correct = self.c.post('/api/user/create_user', data={
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'Abecadło123!',
             'usertype': 2,
             'username': 'admin_account'
-        }
-        create_correct = self.c.post('/api/user/create_user', data=data)
+        })
         self.assertEqual(create_correct.status_code, 201)
 
 
 class TestUpdateUser(TestCase):
     def setUp(self):
-        data = {
+        self.c = APIClient()
+        self.user = User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'Abecadło123!',
             'usertype': 2,
             'username': 'admin_account',
             'is_verified': True
-        }
-        self.c = Client()
-        self.c.post('/api/user/create_user', data=data)
-        login = self.c.post('/api/user/login_user', data=data)
-        self.token = login.json()['access']
+        })
+        self.token = get_tokens_for_user(user=self.user)['access']
 
     def test_update_user_only_wrong_field(self):
         changed_data = {'usertype': 0}
-        update_only_wrong_field = self.c.patch('/api/user/update_user',
-                              data=changed_data,
-                              headers={'Authorization': 'Bearer ' + self.token},
-                              content_type='application/json')
+        update_only_wrong_field = self.c.patch(
+            '/api/user/update_user',
+            data=changed_data,
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         response_data = update_only_wrong_field.json()
         self.assertEqual(update_only_wrong_field.status_code, 406)
         self.assertEqual(response_data['error'], ['Można tylko zmienić tylko nazwę użytkownika, email, imię i hasło.'])
 
     def test_update_user_at_least_one_field(self):
         changed_data = {'username': '', 'email': '', 'password': 'newPassowrd123!@#'}
-        update_at_least_one_field = self.c.patch('/api/user/update_user',
-                              data=changed_data,
-                              headers={'Authorization': 'Bearer ' + self.token},
-                              content_type='application/json')
+        update_at_least_one_field = self.c.patch(
+            '/api/user/update_user',
+            data=changed_data,
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         response_data = update_at_least_one_field.json()
         self.assertEqual(update_at_least_one_field.status_code, 406)
         self.assertEqual(response_data['error'], ['Żadne pole nie może być puste.'])
@@ -231,10 +231,11 @@ class TestUpdateUser(TestCase):
     def test_update_user_not_exists(self):
         self.c.delete('/api/user/delete_user', headers={'Authorization': 'Bearer ' + self.token})
         changed_data = {'username': 'admin_account'}
-        update_not_exists = self.c.patch('/api/user/update_user',
-                              data=changed_data,
-                              headers={'Authorization': 'Bearer ' + self.token},
-                              content_type='application/json')
+        update_not_exists = self.c.patch(
+            '/api/user/update_user',
+            data=changed_data,
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         response_data = update_not_exists.json()
         self.assertEqual(update_not_exists.status_code, 404)
         self.assertEqual(response_data['error'], ['Użytkownik nie istnieje.'])
@@ -246,10 +247,11 @@ class TestUpdateUser(TestCase):
 
     def test_update_user_too_short_password(self):
         changed_data = {'password': 'New123!'}
-        update_too_short_password = self.c.patch('/api/user/update_user',
-                                                 data=changed_data,
-                                                 headers={'Authorization': 'Bearer ' + self.token},
-                                                 content_type='application/json')
+        update_too_short_password = self.c.patch(
+            '/api/user/update_user',
+            data=changed_data,
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         response_data = update_too_short_password.json()
         self.assertEqual(update_too_short_password.status_code, 400)
         self.assertEqual(len(response_data['error']), 1)
@@ -257,10 +259,11 @@ class TestUpdateUser(TestCase):
 
     def test_update_user_too_long_password(self):
         changed_data = {'password': 'New123!New123!New123!New123!New123!New123!New123!'}
-        update_too_long_password = self.c.patch('/api/user/update_user',
-                              data=changed_data,
-                              headers={'Authorization': 'Bearer ' + self.token},
-                              content_type='application/json')
+        update_too_long_password = self.c.patch(
+            '/api/user/update_user',
+            data=changed_data,
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         response_data = update_too_long_password.json()
         self.assertEqual(update_too_long_password.status_code, 400)
         self.assertEqual(len(response_data['error']), 1)
@@ -268,10 +271,11 @@ class TestUpdateUser(TestCase):
 
     def test_update_user_no_digits_in_password(self):
         changed_data = {'password': 'New!New!New!'}
-        update_no_digits_in_password = self.c.patch('/api/user/update_user',
-                                                    data=changed_data,
-                                                    headers={'Authorization': 'Bearer ' + self.token},
-                                                    content_type='application/json')
+        update_no_digits_in_password = self.c.patch(
+            '/api/user/update_user',
+            data=changed_data,
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         response_data = update_no_digits_in_password.json()
         self.assertEqual(update_no_digits_in_password.status_code, 400)
         self.assertEqual(len(response_data['error']), 1)
@@ -279,10 +283,11 @@ class TestUpdateUser(TestCase):
 
     def test_update_user_no_capital_letters_in_password(self):
         changed_data = {'password': 'new123!new123!new123!'}
-        update_no_capital_letters_in_password = self.c.patch('/api/user/update_user',
-                                                             data=changed_data,
-                                                             headers={'Authorization': 'Bearer ' + self.token},
-                                                             content_type='application/json')
+        update_no_capital_letters_in_password = self.c.patch(
+            '/api/user/update_user',
+            data=changed_data,
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         response_data = update_no_capital_letters_in_password.json()
         self.assertEqual(update_no_capital_letters_in_password.status_code, 400)
         self.assertEqual(len(response_data['error']), 1)
@@ -290,10 +295,11 @@ class TestUpdateUser(TestCase):
 
     def test_update_user_no_special_characters_in_password(self):
         changed_data = {'password': 'New123New123New123'}
-        update_no_special_characters_in_password = self.c.patch('/api/user/update_user',
-                                                                data=changed_data,
-                                                                headers={'Authorization': 'Bearer ' + self.token},
-                                                                content_type='application/json')
+        update_no_special_characters_in_password = self.c.patch(
+            '/api/user/update_user',
+            data=changed_data,
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         response_data = update_no_special_characters_in_password.json()
         self.assertEqual(update_no_special_characters_in_password.status_code, 400)
         self.assertEqual(len(response_data['error']), 1)
@@ -301,10 +307,11 @@ class TestUpdateUser(TestCase):
 
     def test_update_user_correct(self):
         changed_data = {'username': 'admin_account_2'}
-        update_correct = self.c.patch('/api/user/update_user',
-                                      data=changed_data,
-                                      headers={'Authorization': 'Bearer ' + self.token},
-                                      content_type='application/json')
+        update_correct = self.c.patch(
+            '/api/user/update_user',
+            data=changed_data,
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         self.assertEqual(update_correct.status_code, 200)
 
 
