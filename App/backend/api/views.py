@@ -420,9 +420,9 @@ def make_submission(request):
         my_file = request.FILES['content'].file
         my_file.seek(0)
 
-        df = pd.read_csv(my_file, delimiter='|', index_col=False) if extension == 'csv' else pd.read_json(my_file)
-
-        if 'text' not in df.columns.tolist():
+        try:
+            df = pd.read_csv(my_file, index_col=False, usecols=['text']) if extension == 'csv' else pd.read_json(my_file)
+        except ValueError as e:
             return Response({
                 'error': ['Plik musi zawierać kolumnę \"text\".']
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -504,6 +504,8 @@ def make_submission(request):
         user.last_submission = timezone.now()
         user.save()
 
+        data['user'] = user.id
+
         serializer = SubmissionSerializer(data=data)
 
         if not serializer.is_valid():
@@ -543,7 +545,7 @@ def get_submission(request, sub_uuid):
         results = pd.read_csv(submission.content.path)
     except FileNotFoundError:
         return Response({
-            'error': [f'Plik z wskazanej próby nie istnieje.']
+            'error': ['Plik z wskazanej próby nie istnieje.']
         }, status=status.HTTP_404_NOT_FOUND)
 
     return Response({
@@ -563,8 +565,15 @@ def change_name(request, sub_uuid):
             'error': ['Baza danych nie zawiera informacji o żądanej próbie.']
         }, status=status.HTTP_404_NOT_FOUND)
 
+    data = request.data.copy()
+    print(data.keys())
+    if not 'name' in data.keys():
+        return Response({
+            'error': ['Brak nowej nazwy do zmiany.']
+        }, status=status.HTTP_400_BAD_REQUEST)
+
     submission = Submission.objects.get(id=sub_uuid)
-    serializer = SubmissionSerializer(submission, data=request.data, partial=True)
+    serializer = SubmissionSerializer(submission, data={'name': data['name']}, partial=True)
 
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

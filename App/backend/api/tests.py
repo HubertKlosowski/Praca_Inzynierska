@@ -1,7 +1,7 @@
 import os
+import uuid
 
 from django.contrib.auth.hashers import make_password
-from django.core.files import File
 from django.test import TestCase, Client
 
 from api import custom_throttle
@@ -339,8 +339,7 @@ class TestReadUser(TestCase):
         }
         self.c = Client()
         self.c.post('/api/user/create_user', data=data)
-        login = self.c.post('/api/user/login_user', data=data)
-        self.token = login.json()['access']
+        self.token = self.c.post('/api/user/login_user', data=data).json()['access']
 
     def test_read_user_forbidden(self):
         read_forbidden = self.c.get('/api/user/get_user_data')
@@ -386,8 +385,7 @@ class TestAdminUser(TestCase):
         self.user = User.objects.create(**user)
         self.c = Client()
         admin['password'] = 'Abecadło123!'
-        login = self.c.post('/api/user/login_user', data=admin)
-        self.token = login.json()['access']
+        self.token = self.c.post('/api/user/login_user', data=admin).json()['access']
 
     def test_renew_submission_forbidden(self):
         admin_forbidden = self.c.patch(
@@ -440,30 +438,30 @@ class TestAnonSubmission(TestCase):
         self.assertEqual(Submission.objects.count(), 0)
 
     def test_submission_anonymous_file_too_big(self):
-        with open(os.path.join('model', 'data', 'unit_test', 'file_10.csv')) as fp:
+        with open(os.path.join('model', 'data', 'unit_test', 'file_10.csv')) as f:
             submission = self.c.post(
                 '/api/submission/make_submission',
-                data={'model': 'bert-base', 'content': fp}
+                data={'model': 'bert-base', 'content': f}
             )
             self.assertEqual(submission.status_code, 400)
             self.assertEqual(len(submission.json()['error']), 1)
             self.assertEqual(Submission.objects.count(), 0)
 
     def test_submission_anonymous_wrong_file_extension(self):
-        with open(os.path.join('model', 'data', 'unit_test', 'wrong_ext.txt')) as fp:
+        with open(os.path.join('model', 'data', 'unit_test', 'wrong_ext.txt')) as f:
             submission = self.c.post(
                 '/api/submission/make_submission',
-                data={'model': 'bert-base', 'content': fp}
+                data={'model': 'bert-base', 'content': f}
             )
             self.assertEqual(submission.status_code, 400)
             self.assertEqual(len(submission.json()['error']), 1)
             self.assertEqual(Submission.objects.count(), 0)
 
     def test_submission_anonymous_wrong_column_name(self):
-        with open(os.path.join('model', 'data', 'unit_test', 'wrong_column.csv')) as fp:
+        with open(os.path.join('model', 'data', 'unit_test', 'wrong_column.csv')) as f:
             submission = self.c.post(
                 '/api/submission/make_submission',
-                data={'model': 'bert-base', 'content': fp}
+                data={'model': 'bert-base', 'content': f}
             )
             self.assertEqual(submission.status_code, 400)
             self.assertEqual(len(submission.json()['error']), 1)
@@ -497,16 +495,187 @@ class TestAnonSubmission(TestCase):
 
 class TestUserSubmission(TestCase):
     def setUp(self):
-        self.c = Client()
         normal = {
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': make_password('Abecadło123!'),
             'usertype': 0,
-            'submission_num': 100,
             'username': 'normal_account',
+            'is_verified': True
+        }
+        pro = {
+            'name': 'Hubert Kłosowski',
+            'email': 'a@a.pl',
+            'password': make_password('Abecadło123!'),
+            'usertype': 1,
+            'username': 'pro_account',
+            'is_verified': True
+        }
+        admin = {
+            'name': 'Hubert Kłosowski',
+            'email': 'a1@a1.pl',
+            'password': make_password('Abecadło123!'),
+            'usertype': 2,
+            'submission_num': 0,
+            'username': 'admin_account',
             'is_verified': True
         }
 
         self.normal = User.objects.create(**normal)
-        self.c.login(username='admin_account', password='Abecadło123!')
+        self.pro = User.objects.create(**pro)
+        self.admin = User.objects.create(**admin)
+
+        self.c = Client()
+        normal['password'] = 'Abecadło123!'
+        self.token_normal = self.c.post('/api/user/login_user', data=normal).json()['access']
+        pro['password'] = 'Abecadło123!'
+        self.token_pro = self.c.post('/api/user/login_user', data=pro).json()['access']
+        admin['password'] = 'Abecadło123!'
+        self.token_admin = self.c.post('/api/user/login_user', data=admin).json()['access']
+
+    def test_submission_user_not_exists(self):
+        self.normal.delete()
+        self.assertEqual(Submission.objects.count(), 0)
+        response = self.c.post(
+            '/api/submission/make_submission',
+            data={'content': 'Check if I have depression.', 'model': 'bert-large'},
+            headers={'Authorization': f'Bearer {self.token_normal}'}
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()['error'], ['Nie można potwierdzić uprawnień użytkownika do zasobu.'])
+        self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_normal_too_big_file(self):
+        with open(os.path.join('model', 'data', 'unit_test', 'file_20.csv'), encoding="utf8") as f:
+            response = self.c.post(
+                '/api/submission/make_submission',
+                data={'content': f, 'model': 'bert-large'},
+                headers={'Authorization': f'Bearer {self.token_normal}'}
+            )
+
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(len(response.json()['error']), 1)
+            self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_pro_too_big_file(self):
+        with open(os.path.join('model', 'data', 'unit_test', 'file_100.csv'), encoding="utf8") as f:
+            response = self.c.post(
+                '/api/submission/make_submission',
+                data={'content': f, 'model': 'bert-large'},
+                headers={'Authorization': f'Bearer {self.token_pro}'}
+            )
+
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(len(response.json()['error']), 1)
+            self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_user_zero_trials(self):
+        response = self.c.post(
+            '/api/submission/make_submission',
+            data={'content': 'Check if I have depression.', 'model': 'bert-base'},
+            headers={'Authorization': f'Bearer {self.token_admin}'}
+        )
+
+        response_data = response.json()
+        self.assertEqual(Submission.objects.count(), 0)
+        self.assertIn('Użytkownik nie posiada wolnych prób.', response_data['error'])
+
+    def test_submission_correct(self):
+        response = self.c.post(
+            '/api/submission/make_submission',
+            data={'content': 'Check if I have depression.', 'model': 'bert-large'},
+            headers={'Authorization': f'Bearer {self.token_normal}'}
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Submission.objects.count(), 1)
+        self.assertEqual(response.json()['success'], 'Poprawnie przeprowadzono obliczenia.')
+
+
+class TestSubmissionReadUpdate(TestCase):
+    def setUp(self):
+        normal = {
+            'name': 'Hubert Kłosowski',
+            'email': 'hklosowski@interia.pl',
+            'password': make_password('Abecadło123!'),
+            'usertype': 0,
+            'username': 'normal_account',
+            'is_verified': True
+        }
+        self.normal = User.objects.create(**normal)
+        self.c = Client()
+        normal['password'] = 'Abecadło123!'
+        self.token_normal = self.c.post('/api/user/login_user', data=normal).json()['access']
+        self.submission = self.c.post(
+            '/api/submission/make_submission',
+            data={'content': 'Check if I have depression.', 'model': 'bert-base'},
+            headers={'Authorization': f'Bearer {self.token_normal}'}
+        ).json()
+
+    def test_submission_read_not_exists(self):
+        sub_uuid = str(uuid.uuid4())
+        submission = self.c.get(
+            f'/api/submission/get_submission/{sub_uuid}',
+            headers={'Authorization': f'Bearer {self.token_normal}'}
+        )
+
+        self.assertEqual(submission.status_code, 404)
+        self.assertEqual(submission.json()['error'], ['Baza danych nie zawiera informacji o żądanej próbie.'])
+
+    def test_submission_read_file_deleted(self):
+        os.remove(os.path.join('media', 'submission_files', self.submission['submission']['content'].split('/')[-1]))
+        self.assertEqual(Submission.objects.count(), 1)
+
+        read = self.c.get(
+            f'/api/submission/get_submission/{self.submission['submission']['id']}',
+            headers={'Authorization': f'Bearer {self.token_normal}'}
+        )
+        self.assertEqual(read.status_code, 404)
+        self.assertEqual(read.json()['error'], ['Plik z wskazanej próby nie istnieje.'])
+
+    def test_submission_read_correct(self):
+        read = self.c.get(
+            f'/api/submission/get_submission/{self.submission['submission']['id']}',
+            headers={'Authorization': f'Bearer {self.token_normal}'},
+            content_type='application/json'
+        )
+
+        self.assertEqual(read.status_code, 200)
+        self.assertEqual(read.json()['success'], 'Poprawnie odczytano dane.')
+
+    def test_submission_change_name_not_exists(self):
+        sub_uuid = str(uuid.uuid4())
+        change_name = self.c.patch(
+            f'/api/submission/change_name/{sub_uuid}',
+            headers={'Authorization': f'Bearer {self.token_normal}'}
+        )
+
+        self.assertEqual(change_name.status_code, 404)
+        self.assertEqual(change_name.json()['error'], ['Baza danych nie zawiera informacji o żądanej próbie.'])
+
+    def test_submission_change_name_not_given_new_name(self):
+        change_name = self.c.patch(
+            f'/api/submission/change_name/{self.submission['submission']['id']}',
+            data={'not_name': 'abecadlo'},
+            headers={'Authorization': f'Bearer {self.token_normal}'},
+            content_type='application/json'
+        )
+
+        after = change_name.json()
+        self.assertEqual(change_name.status_code, 400)
+        self.assertEqual(after['error'], ['Brak nowej nazwy do zmiany.'])
+
+    def test_submission_change_name_correct(self):
+        change_name = self.c.patch(
+            f'/api/submission/change_name/{self.submission['submission']['id']}',
+            data={'name': 'abecadlo'},
+            headers={'Authorization': f'Bearer {self.token_normal}'},
+            content_type='application/json'
+        )
+
+        response = change_name.json()
+        self.assertEqual(change_name.status_code, 200)
+        self.assertEqual(response['success'], 'Poprawnie ustawiono nazwę próby.')
+        self.assertEqual(response['submission']['name'], 'abecadlo')
+        self.assertEqual(self.submission['submission']['name'], None)

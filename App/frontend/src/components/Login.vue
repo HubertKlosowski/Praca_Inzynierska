@@ -2,10 +2,10 @@
 import {reactive, ref} from "vue";
 import FormTextField from "@/components/FormTextField.vue";
 import axios from "axios";
-import ResponseOutput from "@/components/ResponseOutput.vue";
 import _ from "lodash";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import FormButtonField from "@/components/FormButtonField.vue";
+import router from "@/router/index.js";
 
 
 const username = ref('')
@@ -87,6 +87,7 @@ const login = async () => {
       await getUsers(user)
     }
     resetInputs()
+    await router.push('/profile')
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
@@ -138,19 +139,7 @@ const resetInputs = () => {
 
 <template>
 
-  <ResponseOutput
-      v-model:response_status="response_status"
-      :after_create="after_create"
-      v-if="response_status >= 200"
-      :move_to="'/profile'"
-      :title="title"
-      :subtitle="subtitle"
-  ></ResponseOutput>
-
-  <div class="left-part" :style="{
-    opacity: response_status < 200 ? '1' : '0.3',
-    pointerEvents: response_status < 200 ? 'auto' : 'none'
-  }">
+  <div class="left-part">
     <div class="header">
       <h3>Witaj ponownie</h3>
     </div>
