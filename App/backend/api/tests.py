@@ -578,7 +578,7 @@ class TestUserSubmission(TestCase):
         self.pro = User.objects.create(**pro)
         self.admin = User.objects.create(**admin)
 
-        self.c = Client()
+        self.c = APIClient()
         normal['password'] = 'Abecadło123!'
         self.token_normal = self.c.post('/api/user/login_user', data=normal).json()['access']
         pro['password'] = 'Abecadło123!'
