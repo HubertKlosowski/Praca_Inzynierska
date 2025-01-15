@@ -5,12 +5,13 @@ from datetime import datetime, timedelta
 import jwt
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.test import TestCase, Client
 from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api import custom_throttle
 from api.models import User, Submission
-from rest_framework_simplejwt.tokens import RefreshToken
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -23,7 +24,7 @@ def get_tokens_for_user(user):
 custom_throttle.allow_request_for_test()
 
 
-class TestLoginUser(TestCase):
+class TestLoginUser(APITestCase):
     def setUp(self):
         self.c = APIClient()
         self.user_verified = User.objects.create(**{
@@ -64,21 +65,45 @@ class TestLoginUser(TestCase):
         self.assertEqual(login_correct.status_code, 200)
 
 
-class TestCreateUser(TestCase):
+class TestCreateUser(APITestCase):
     def setUp(self):
         self.c = APIClient()
 
-    def test_create_user_already_exists(self):
-        data = {
+    def test_create_user_already_exists_same_username(self):
+        User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
             'password': 'Abecadło123!',
             'usertype': 2,
             'username': 'admin_account'
-        }
-        User.objects.create(**data)
+        })
         self.assertEqual(User.objects.count(), 1)
-        create_already_exists = self.c.post('/api/user/create_user', data=data)
+        create_already_exists = self.c.post('/api/user/create_user', data={
+            'name': 'Hubert Kłosowski',
+            'email': 'a@a.pl',
+            'password': 'Abecadło123!',
+            'usertype': 2,
+            'username': 'admin_account'
+        })
+        self.assertEqual(create_already_exists.status_code, 406)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_create_user_already_exists_same_email(self):
+        User.objects.create(**{
+            'name': 'Hubert Kłosowski',
+            'email': 'hklosowski@interia.pl',
+            'password': 'Abecadło123!',
+            'usertype': 2,
+            'username': 'admin_account'
+        })
+        self.assertEqual(User.objects.count(), 1)
+        create_already_exists = self.c.post('/api/user/create_user', data={
+            'name': 'Hubert Kłosowski',
+            'email': 'hklosowski@interia.pl',
+            'password': 'Abecadło123!',
+            'usertype': 2,
+            'username': 'admin_account_123'
+        })
         self.assertEqual(create_already_exists.status_code, 406)
         self.assertEqual(User.objects.count(), 1)
 
@@ -95,7 +120,7 @@ class TestCreateUser(TestCase):
             'username': 'admin_account'
         })
         self.assertEqual(create_with_empty_fields.status_code, 406)
-        self.assertEqual(create_with_empty_fields.json(), ['Żadne pole nie może być puste.'])
+        self.assertEqual(create_with_empty_fields.json()['error'], ['Żadne pole nie może być puste.'])
 
     def test_create_user_too_short_password(self):
         create_too_short_password = self.c.post('/api/user/create_user', data={
@@ -193,7 +218,7 @@ class TestCreateUser(TestCase):
         self.assertEqual(create_correct.status_code, 201)
 
 
-class TestUpdateUser(TestCase):
+class TestUpdateUser(APITestCase):
     def setUp(self):
         self.c = APIClient()
         self.user = User.objects.create(**{
@@ -205,6 +230,17 @@ class TestUpdateUser(TestCase):
             'is_verified': True
         })
         self.token = get_tokens_for_user(user=self.user)['access']
+
+    def test_update_user_serializer_error_too_long_username(self):
+        changed_data = {'username': 'a' * 51}
+        update_only_wrong_field = self.c.patch(
+            '/api/user/update_user',
+            data=changed_data,
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
+        response_data = update_only_wrong_field.json()
+        self.assertEqual(update_only_wrong_field.status_code, 400)
+        self.assertGreater(len(response_data), 0)
 
     def test_update_user_only_wrong_field(self):
         changed_data = {'usertype': 0}
@@ -315,7 +351,7 @@ class TestUpdateUser(TestCase):
         self.assertEqual(update_correct.status_code, 200)
 
 
-class TestDeleteUser(TestCase):
+class TestDeleteUser(APITestCase):
     def setUp(self):
         self.c = APIClient()
         self.user = User.objects.create(**{
@@ -328,20 +364,48 @@ class TestDeleteUser(TestCase):
         })
         self.token = get_tokens_for_user(user=self.user)['access']
 
-    def test_delete_user(self):
+    def test_delete_user_the_same_twice(self):
         self.assertEqual(User.objects.count(), 1)
-        delete = self.c.delete('/api/user/delete_user', headers={'Authorization': 'Bearer ' + self.token})
+        delete = self.c.delete(
+            '/api/user/delete_user',
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         self.assertEqual(User.objects.count(), 0)
         self.assertEqual(delete.status_code, 200)
-        delete_again = self.c.delete('/api/user/delete_user', headers={'Authorization': 'Bearer ' + self.token})
+        delete_again = self.c.delete(
+            '/api/user/delete_user',
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
         self.assertEqual(delete_again.status_code, 404)
 
     def test_delete_user_forbidden(self):
         delete_forbidden = self.c.delete('/api/user/delete_user')
         self.assertEqual(delete_forbidden.status_code, 403)
 
+    def test_delete_user_check_submission_files(self):
+        path = os.path.join('media', 'submission_files', 'test_sub.csv')
+        with open(path, 'w'):
+            pass
 
-class TestReadUser(TestCase):
+        Submission.objects.create(**{
+            'model': 'bert-base',
+            'content': 'submission_files/test_sub.csv',
+            'user': self.user,
+            'name': 'test_submission',
+        })
+
+        self.assertEqual(Submission.objects.count(), 1)
+        delete = self.c.delete(
+            '/api/user/delete_user',
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
+        self.assertEqual(Submission.objects.count(), 0)
+        self.assertEqual(delete.status_code, 200)
+
+        self.assertFalse(os.path.exists(path))
+
+
+class TestReadUser(APITestCase):
     def setUp(self):
         self.c = APIClient()
         self.user = User.objects.create(**{
@@ -373,7 +437,7 @@ class TestReadUser(TestCase):
         self.assertEqual(len(read_all_users.json()), 1)
 
 
-class TestAdminUser(TestCase):
+class TestAdminUser(APITestCase):
     def setUp(self):
         self.c = APIClient()
         self.admin = User.objects.create(**{
@@ -414,7 +478,7 @@ class TestAdminUser(TestCase):
         new_user = User.objects.get(username=self.user.username)
         self.assertEqual(new_user.submission_num, 30)
 
-    def test_renew_submission_not_found(self):
+    def test_renew_submission_user_not_exists(self):
         self.user.delete()
         renew_submission = self.c.patch(
             '/api/user/renew_submission',
@@ -425,8 +489,34 @@ class TestAdminUser(TestCase):
         self.assertEqual(renew_submission.status_code, 404)
         self.assertIn('Użytkownik nie istnieje.', response_data['error'])
 
+    def test_verify_user_not_exists(self):
+        username = self.user.username
+        self.user.delete()
+        verify = self.c.patch(
+            '/api/user/verify_user',
+            data={'username': username},
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
 
-class VerifyUserTestCase(TestCase):
+        self.assertEqual(verify.status_code, 404)
+        self.assertEqual(verify.json()['error'], ['Użytkownik nie istnieje.'])
+
+    def test_verify_user_correct(self):
+        self.assertFalse(self.user.is_verified)
+        verify = self.c.patch(
+            '/api/user/verify_user',
+            data={'username': self.user.username},
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
+
+        self.assertEqual(verify.status_code, 200)
+        self.assertEqual(verify.json()['success'], 'Weryfikacja użytkownika powiodła się.')
+
+        new_user = User.objects.get(username=self.user.username)
+        self.assertTrue(new_user.is_verified)
+
+
+class VerifyUserTestCase(APITestCase):
     def setUp(self):
         self.c = APIClient()
         self.user = User.objects.create(**{
@@ -439,13 +529,18 @@ class VerifyUserTestCase(TestCase):
             'is_verified': False
         })
         self.token = jwt.encode(
-            {'email': self.user.email, 'exp': datetime.now() + timedelta(hours=1)},
-            settings.SIMPLE_JWT['SIGNING_KEY'],
+            payload={'email': self.user.email, 'exp': datetime.now() + timedelta(hours=1)},
+            key=settings.SIMPLE_JWT['SIGNING_KEY'],
             algorithm=settings.SIMPLE_JWT['ALGORITHM']
         )
         self.expired_token = jwt.encode(
-            {'email': self.user.email, 'exp': datetime.now() - timedelta(hours=1)},
-            settings.SIMPLE_JWT['SIGNING_KEY'],
+            payload={'email': self.user.email, 'exp': datetime.now() - timedelta(hours=1)},
+            key=settings.SIMPLE_JWT['SIGNING_KEY'],
+            algorithm=settings.SIMPLE_JWT['ALGORITHM']
+        )
+        self.invalid_signature = jwt.encode(
+            payload={'email': self.user.email, 'exp': datetime.now() + timedelta(hours=1)},
+            key='different_key',
             algorithm=settings.SIMPLE_JWT['ALGORITHM']
         )
         self.invalid_token = 'invalid.token.value'
@@ -460,6 +555,11 @@ class VerifyUserTestCase(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn('Weryfikacja się nie powiodła.', response.json()['error'])
 
+    def test_verify_user_invalid_signature_token(self):
+        response = self.c.get('/api/user/verify_user', {'token': self.invalid_signature})
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('Podpis tokena nie zgadza się z używanym.', response.json()['error'])
+
     def test_verify_user_expired_token(self):
         response = self.c.get('/api/user/verify_user', {'token': self.expired_token})
         self.assertEqual(response.status_code, 401)
@@ -473,7 +573,7 @@ class VerifyUserTestCase(TestCase):
         self.assertTrue(self.user.is_verified)
 
 
-class TestAnonSubmission(TestCase):
+class TestAnonSubmission(APITestCase):
     def setUp(self):
         self.c = APIClient()
         self.en = 'I dont want to do this!'
@@ -546,45 +646,38 @@ class TestAnonSubmission(TestCase):
         self.assertEqual(submission.json()['success'], 'Poprawnie przeprowadzono obliczenia.')
 
 
-class TestUserSubmission(TestCase):
+class TestUserSubmission(APITestCase):
     def setUp(self):
-        normal = {
+        self.normal = User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'hklosowski@interia.pl',
-            'password': make_password('Abecadło123!'),
+            'password': 'Abecadło123!',
             'usertype': 0,
             'username': 'normal_account',
             'is_verified': True
-        }
-        pro = {
+        })
+        self.pro = User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'a@a.pl',
-            'password': make_password('Abecadło123!'),
+            'password': 'Abecadło123!',
             'usertype': 1,
             'username': 'pro_account',
             'is_verified': True
-        }
-        admin = {
+        })
+        self.admin = User.objects.create(**{
             'name': 'Hubert Kłosowski',
             'email': 'a1@a1.pl',
-            'password': make_password('Abecadło123!'),
+            'password': 'Abecadło123!',
             'usertype': 2,
             'submission_num': 0,
             'username': 'admin_account',
             'is_verified': True
-        }
-
-        self.normal = User.objects.create(**normal)
-        self.pro = User.objects.create(**pro)
-        self.admin = User.objects.create(**admin)
+        })
 
         self.c = APIClient()
-        normal['password'] = 'Abecadło123!'
-        self.token_normal = self.c.post('/api/user/login_user', data=normal).json()['access']
-        pro['password'] = 'Abecadło123!'
-        self.token_pro = self.c.post('/api/user/login_user', data=pro).json()['access']
-        admin['password'] = 'Abecadło123!'
-        self.token_admin = self.c.post('/api/user/login_user', data=admin).json()['access']
+        self.token_normal = get_tokens_for_user(user=self.normal)['access']
+        self.token_pro = get_tokens_for_user(user=self.pro)['access']
+        self.token_admin = get_tokens_for_user(user=self.admin)['access']
 
     def test_submission_user_not_exists(self):
         self.normal.delete()
@@ -646,7 +739,7 @@ class TestUserSubmission(TestCase):
         self.assertEqual(response.json()['success'], 'Poprawnie przeprowadzono obliczenia.')
 
 
-class TestSubmissionReadUpdate(TestCase):
+class TestSubmissionReadUpdate(APITestCase):
     def setUp(self):
         self.normal = User.objects.create(**{
             'name': 'Hubert Kłosowski',

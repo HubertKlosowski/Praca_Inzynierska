@@ -305,7 +305,7 @@ def verify_user(request):
             }, status=status.HTTP_401_UNAUTHORIZED)
         except jwt.exceptions.InvalidSignatureError:
             return Response({
-                'error': ['Weryfikacja się nie powiodła.', 'Podpis tokena nie zgadza się z dostarczonym.']
+                'error': ['Weryfikacja się nie powiodła.', 'Podpis tokena nie zgadza się z używanym.']
             }, status=status.HTTP_401_UNAUTHORIZED)
         except jwt.exceptions.InvalidTokenError:
             return Response({
@@ -325,40 +325,38 @@ def verify_user(request):
                 'error': ['Użytkownik nie istnieje.']
             }, status=status.HTTP_404_NOT_FOUND)
 
+        # Rozdziel verify_user na 2 metody i dodaj sprawdzenie czy user jest adminem i potwierdził swoje konto
+
         user = User.objects.get(username=username)
-        serializer = UserSerializer(user, data={'is_verified': True}, partial=True)
+        user.is_verified = True
+        user.save()
 
-        if serializer.is_valid():
-            serializer.save()
+        message = loader.render_to_string(
+            'mails/verify_account.html',
+            context={
+                'title': 'Weryfikacja konta',
+                'usertype': user.usertype
+            }
+        )
 
-            message = loader.render_to_string(
-                'mails/verify_account.html',
-                context={
-                    'title': 'Weryfikacja konta',
-                    'usertype': serializer.data['usertype']
-                }
-            )
+        email = EmailMessage(
+            subject='Weryfikacja konta',
+            body=message,
+            from_email=settings.EMAIL_HOST_USER,
+            to=[user.email],
+        )
+        email.content_subtype = 'html'
 
-            email = EmailMessage(
-                subject='Weryfikacja konta',
-                body=message,
-                from_email=settings.EMAIL_HOST_USER,
-                to=[serializer.data['email']],
-            )
-            email.content_subtype = 'html'
-
-            try:
-                email.send()
-            except smtplib.SMTPException:
-                return Response({
-                    'error': ['Nie udało się wysłać wiadomości potwierdzającej weryfikację konta.']
-                }, status=status.HTTP_400_BAD_REQUEST)
-
+        try:
+            email.send()
+        except smtplib.SMTPException:
             return Response({
-                'success': 'Weryfikacja użytkownika powiodła się.'
-            }, status=status.HTTP_200_OK)
+                'error': ['Nie udało się wysłać wiadomości potwierdzającej weryfikację konta.']
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'success': 'Weryfikacja użytkownika powiodła się.'
+        }, status=status.HTTP_200_OK)
 
 
 @api_view(['PATCH'])
@@ -373,16 +371,12 @@ def renew_submission(request):
         }, status=status.HTTP_404_NOT_FOUND)
 
     user = User.objects.get(username=username)
-    submission_num = [10, 30, 100][user.usertype]
-    serializer = UserSerializer(user, data={'submission_num': submission_num}, partial=True)
+    user.submission_num = [10, 30, 100][user.usertype]
+    user.save()
 
-    if serializer.is_valid():
-        serializer.save()
-        return Response({
-            'success': 'Odnowienie prób użytkownika powiodło się.'
-        }, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response({
+        'success': 'Odnowienie prób użytkownika powiodło się.'
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -450,13 +444,8 @@ def make_submission(request):
     path = f'depression-detect/{model}-uncased-depression'
     prepared = preprocess_dataframe(df.copy(deep=True), lang=lang)
 
-    try:
-        stats = predict(path, prepared, truncate=False, login_token=save_model_token)
-        data['time_taken'] = (timezone.now() - time_start).total_seconds()
-    except Exception as e:
-        return Response({
-            'error': [f'{str(e)}']
-        }, status=status.HTTP_404_NOT_FOUND)
+    stats = predict(path, prepared, truncate=False, login_token=save_model_token)
+    data['time_taken'] = (timezone.now() - time_start).total_seconds()
 
     concated = pd.concat([df, stats], axis=1)
     buffer = BytesIO()
@@ -571,14 +560,9 @@ def change_name(request, sub_uuid):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     submission = Submission.objects.get(id=sub_uuid)
-    serializer = SubmissionSerializer(submission, data={'name': data['name']}, partial=True)
-
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    serializer.save()
+    submission.name = data['name']
 
     return Response({
         'success': 'Poprawnie ustawiono nazwę próby.',
-        'submission': serializer.data
+        'submission': SubmissionSerializer(submission).data
     }, status=status.HTTP_200_OK)
