@@ -1,7 +1,7 @@
 import os
 import re
 
-from langdetect import DetectorFactory, detect
+from langdetect import DetectorFactory
 
 DetectorFactory.seed = 0
 
@@ -23,16 +23,6 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 from huggingface_hub import login, logout
-
-
-def limit_lang(df: pd.DataFrame) -> pd.DataFrame:  # pozostawienie tylko wpisow w danym jezyku
-    df['text'] = df['text'].apply(lambda x: x.strip())
-    if 'lang' not in df.columns:
-        df['lang'] = df['text'].apply(lambda x: detect(x))
-    df.drop(index=df.loc[(df['lang'] != 'en'), :].index, inplace=True)
-    df.drop(columns=['lang'], inplace=True)
-    df.reset_index(drop=True, inplace=True)
-    return df
 
 
 def detect_lang(df: pd.DataFrame) -> str:
@@ -59,18 +49,14 @@ def create_dataset(dataframe: pd.DataFrame, split_train_test: bool) -> DatasetDi
 
 
 # Połączenie zbiorów w jeden
-def merge_dataframes(lang: str = 'en', for_train: bool = False) -> pd.DataFrame:
+def merge_dataframes(for_train: bool = False) -> pd.DataFrame:
     merged = pd.DataFrame()
-    columns = ['text', 'label'] if for_train and lang == 'en' else ['text']
-    path = os.path.join(os.path.join('data', lang, 'train')) if for_train \
-        else os.path.join(os.path.join('data', lang, 'test'))
+    columns = ['text', 'label'] if for_train else ['text']
+    path = os.path.join(os.path.join('data', 'en', 'train')) if for_train \
+        else os.path.join(os.path.join('data', 'en', 'test'))
 
     for d in os.listdir(path):
         dataframe = pd.read_csv(os.path.join(path, d))
-
-        if lang == 'pl' and d == 'polish_reddit_posts.csv':
-            dataframe = dataframe[columns]
-
         dataframe = dataframe[columns].reset_index(drop=True)
         merged = pd.concat([merged, dataframe], axis=0)
 
@@ -89,6 +75,9 @@ def merge_dataframes(lang: str = 'en', for_train: bool = False) -> pd.DataFrame:
 
 
 def balance_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
+    if 'label' not in dataframe.columns:
+        raise ValueError('Podanego zbioru nie można zbalansować. Brak kolumny \"label\".')
+
     dataframe['label'] = dataframe['label'].astype(int)
     counts = dataframe['label'].value_counts()
 
@@ -274,9 +263,12 @@ def prepare_predictions(pred, df_index) -> pd.DataFrame:
 #     train_english = merge_dataframes(lang='en', for_train=True)
 #     train_english.to_csv(os.path.join('data', 'final', 'train_english.csv'), index=False)
 #
-# train_english = balance_dataframe(train_english)
-# train_preprocessed_english = preprocess_dataframe(train_english, lang='en')
-# train_preprocessed_english.to_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'), index=False)
+# try:
+#     train_english = balance_dataframe(train_english)
+#     train_preprocessed_english = preprocess_dataframe(train_english, lang='en')
+#     train_preprocessed_english.to_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv'), index=False)
+# except ValueError as e:
+#     print(str(e))
 
 # Przetworzone wpisy w języku angielskim (zbiór testowy)
 # if 'test_english.csv' in os.listdir(os.path.join('data', 'final')):

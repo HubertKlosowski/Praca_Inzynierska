@@ -42,7 +42,7 @@ class Submission(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)
     time_taken = models.FloatField(default=0)
-    model = models.CharField(max_length=20, choices=LLM_CHOICES)
+    model = models.CharField(choices=LLM_CHOICES)
     content = models.FileField(upload_to='submission_files/', null=True, blank=True)
 
     def __str__(self):
