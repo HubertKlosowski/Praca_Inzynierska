@@ -70,16 +70,6 @@ class UserSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError({
                         'error': 'Dla administratora liczba dziennych prób nie przekracza 100.'
                     })
-
-            if not regex_name.search(self.instance.name):
-                raise serializers.ValidationError({
-                    'error': 'Imie i nazwisko musi składać się z dwóch wyrazów zaczynających się dużą literą.'
-                })
-
-            if not regex_email.search(self.instance.email):
-                raise serializers.ValidationError({
-                    'error': 'Adres email musi być podany zgodnie z formatem: adres@mail.com.'
-                })
         else:
             if 'submission_num' in data:
                 if data['submission_num'] > 10 and data['usertype'] == 0:
@@ -94,6 +84,13 @@ class UserSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError({
                         'error': 'Dla administratora liczba dziennych prób nie przekracza 100.'
                     })
+
+            if data['usertype'] > 2 or data['usertype'] < 0:
+                raise serializers.ValidationError({
+                    'error': 'Nieznany typ użytkownika. Proszę wybrać między kontem STANDARD, PRO, ADMIN.'
+                })
+
+        if 'name' in data.keys() or 'email' in data.keys():
             if not regex_name.search(data['name']):
                 raise serializers.ValidationError({
                     'error': 'Imie i nazwisko musi składać się z dwóch wyrazów zaczynających się dużą literą.'
@@ -102,11 +99,6 @@ class UserSerializer(serializers.ModelSerializer):
             if not regex_email.search(data['email']):
                 raise serializers.ValidationError({
                     'error': 'Adres email musi być podany zgodnie z formatem: adres@mail.com.'
-                })
-
-            if data['usertype'] > 2 or data['usertype'] < 0:
-                raise serializers.ValidationError({
-                    'error': 'Nieznany typ użytkownika. Proszę wybrać między kontem STANDARD, PRO, ADMIN.'
                 })
 
         return data

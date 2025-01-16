@@ -33,7 +33,6 @@ def detect_lang(df: pd.DataFrame) -> str:
     df.drop(columns=['lang'], inplace=True)
     return langs.idxmax(axis=0)
 
-
 def create_dataset(dataframe: pd.DataFrame, split_train_test: bool) -> DatasetDict:
     dt = DatasetDict()
     if split_train_test:
@@ -47,13 +46,12 @@ def create_dataset(dataframe: pd.DataFrame, split_train_test: bool) -> DatasetDi
         dt['test'] = Dataset.from_pandas(dataframe)
     return dt
 
-
 # Połączenie zbiorów w jeden
 def merge_dataframes(for_train: bool = False) -> pd.DataFrame:
     merged = pd.DataFrame()
     columns = ['text', 'label'] if for_train else ['text']
-    path = os.path.join(os.path.join('data', 'en', 'train')) if for_train \
-        else os.path.join(os.path.join('data', 'en', 'test'))
+    path = os.path.join(os.path.join('model', 'data', 'en', 'train')) if for_train \
+        else os.path.join(os.path.join('model', 'data', 'en', 'test'))
 
     for d in os.listdir(path):
         dataframe = pd.read_csv(os.path.join(path, d))
@@ -73,7 +71,6 @@ def merge_dataframes(for_train: bool = False) -> pd.DataFrame:
 
     return merged
 
-
 def balance_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
     if 'label' not in dataframe.columns:
         raise ValueError('Podanego zbioru nie można zbalansować. Brak kolumny \"label\".')
@@ -89,7 +86,6 @@ def balance_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
         dataframe.drop(index=dataframe.loc[dataframe['label'] == 1].sample(n=sample).index, inplace=True)
 
     return dataframe.sample(frac=1).reset_index(drop=True)
-
 
 # Funkcja odpowiedzialna jest za przygotowanie zbiorów:
 # usunięcie adresów URL
@@ -137,10 +133,8 @@ def drop_too_long(df: pd.DataFrame, tokenizer) -> pd.DataFrame:
     df_copy.drop(columns=['len'], inplace=True)
     return df_copy
 
-
 def apply_tokenizer(tokenizer, row):
     return tokenizer(row['text'], truncation=True)
-
 
 def compute_metrics(logits):
     y_pred, y_true = logits
@@ -151,7 +145,6 @@ def compute_metrics(logits):
         'recall': recall_score(y_true, y_pred),
         'f1': f1_score(y_true, y_pred),
     }
-
 
 def fine_tune(model_path: str):
     login(token=save_model_token)
@@ -203,7 +196,6 @@ def fine_tune(model_path: str):
 
     logout()
 
-
 def predict(model_path: str, dataframe: pd.DataFrame, truncate: bool = True, login_token: str = None) -> pd.DataFrame:
     if login_token is not None:
         login(token=login_token)
@@ -247,7 +239,6 @@ def predict(model_path: str, dataframe: pd.DataFrame, truncate: bool = True, log
         logout()
 
     return predictions
-
 
 def prepare_predictions(pred, df_index) -> pd.DataFrame:
     return pd.DataFrame([{pair['label']: pair['score'] for pair in row} for row in pred], index=df_index)

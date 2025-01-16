@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 import pandas as pd
 import os
-from model.model_datasets import create_dataset, balance_dataframe
+from model.model_datasets import create_dataset, balance_dataframe, merge_dataframes
 from datasets import DatasetDict
 
 
@@ -46,3 +46,15 @@ class TestModelDatasets(APITestCase):
             self.assertEqual(counts[0], counts[1])
         except ValueError:
             pass
+
+    def test_merge_dataframes_for_train(self):
+        merged = merge_dataframes(True)
+
+        self.assertIsInstance(merged, pd.DataFrame)
+        self.assertListEqual(merged.columns.tolist(), ['text', 'label'])
+
+    def test_merge_dataframes_not_for_train(self):
+        merged = merge_dataframes(False)
+
+        self.assertIsInstance(merged, pd.DataFrame)
+        self.assertListEqual(merged.columns.tolist(), ['text'])

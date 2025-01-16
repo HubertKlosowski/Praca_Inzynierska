@@ -1,6 +1,7 @@
-from django.contrib.auth.hashers import make_password
+from django.utils.translation import gettext_lazy as _
 from rest_framework.test import APITestCase
 
+from api.password_validation import LengthValidator, DigitValidator, CapitalLetterValidator, SpecialCharacterValidator
 from api.serializer import UserSerializer, SubmissionSerializer
 
 from api.models import User, Submission
@@ -45,19 +46,41 @@ class TestModels(APITestCase):
 
 
 class TestPasswordValidation(APITestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.user = User.objects.create(**{
-            'name': 'Hubert Kłosowski',
-            'email': 'hklosowski@interia.pl',
-            'password': 'Abecadło123!',
-            'usertype': 0,
-            'username': 'normal_account',
-            'is_verified': True
-        })
+    def test_password_length_validation(self):
+        validator = LengthValidator()
+        help_text = validator.get_help_text()
 
-    def test_password_validation(self):
-        pass
+        self.assertEqual(
+            help_text,
+            _('Hasło musi mieć długość od 8 do 32 znaków.')
+        )
+
+    def test_password_digit_validation(self):
+        validator = DigitValidator()
+        help_text = validator.get_help_text()
+
+        self.assertEqual(
+            help_text,
+            _('Hasło musi zawierać conajmniej 1 cyfr.')
+        )
+
+    def test_password_capital_letters(self):
+        validator = CapitalLetterValidator()
+        help_text = validator.get_help_text()
+
+        self.assertEqual(
+            help_text,
+            _('Hasło musi zawierać conajmniej 1 dużych liter.')
+        )
+
+    def test_password_special_character_validation(self):
+        validator = SpecialCharacterValidator()
+        help_text = validator.get_help_text()
+
+        self.assertEqual(
+            help_text,
+            _('Hasło musi zawierać conajmniej 1 znaków specjalnych.')
+        )
 
 
 class TestUserSerializer(APITestCase):
@@ -142,10 +165,11 @@ class TestUserSerializer(APITestCase):
 
     def test_user_serializer_too_big_submission_num_submission_for_existing_normal(self):
         user_instance = User.objects.create(**self.user)
-        user_instance.save()
-
         serializer = UserSerializer(instance=user_instance, data={'submission_num': 11}, partial=True)
+        user_instance.refresh_from_db()
+
         self.assertFalse(serializer.is_valid())
+        self.assertTrue(user_instance.submission_num != 11)
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(
             str(serializer.errors['error'][0]),
@@ -167,9 +191,11 @@ class TestUserSerializer(APITestCase):
     def test_user_serializer_too_big_submission_num_for_existing_pro(self):
         self.user['usertype'] = 1
         user_instance = User.objects.create(**self.user)
-
         serializer = UserSerializer(instance=user_instance, data={'submission_num': 31}, partial=True)
+        user_instance.refresh_from_db()
+
         self.assertFalse(serializer.is_valid())
+        self.assertTrue(user_instance.submission_num != 31)
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(
             str(serializer.errors['error'][0]),
@@ -191,9 +217,11 @@ class TestUserSerializer(APITestCase):
     def test_user_serializer_too_big_submission_num_for_existing_admin(self):
         self.user['usertype'] = 2
         user_instance = User.objects.create(**self.user)
-
         serializer = UserSerializer(instance=user_instance, data={'submission_num': 101}, partial=True)
+        user_instance.refresh_from_db()
+
         self.assertFalse(serializer.is_valid())
+        self.assertTrue(user_instance.submission_num != 101)
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(
             str(serializer.errors['error'][0]),
