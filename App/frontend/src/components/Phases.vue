@@ -9,7 +9,7 @@ const phases = [
     'title': 'Przekaż dane',
     'description': [
         'Prześlij dane, na których chcesz przeprowadzić wykrywanie depresji.',
-        'Istnieją dwa możliwe sposoby przekazania danych: z pliku lub jako pojedyńczy tekst.'
+        'Istnieją dwa możliwe sposoby przekazania danych: jako pojedynczy tekst albo w postaci pliku.'
     ]
   }
 ]

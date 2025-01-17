@@ -12,8 +12,7 @@ const user = reactive(JSON.parse(localStorage.getItem('user')))
     <div class="header">
       <h3>Limity konta</h3>
       <ul>
-        <li>Każde konto stworzone ma swoje limity</li>
-        <li>Dotyczą one kwestii liczby wykonanych predykcji, prób logowania w ciągu dnia.</li>
+        <li>Każde konto posiada określone limity.</li>
       </ul>
     </div>
     <div class="go-main">

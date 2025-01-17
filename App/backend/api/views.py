@@ -1,3 +1,4 @@
+import asyncio
 import os.path
 import random
 import smtplib
@@ -469,13 +470,13 @@ def make_submission(request):
         if request.FILES:
             file_size = request.FILES['content'].size
 
-            if user.usertype == 0 and file_size >= 2e4:
+            if user.usertype == 0 and file_size >= 1e4:
                 return Response({
-                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000} > 20KB']
+                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000} > 10kB']
                 }, status=status.HTTP_400_BAD_REQUEST)
             elif user.usertype == 1 and file_size >= 1e5:
                 return Response({
-                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000} > 100KB']
+                    'error': [f'Rozmiar przekazanego pliku przekroczył dopuszczalny limit: {file_size // 1000} > 100kB']
                 }, status=status.HTTP_400_BAD_REQUEST)
             elif user.usertype == 2 and file_size >= 1e6:
                 return Response({

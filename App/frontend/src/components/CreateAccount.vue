@@ -84,8 +84,8 @@ const resetInputs = () => {
       <h3>Utwórz konto</h3>
       <ul>
         <li>Poniżej znajduje się formularz, w którym należy podać własne dane osobowe.</li>
-        <li>Wszystkie pola muszą być wypełnione aby móc utworzyć konto.</li>
-        <li>Konto służy do przechowywania wyników analiz i zarządzania.</li>
+        <li>Wszystkie pola muszą być wypełnione, aby móc utworzyć konto.</li>
+        <li>Konto służy do przechowywania wyników analiz i zarządzania nimi.</li>
       </ul>
     </div>
     <div class="go-main">

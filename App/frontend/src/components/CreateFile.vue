@@ -46,9 +46,8 @@ onMounted(() => {
       <h3>Kreator pliku</h3>
       <ul>
         <li>Rozwiązuje problem z utworzeniem pliku.</li>
-        <li>Podaj dowolną liczbę wpisów, a aplikacja sama stworzy plik za Ciebie.</li>
-        <li>Wielkość pliku dla typ kont ciągle obowiązuje.</li>
-        <li>Język musi być spójny dla każdego wpisu.</li>
+        <li>Na podstawie dowolnej liczby wpisów aplikacja sama tworzy plik za Ciebie</li>
+        <li>Maksymalna wielkość pliku zależy od typu konta.</li>
       </ul>
     </div>
     <div class="main">

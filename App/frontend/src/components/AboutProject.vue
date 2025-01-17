@@ -6,8 +6,8 @@
   <div class="left-part">
     <h3>Witaj w aplikacji eDepresja</h3>
     <p>Aplikacja została stworzona z myślą o wsparciu osób dotkniętych zaburzeniami depresyjnymi.</p>
-    <p>Jej główną funkcją jest wykorzystanie modeli językowych do wykrywania depresji na podstawie wpisów w mediach społecznościowych.</p>
-    <p>Każdy użytkownik otrzyma informacje zwrotne na podstawie analizy poszczególnych postów.</p>
+    <p>Jej główną funkcją jest wykrywanie stanów depresyjnych na podstawie wpisów w mediach społecznościowych z wykorzystaniem dużych modeli językowych.</p>
+    <p>Każdy użytkownik otrzymuje informację zwrotną na podstawie analizy przesłanych postów.</p>
     <p>Szczegółowe informacje dotyczące możliwości aplikacji można znaleźć w kartach "Twoje konto" i "Twoje predykcje".</p>
   </div>
 </template>

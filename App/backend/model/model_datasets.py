@@ -1,16 +1,11 @@
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor
-
-from langdetect import DetectorFactory
-
-DetectorFactory.seed = 0
+import spacy_fastlang  # noqa: F401 # pylint: disable=unused-import
 
 import numpy as np
 import spacy
 import torch
 from datasets import Dataset, DatasetDict
-from googletrans import Translator
 from nltk.stem import PorterStemmer  # stemming dla języka angielskiego
 from sklearn.model_selection import train_test_split
 
@@ -27,18 +22,9 @@ from huggingface_hub import login, logout
 
 
 def detect_lang(df: pd.DataFrame) -> str:
-    translator = Translator(service_urls=[
-      'translate.googleapis.com'
-    ])
-    df['text'] = df['text'].apply(lambda x: x.strip())
-
-    def detect_language(row: str) -> str:
-        return translator.detect(row).lang
-
-    with ThreadPoolExecutor(max_workers=20) as executor:
-        langs = executor.map(detect_language, df['text'].values)
-
-    df['lang'] = np.array([l for l in langs], dtype=str)
+    nlp = spacy.load('en_core_web_sm')
+    nlp.add_pipe('language_detector')
+    df['lang'] = df['text'].apply(lambda text: nlp(text)._.language)
     counts = df['lang'].value_counts()
     df.drop(columns=['lang'], inplace=True)
     return counts.idxmax(axis=0)

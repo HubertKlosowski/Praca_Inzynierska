@@ -120,8 +120,8 @@ const resetInputs = () => {
     <div class="header">
       <h3>Zmień dane konta</h3>
       <ul>
-        <li>Nie wymagana jest zmiana wszystkich pól.</li>
-        <li>Typu użytkownika nie można zmienić, ze względu bezpieczeństwa.</li>
+        <li>Zmiana wszystkich pól nie jest wymagana.</li>
+        <li>Ze względów bezpieczeństwa nie można zmieniać typu użytkownika.</li>
       </ul>
     </div>
     <div class="go-main">

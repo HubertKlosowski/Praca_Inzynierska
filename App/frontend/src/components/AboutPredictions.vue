@@ -16,22 +16,22 @@ const check = () => {
   <div class="left-part">
     <div class="content">
       <h4>Informacje o predykcjach</h4>
-      <p>Wyniki przedstawią wykryte stopnie depresji w przekazanych danych.</p>
-      <p>Bez konta nie będą zapisywane w bazie danych uzyskane wyniki.</p>
-      <p>Jeśli chcesz mieć możliwość powrotu do wcześniejszych wyników w przyszłości, zalecane jest utworzenie konta.</p>
-      <p>Pozwoli na pełny wgląd w historię predykcji.</p>
+      <p>Wyniki prezentują wykryty stopień depresji w zamieszczonych postach.</p>
+      <p>W przypadku braku konta nie zostaną one zapisane w bazie danych.</p>
+      <p>Jeśli chcesz posiadać możliwość powrotu do wcześniejszych wyników, zalecane jest utworzenie konta.</p>
+      <p>Pozwoli ono pełny wgląd w historię predykcji.</p>
     </div>
     <div class="info">
       <div class="phase">
         <h4>Przygotuj dane</h4>
-        <p>Analiza depresji wymaga posiadania danych tekstowych.</p>
-        <p>Dane możesz wysłać w postaci pliku w rozszerzeniu "csv", "json" lub w formie pojedyńczego wpisu.</p>
-        <p>Każdy wpis powinien być umieszczony w osobnych wierszach.</p>
+        <p>Analiza depresji wymaga posiadania danych w formacie tekstowym.</p>
+        <p>Dane możesz wysłać w postaci pliku w rozszerzeniu "csv", "json" albo w formie pojedynczego wpisu.</p>
+        <p>Każdy wpis powinien zostać umieszczony w osobnym wierszu.</p>
       </div>
       <div class="phase">
         <h4>Przeanalizuj wyniki</h4>
-        <p>Wyniki będą przypisane każdemu przesłanemu wpisowi.</p>
-        <p>Dodatkowo, osoby posiadające konto otrzymają rozbudowane wyniki</p>
+        <p>Każdy wpis zostanie poddany detekcji pod kątem występowania stanów depresyjnych.</p>
+        <p>Osoby posiadające konto otrzymają dodatkowe statystyki.</p>
       </div>
     </div>
     <div class="links">

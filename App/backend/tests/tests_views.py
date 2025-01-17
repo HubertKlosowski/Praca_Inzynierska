@@ -634,7 +634,7 @@ class TestAnonSubmission(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.c = APIClient()
-        cls.en = 'I dont want to do this!'
+        cls.en = 'I don\'t want to do this!'
 
     def test_submission_missing_content(self):
         submission = self.c.post('/api/submission/make_submission', data={'model': 'bert-base'})

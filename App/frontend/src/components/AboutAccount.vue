@@ -12,9 +12,9 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
       <h4>Informacje o koncie</h4>
       <p>Utworzenie konta umożliwia uzyskanie dostępu do nowych możliwości:</p>
       <ol class="list">
-        <li>zapisanie wyników twoich analiz</li>
-        <li>udostępnienie ogólnych statystyk i wykresów do wyników</li>
-        <li>kreator plików w przypadku problemów z ich stworzeniem</li>
+        <li>zapisywanie wyników przeprowadzonych analiz</li>
+        <li>udostępnienia szczegółowych statystyk i wykresów</li>
+        <li>wsparcia w postaci kreatora plików w przypadku problemów z ich stworzeniem</li>
       </ol>
       <p>Korzystanie z konta jest proste i przejrzyste &#128522;.</p>
       <p>Poniżej znajdują się trzy dostępne typy kont:</p>
@@ -24,24 +24,23 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
         <h4>Standard</h4>
         <ul>
           <li>liczba dziennych prób: 10</li>
-          <li>analiza pojedyńczych wpisów</li>
-          <li>max. wielkość pliku: do 200KB</li>
+          <li>analiza pojedynczych wpisów</li>
+          <li>max. wielkość pliku: do 200kB</li>
         </ul>
       </div>
       <div class="account">
         <h4>Pro</h4>
         <ul>
           <li>liczba dziennych prób: 30</li>
-          <li>ogólne statystyki dla plików</li>
-          <li>max. wielkość pliku: do 1MB</li>
+          <li>podsumowanie w postaci statystyki</li>
         </ul>
       </div>
       <div class="account">
         <h4>Admin</h4>
         <ul>
           <li>liczba dziennych prób: 100</li>
-          <li>wykresy dotyczące danych</li>
-          <li>max. wielkość pliku: do 10MB</li>
+          <li>wykrywanie stanów depresyjnych</li>
+          <li>max. wielkość pliku: do 1MB</li>
         </ul>
       </div>
     </div>
