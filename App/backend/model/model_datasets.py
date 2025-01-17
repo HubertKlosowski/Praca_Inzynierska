@@ -1,5 +1,6 @@
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 from langdetect import DetectorFactory
 
@@ -26,12 +27,21 @@ from huggingface_hub import login, logout
 
 
 def detect_lang(df: pd.DataFrame) -> str:
-    translator = Translator()
+    translator = Translator(service_urls=[
+      'translate.googleapis.com'
+    ])
     df['text'] = df['text'].apply(lambda x: x.strip())
-    df['lang'] = df['text'].apply(lambda x: translator.detect(x).lang)
-    langs = df['lang'].value_counts()
+
+    def detect_language(row: str) -> str:
+        return translator.detect(row).lang
+
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        langs = executor.map(detect_language, df['text'].values)
+
+    df['lang'] = np.array([l for l in langs], dtype=str)
+    counts = df['lang'].value_counts()
     df.drop(columns=['lang'], inplace=True)
-    return langs.idxmax(axis=0)
+    return counts.idxmax(axis=0)
 
 def create_dataset(dataframe: pd.DataFrame, split_train_test: bool) -> DatasetDict:
     dt = DatasetDict()
@@ -94,7 +104,7 @@ def balance_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
 # usuniecie znaków interpunkcyjnych
 # usuniecie stop-words
 # stemming
-def preprocess_dataframe(dataframe: pd.DataFrame, lang: str = 'en') -> pd.DataFrame:
+def preprocess_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
     lang_resource = spacy.load('en_core_web_sm')
     lang_resource.add_pipe('emoji', first=True)
 

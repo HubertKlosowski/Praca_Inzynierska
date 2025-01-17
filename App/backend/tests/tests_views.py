@@ -1,16 +1,18 @@
 import os
+import smtplib
 import uuid
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 import jwt
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.test import APIClient
 from rest_framework.test import APITestCase
-from api.tokens import get_tokens_for_user
 
 from api import custom_throttle
 from api.models import User, Submission
+from api.tokens import get_tokens_for_user
 
 custom_throttle.allow_request_for_test()
 
@@ -61,6 +63,27 @@ class TestCreateUser(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.c = APIClient()
+
+    @patch('django.core.mail.EmailMessage.send')
+    def test_delete_user_email_failure(self, mock_send):
+        mock_send.side_effect = smtplib.SMTPException()
+        response = self.c.post(
+            '/api/user/create_user',
+            data={
+                'name': 'Hubert Kłosowski',
+                'email': 'a@a.pl',
+                'password': 'Abecadło123!',
+                'usertype': 2,
+                'username': 'admin_account'
+            }
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.data)
+        self.assertEqual(
+            response.data['error'],
+            ['Nie udało się wysłać wiadomości potwierdzającej dodanie konta.']
+        )
 
     def test_create_user_already_exists_same_username(self):
         User.objects.create(**{
@@ -336,13 +359,16 @@ class TestUpdateUser(APITestCase):
         self.assertIn('Hasło nie zawiera specjalnych znaków.', response_data['error'])
 
     def test_update_user_correct(self):
-        changed_data = {'username': 'admin_account_2'}
+        changed_data = {'username': 'admin_account_2', 'password': 'Qwerty123!'}
         update_correct = self.c.patch(
             '/api/user/update_user',
             data=changed_data,
             headers={'Authorization': 'Bearer ' + self.token}
         )
         self.assertEqual(update_correct.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertFalse(check_password('Abecadło123!', self.user.password))
+        self.assertTrue(check_password('Qwerty123!', self.user.password))
 
 
 class TestDeleteUser(APITestCase):
@@ -358,6 +384,22 @@ class TestDeleteUser(APITestCase):
             'is_verified': True
         })
         cls.token = get_tokens_for_user(user=cls.user)['access']
+
+    @patch('django.core.mail.EmailMessage.send')
+    def test_delete_user_email_failure(self, mock_send):
+        mock_send.side_effect = smtplib.SMTPException()
+        response = self.c.delete(
+            '/api/user/delete_user',
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.data)
+        self.assertEqual(
+            response.data['error'],
+            ['Nie udało się wysłać wiadomości potwierdzającej usunięcie konta.']
+        )
+        self.assertFalse(User.objects.filter(id=self.user.id).exists())
 
     def test_delete_user_the_same_twice(self):
         self.assertEqual(User.objects.count(), 1)
@@ -485,6 +527,23 @@ class TestAdminUser(APITestCase):
         response_data = renew_submission.json()
         self.assertEqual(renew_submission.status_code, 404)
         self.assertIn('Użytkownik nie istnieje.', response_data['error'])
+
+    @patch('django.core.mail.EmailMessage.send')
+    def test_delete_user_email_failure(self, mock_send):
+        mock_send.side_effect = smtplib.SMTPException()
+        username = self.user.username
+        response = self.c.patch(
+            '/api/user/verify_user',
+            data={'username': username},
+            headers={'Authorization': 'Bearer ' + self.token}
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.data)
+        self.assertEqual(
+            response.data['error'],
+            ['Nie udało się wysłać wiadomości potwierdzającej weryfikację konta.']
+        )
 
     def test_verify_user_not_exists(self):
         username = self.user.username
@@ -693,10 +752,10 @@ class TestUserSubmission(APITestCase):
         self.assertEqual(Submission.objects.count(), 0)
 
     def test_submission_normal_too_big_file(self):
-        with open(os.path.join('model', 'data', 'unit_test', 'file_20.csv'), encoding="utf8") as f:
+        with open(os.path.join('model', 'data', 'unit_test', 'file_20.csv'), encoding='utf8') as f:
             response = self.c.post(
                 '/api/submission/make_submission',
-                data={'content': f, 'model': 'bert-large'},
+                data={'content': f, 'model': 'bert-base'},
                 headers={'Authorization': f'Bearer {self.token_normal}'}
             )
 
@@ -705,11 +764,23 @@ class TestUserSubmission(APITestCase):
             self.assertEqual(Submission.objects.count(), 0)
 
     def test_submission_pro_too_big_file(self):
-        with open(os.path.join('model', 'data', 'unit_test', 'file_100.csv'), encoding="utf8") as f:
+        with open(os.path.join('model', 'data', 'unit_test', 'file_100.csv'), encoding='utf8') as f:
             response = self.c.post(
                 '/api/submission/make_submission',
-                data={'content': f, 'model': 'bert-large'},
+                data={'content': f, 'model': 'bert-base'},
                 headers={'Authorization': f'Bearer {self.token_pro}'}
+            )
+
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(len(response.json()['error']), 1)
+            self.assertEqual(Submission.objects.count(), 0)
+
+    def test_submission_admin_too_big_file(self):
+        with open(os.path.join('model', 'data', 'unit_test', 'file_1000.csv'), encoding='utf8') as f:
+            response = self.c.post(
+                '/api/submission/make_submission',
+                data={'content': f, 'model': 'bert-base'},
+                headers={'Authorization': f'Bearer {self.token_admin}'}
             )
 
             self.assertEqual(response.status_code, 400)

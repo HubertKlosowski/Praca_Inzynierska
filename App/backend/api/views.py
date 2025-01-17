@@ -4,6 +4,7 @@ import smtplib
 import string
 from io import BytesIO
 
+import httpcore
 import jwt
 import pandas as pd
 from django.conf import settings
@@ -115,7 +116,7 @@ def create_user(request):
             email.send()
         except smtplib.SMTPException:
             return Response({
-                'error': ['Nie udało się wysłać wiadomości potwierdzającej dodanie konto.']
+                'error': ['Nie udało się wysłać wiadomości potwierdzającej dodanie konta.']
             }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
@@ -442,7 +443,7 @@ def make_submission(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     path = f'depression-detect/{model}-uncased-depression'
-    prepared = preprocess_dataframe(df.copy(deep=True), lang=lang)
+    prepared = preprocess_dataframe(df.copy(deep=True))
 
     stats = predict(path, prepared, truncate=False, login_token=save_model_token)
     data['time_taken'] = (timezone.now() - time_start).total_seconds()
