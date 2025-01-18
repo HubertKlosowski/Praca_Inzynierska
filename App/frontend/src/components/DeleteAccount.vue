@@ -1,18 +1,18 @@
 <script setup>
 import axios from "axios";
-import {onMounted, reactive, ref} from "vue";
+import {inject, onMounted, reactive, ref} from "vue";
 import ResponseOutput from "@/components/ResponseOutput.vue";
 
 
 const move_to = ref('')
 const user = ref(JSON.parse(localStorage.getItem('user')))
+const $cookies = inject('$cookies')
 
 const after_create = ref({})
 const title = ref('')
 const subtitle = ref('')
 const response_status = ref(0)
 const token = reactive(JSON.parse(localStorage.getItem('token')))
-
 
 const deleteUser = async () => {
   try {
@@ -28,6 +28,10 @@ const deleteUser = async () => {
     title.value = response.data.success
     subtitle.value = 'Użytkownik został poprawnie usunięty.'
     response_status.value = response.status
+
+    localStorage.clear()
+    localStorage.setItem('choosen_model', JSON.stringify('bert-base'))
+    $cookies.remove('made_submission')
     move_to.value = '/'
 
   } catch (e) {

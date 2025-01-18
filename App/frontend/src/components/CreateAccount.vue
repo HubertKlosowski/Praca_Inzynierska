@@ -36,7 +36,11 @@ const createAccount = async () => {
       ['Typ konta', usertypes[user['usertype']]],
     ]
     title.value = response.data.success
-    subtitle.value = ''
+    if (user['usertype'] === 2) {
+      subtitle.value = 'Na adres mailowy został wysłany link potwierdzający konto. Aby korzystać z konta należy je zatwierdzić.'
+    } else {
+      subtitle.value = 'Do korzystania z konta należy poczekać na zatwierdzenie go przez administratora.'
+    }
     response_status.value = response.status
     resetInputs()
 

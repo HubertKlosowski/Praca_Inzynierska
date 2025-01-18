@@ -79,6 +79,10 @@ const closeWindow = async () => {
   color: darkred;
 }
 
+.element {
+  font-size: 1.5vw;
+}
+
 .show-content {
   background-color: red;
   height: 2.5vw;

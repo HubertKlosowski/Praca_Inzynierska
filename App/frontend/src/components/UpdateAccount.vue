@@ -35,12 +35,7 @@ const updateAccount = async () => {
     const user = response.data['user']
     const usertypes = ['Normal', 'Pro', 'Administrator']
 
-    after_create.value = [
-      ['Imię i nazwisko', user['name']],
-      ['Nazwa użytkownika', user['username']],
-      ['Adres email', user['email']],
-      ['Typ konta', usertypes[user['usertype']]],
-    ]
+    after_create.value = []
     title.value = response.data.success
     subtitle.value = ''
     response_status.value = response.status

@@ -25,7 +25,7 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
         <ul>
           <li>liczba dziennych prób: 10</li>
           <li>analiza pojedynczych wpisów</li>
-          <li>max. wielkość pliku: do 200kB</li>
+          <li>max. wielkość pliku: do 10 kB</li>
         </ul>
       </div>
       <div class="account">
@@ -40,7 +40,7 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
         <ul>
           <li>liczba dziennych prób: 100</li>
           <li>wykrywanie stanów depresyjnych</li>
-          <li>max. wielkość pliku: do 1MB</li>
+          <li>max. wielkość pliku: do 1 MB</li>
         </ul>
       </div>
     </div>

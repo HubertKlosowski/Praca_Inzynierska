@@ -1,11 +1,9 @@
-import asyncio
 import os.path
 import random
 import smtplib
 import string
 from io import BytesIO
 
-import httpcore
 import jwt
 import pandas as pd
 from django.conf import settings
@@ -43,26 +41,26 @@ from .serializer import UserSerializer, SubmissionSerializer
 def create_user(request):
     data = request.data.copy()
 
+    check = [value for key, value in data.items() if key != 'usertype']
     # sprawdzenie czy wartości pól są puste
-    if not all(data.values()) or not data:
+    if not all(check) or not data:
         return Response({
             'error': ['Żadne pole nie może być puste.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # jeśli użytkownik już istnieje
-    if User.objects.filter(username=request.data['username']).exists():
+    if User.objects.filter(username=data['username']).exists():
         return Response({
             'error': ['Użytkownik o podanej nazwie już istnieje.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # jesli email już jest na kogoś innego zarejestrowany
-    if User.objects.filter(email=request.data['email']).exists():
+    if User.objects.filter(email=data['email']).exists():
         return Response({
             'error': ['Użytkownik o podanym adresie email już istnieje.']
         }, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # walidacja hasła
-    data = request.data.copy()
     try:
         validate_password(data['password'])
     except ValidationError as e:
@@ -70,7 +68,7 @@ def create_user(request):
             'error': e.messages
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    if data['usertype'] not in ['0', '1', '2']:
+    if data['usertype'] not in [0, 1, 2]:
         return Response({
             'error': ['Niepoprawny typ użytkownika.']
         }, status=status.HTTP_400_BAD_REQUEST)
@@ -213,7 +211,10 @@ def delete_user(request):
     email = user.email
 
     for submission in submissions:
-        os.remove(submission.content.path)
+        try:
+            os.remove(submission.content.path)
+        except FileNotFoundError:
+            pass
     submissions.delete()
     user.delete()
 
@@ -417,7 +418,7 @@ def make_submission(request):
 
         try:
             df = pd.read_csv(my_file, index_col=False, usecols=['text']) if extension == 'csv' else pd.read_json(my_file)
-        except ValueError as e:
+        except ValueError:
             return Response({
                 'error': ['Plik musi zawierać kolumnę \"text\".']
             }, status=status.HTTP_400_BAD_REQUEST)

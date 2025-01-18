@@ -31,19 +31,19 @@ const user = reactive(JSON.parse(localStorage.getItem('user')))
       </div>
       <div class="limit">
         <div class="info">Usunięcie konta</div>
-        <div class="info">1 na dzień</div>
+        <div class="info">1 na godzinę</div>
       </div>
       <div class="limit">
         <div class="info">Aktualizacja konta</div>
-        <div class="info">1 na dzień</div>
+        <div class="info">1 na godzinę</div>
       </div>
       <div class="limit" v-if="user.usertype === 2">
         <div class="info">Weryfikacja użytkownika</div>
-        <div class="info">10 na dzień</div>
+        <div class="info">10 na godzinę</div>
       </div>
       <div class="limit" v-if="user.usertype === 2">
         <div class="info">Odświeżenie liczby prób użytkownika</div>
-        <div class="info">10 na dzień</div>
+        <div class="info">10 na godzinę</div>
       </div>
       <div class="limit">
         <div class="info">Wykonanie predykcji</div>

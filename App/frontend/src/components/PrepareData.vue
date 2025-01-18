@@ -117,7 +117,7 @@ const makeSubmissionUser = async () => {
   let form_data = new FormData()
   form_data.append('content', data.value)
   form_data.append('model', model.value)
-  form_data.append('user', user.id)
+  form_data.append('user', user['id'])
 
   data.value = null
   show_loading_screen.value = true

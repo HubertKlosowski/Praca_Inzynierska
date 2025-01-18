@@ -6,6 +6,7 @@ import _ from "lodash";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import FormButtonField from "@/components/FormButtonField.vue";
 import router from "@/router/index.js";
+import ResponseOutput from "@/components/ResponseOutput.vue";
 
 
 const username = ref('')
@@ -138,6 +139,14 @@ const resetInputs = () => {
 </script>
 
 <template>
+
+  <ResponseOutput
+      v-model:response_status="response_status"
+      :after_create="after_create"
+      v-if="response_status >= 400"
+      :title="title"
+      :subtitle="subtitle"
+  ></ResponseOutput>
 
   <div class="left-part">
     <div class="header">

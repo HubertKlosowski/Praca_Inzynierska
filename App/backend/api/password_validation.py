@@ -23,6 +23,7 @@ class LengthValidator:
             f'Hasło musi mieć długość od {self.min_length} do {self.max_length} znaków.'
         )
 
+
 class DigitValidator:
     def __init__(self, min_num=1):
         self.min_num = min_num
@@ -39,6 +40,7 @@ class DigitValidator:
             f'Hasło musi zawierać conajmniej {self.min_num} cyfr.'
         )
 
+
 class CapitalLetterValidator:
     def __init__(self, min_num=1):
         self.min_num = min_num
@@ -54,6 +56,7 @@ class CapitalLetterValidator:
         return _(
             f'Hasło musi zawierać conajmniej {self.min_num} dużych liter.'
         )
+
 
 class SpecialCharacterValidator:
     def __init__(self, min_num=1):

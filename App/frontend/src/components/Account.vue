@@ -514,7 +514,16 @@ form > input {
   justify-content: center;
 }
 
-.account-details, .model-config, .header {
+.account-details {
+  border-top: 2px solid black;
+  height: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.model-config, .header {
   border-top: 2px solid black;
   height: 20%;
   display: flex;
@@ -547,8 +556,7 @@ svg {
 .account-details > .rest {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  overflow-y: scroll;
-  scrollbar-gutter: both-edges stable;
+  place-items: center;
 }
 
 .info {
@@ -611,8 +619,6 @@ svg {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    overflow-y: auto;
-    overflow-x: hidden;
   }
 
   .model-config > .rest {
@@ -675,8 +681,6 @@ svg {
   .account-details > .rest {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
-    overflow-y: scroll;
-    scrollbar-gutter: both-edges stable;
   }
 }
 
