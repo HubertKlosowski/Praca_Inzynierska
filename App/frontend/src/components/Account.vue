@@ -29,7 +29,7 @@ const subtitle = ref('')
 const response_status = ref(0)
 const token = reactive(JSON.parse(localStorage.getItem('token')))
 
-const session = ref(JSON.parse(localStorage.getItem('session')))
+const session = ref(Math.floor((JSON.parse(localStorage.getItem('session')) - new Date().getTime()) / 1000))
 
 
 const logoutUser = async () => {
@@ -157,8 +157,7 @@ const formatSeconds = () => {
 watch(session, () => {
   if (session.value >= 1) {
     setTimeout(() => {
-      session.value -= 1
-      localStorage.setItem('session', JSON.stringify(session.value))
+      session.value = Math.floor((JSON.parse(localStorage.getItem('session')) - new Date().getTime()) / 1000)
     }, 1000)
   }
 }, { immediate: true })
@@ -169,6 +168,10 @@ onMounted(() => {
   } else {
     model.value = JSON.parse(localStorage.getItem('choosen_model'))
     choose_model.value = model.value !== 'bert-base'
+  }
+
+  if (session.value <= 0) {
+    session.value = 0
   }
 })
 </script>

@@ -126,15 +126,6 @@ const createDonut = () => {
       .data(entries)
       .join('text')
       .attr('transform', (d) => `translate(${outer_arc.centroid(d)})`)
-      .call(text => text.append('tspan')
-          .attr('y', '-0.4em')
-          .attr('font-weight', 'bold')
-          .text((d) => d.data['name']))
-      .call(text => text.append('tspan')
-          .attr('x', 0)
-          .attr('y', '0.7em')
-          .attr('fill-opacity', 0.7)
-          .text((d) => d.data['value'] + '%'))
 
   svg.selectAll('path')
       .transition()
@@ -224,9 +215,9 @@ onMounted(() => {
 <template>
   <div class="plot">
     <div class="plots">
-      <h4 v-if="choose_plot === 0">Liczba przypadków depresji w poszczególnych przedziałach</h4>
-      <h4 v-else-if="choose_plot === 1">Średnia wartość depresji</h4>
-      <h4 v-else>Chmura najczęściej występujących słów</h4>
+      <h3 v-if="choose_plot === 0">Liczba przypadków depresji w poszczególnych przedziałach</h3>
+      <h3 v-else-if="choose_plot === 1">Średnia wartość depresji: {{ _.round(_.mean(stats) * 100, 2) }}%</h3>
+      <h3 v-else>Chmura najczęściej występujących słów</h3>
 
       <svg id="hist" v-if="choose_plot === 0" preserveAspectRatio="xMidYMid meet"></svg>
       <svg id="donut" v-else-if="choose_plot === 1" preserveAspectRatio="xMidYMid meet"></svg>
@@ -237,8 +228,7 @@ onMounted(() => {
 
         <FormRadioField
             v-model:input_value="choose_plot"
-            :title="'Wykres'"
-            :options="['histogram', 'kołowy', 'wordcloud']"
+            :options="['histogram', 'średnia', 'chmura słów']"
             :values="[0, 1, 2]"
         ></FormRadioField>
 
@@ -248,7 +238,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-h4 {
+h3 {
   text-align: center;
 }
 

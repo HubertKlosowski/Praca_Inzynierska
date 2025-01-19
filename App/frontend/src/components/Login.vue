@@ -81,8 +81,9 @@ const login = async () => {
     subtitle.value = ''
     response_status.value = response.status
 
+    const date = new Date()
     localStorage.setItem('user', JSON.stringify(user))
-    localStorage.setItem('session', JSON.stringify(3600))
+    localStorage.setItem('session', JSON.stringify(date.setHours(date.getHours() + 1)))
 
     if (user['usertype'] === 2) {
       await getUsers(user)

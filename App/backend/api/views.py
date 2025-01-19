@@ -523,7 +523,6 @@ def make_submission(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTTokenUserAuthentication])
-@throttle_classes([GetSubUserRateThrottle])
 def get_submission(request, sub_uuid):
     if not Submission.objects.filter(id=sub_uuid).exists():
         return Response({

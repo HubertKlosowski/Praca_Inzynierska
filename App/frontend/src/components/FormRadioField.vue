@@ -6,10 +6,14 @@ const props = defineProps(['title', 'options', 'values'])
 
 <template>
   <div class="form-row">
-    <div class="title">
+    <div class="title" :style="{
+      display: props.title !== '' ? 'none' : 'auto',
+    }">
       <span>{{ props.title }}</span>
     </div>
-    <div class="radio-column">
+    <div class="radio-column" :style="{
+      width: props.title !== '' ? '100%' : '70%',
+    }">
       <div class="radio-row">
         <label :for="option" v-for="option in props.options" :key="option">{{ option }}</label>
       </div>
