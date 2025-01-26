@@ -55,10 +55,6 @@ const user = reactive(JSON.parse(localStorage.getItem('user')))
         <div class="info">Zmiana nazwy predykcji</div>
         <div class="info">50 na dzień</div>
       </div>
-      <div class="limit">
-        <div class="info">Wczytanie predykcji przez użytkownika</div>
-        <div class="info">50 na dzień</div>
-      </div>
     </div>
   </div>
 </template>

@@ -19,7 +19,7 @@ const usertypes = ref(['Normal', 'Pro', 'Administrator'])
 const choose_model = ref(false)
 const history_submissions = ref(JSON.parse(localStorage.getItem('history_submissions')))
 const new_name = ref('')
-const change_name = ref(-1)
+const change_index = ref(-1)
 
 const model = ref('')
 
@@ -82,17 +82,17 @@ const showDetails = async (submission) => {
   }
 }
 
-const setPredictionName = async (submission, num) => {
-  change_name.value = -1
+const setPredictionName = async (submission) => {
   try {
     await axios.patch(
         'http://localhost:8000/api/submission/change_name/' + submission['id'],
         {'name': new_name.value},
         {headers: {'Authorization' : `Bearer ${token['access']}`}}
     )
-    history_submissions.value[num]['name'] = new_name.value
+    history_submissions.value[change_index.value]['name'] = new_name.value
     localStorage.setItem('history_submissions', JSON.stringify(history_submissions.value))
     new_name.value = ''
+    change_index.value = -1
 
   } catch (e) {
     if (typeof e.response === 'undefined') {
@@ -142,7 +142,7 @@ const refreshAccessToken = async (after_create_success) => {
 }
 
 const closeWindow = () => {
-  change_name.value = -1
+  change_index.value = -1
 }
 
 const formatSeconds = () => {
@@ -252,18 +252,26 @@ onMounted(() => {
         <div class="field">Szczegóły</div>
       </div>
       <div class="h-submissions">
-        <div class="history-submission" v-for="(item, i) in history_submissions" :key="item" v-if="history_submissions.length !== 0">
+        <div
+            class="history-submission"
+            v-for="(item, i) in history_submissions" :key="item"
+            v-if="history_submissions.length !== 0 && change_index === -1"
+        >
           <div class="field" style="width: 10%">{{ i + 1 }}</div>
-          <div class="field" @click="change_name = i" v-if="item.name !== null" v-show="change_name !== i">{{ item.name }}</div>
-          <div class="field" @click="change_name = i" v-else v-show="change_name !== i">Brak nazwy</div>
-          <div class="field" v-if="change_name === i" style="overflow-y: auto; align-items: start;">
-            <form @submit.prevent="setPredictionName(item, i)">
+          <div class="field" v-if="item.name !== null && change_index !== i" @click="change_index = i">{{ item.name }}</div>
+          <div class="field" v-if="item.name === null && change_index !== i" @click="change_index = i">Brak nazwy</div>
+          <div class="field" style="border: none">
+            <button type="button" class="details" @click="showDetails(item)">Pokaż szczegóły</button>
+          </div>
+        </div>
+        <div class="history-submission" v-if="change_index !== -1">
+          <form @submit.prevent="setPredictionName(history_submissions[change_index])" style="border: none">
 
               <FormTextField
                   v-model:input_value="new_name"
                   :minimize="true"
                   :label_info="''"
-                  :input_placeholder="item.name"
+                  :input_placeholder="history_submissions[change_index].name"
                   :label_name="''"
               ></FormTextField>
 
@@ -277,12 +285,8 @@ onMounted(() => {
               </FormButtonField>
 
             </form>
-          </div>
-          <div class="field" style="border: none">
-            <button type="button" class="details" @click="showDetails(item)">Pokaż szczegóły</button>
-          </div>
         </div>
-        <div class="history-submission" v-else>
+        <div class="history-submission" v-if="history_submissions.length === 0">
           Brak wykonanych prób
         </div>
       </div>
@@ -348,20 +352,7 @@ form {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-}
-
-form > .update {
-  width: 50%;
-  height: 80%;
-  font-size: 1.5vw;
-}
-
-form > input {
-  width: 50%;
-  height: 20%;
-  box-sizing: border-box;
-  padding: 1rem;
-  border-radius: 0.75rem;
+  height: 100%;
 }
 
 .history {
@@ -584,7 +575,11 @@ svg {
   align-items: center;
 }
 
-@media (max-width: 660px) {
+@media (max-width: 700px) {
+  .form-row {
+    width: auto;
+  }
+
   .buttons {
     display: flex;
     flex-direction: column;
@@ -684,27 +679,6 @@ svg {
   .account-details > .rest {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
-  }
-}
-
-@media (max-height: 768px) {
-  form {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-  }
-
-  form > .update {
-    width: 50%;
-    height: 100%;
-    font-size: 1.5vw;
-  }
-
-  form > input {
-    width: 30%;
-    height: 100%;
-    font-size: 1.5vw;
   }
 }
 </style>

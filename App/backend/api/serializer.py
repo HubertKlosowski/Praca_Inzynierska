@@ -42,9 +42,6 @@ class UserSerializer(serializers.ModelSerializer):
             'last_submission': {
                 'write_only': True,
             },
-            'is_verified': {
-                'write_only': True,
-            },
             'created_at': {
                 'write_only': True,
             },

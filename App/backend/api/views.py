@@ -563,6 +563,7 @@ def change_name(request, sub_uuid):
 
     submission = Submission.objects.get(id=sub_uuid)
     submission.name = data['name']
+    submission.save()
 
     return Response({
         'success': 'Poprawnie ustawiono nazwę próby.',
