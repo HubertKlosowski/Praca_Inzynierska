@@ -328,8 +328,6 @@ def verify_user(request):
                 'error': ['Użytkownik nie istnieje.']
             }, status=status.HTTP_404_NOT_FOUND)
 
-        # Rozdziel verify_user na 2 metody i dodaj sprawdzenie czy user jest adminem i potwierdził swoje konto
-
         user = User.objects.get(username=username)
         user.is_verified = True
         user.save()
