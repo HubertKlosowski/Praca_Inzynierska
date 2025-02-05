@@ -68,18 +68,13 @@ def merge_dataframes(for_train: bool = False) -> pd.DataFrame:
     return merged
 
 def balance_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
-    if 'label' not in dataframe.columns:
-        raise ValueError('Podanego zbioru nie można zbalansować. Brak kolumny \"label\".')
-
     dataframe['label'] = dataframe['label'].astype(int)
     counts = dataframe['label'].value_counts()
 
     if counts[0] > counts[1]:
-        sample = counts[0] - counts[1]
-        dataframe.drop(index=dataframe.loc[dataframe['label'] == 0].sample(n=sample).index, inplace=True)
+        dataframe.drop(index=dataframe.loc[dataframe['label'] == 0].sample(n=counts[0] - counts[1]).index, inplace=True)
     else:
-        sample = counts[1] - counts[0]
-        dataframe.drop(index=dataframe.loc[dataframe['label'] == 1].sample(n=sample).index, inplace=True)
+        dataframe.drop(index=dataframe.loc[dataframe['label'] == 1].sample(n=counts[1] - counts[0]).index, inplace=True)
 
     return dataframe.sample(frac=1).reset_index(drop=True)
 
@@ -90,35 +85,30 @@ def balance_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
 # usuniecie znaków interpunkcyjnych
 # usuniecie stop-words
 # stemming
-def preprocess_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
+def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     lang_resource = spacy.load('en_core_web_sm')
     lang_resource.add_pipe('emoji', first=True)
-
     stemmer = PorterStemmer()
-
     url_pattern = r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?'
-    dataframe['text'] = dataframe['text'].apply(lambda sentence: re.sub(url_pattern, '', sentence))
-    dataframe['text'] = dataframe['text'].apply(lambda sentence: sentence.strip())
-    dataframe['text'] = dataframe['text'].apply(lambda sentence: lang_resource(sentence))
-    dataframe['text'] = dataframe['text'].apply(
-        lambda tokens: [token for token in tokens if not token.is_punct]
+    df['text'] = df['text'].apply(lambda s: re.sub(url_pattern, '', s))
+    df['text'] = df['text'].apply(lambda s: s.strip())
+    df['text'] = df['text'].apply(lambda s: lang_resource(s))
+    df['text'] = df['text'].apply(
+        lambda ts: [t for t in ts if not t.is_punct]
     )
-    dataframe['text'] = dataframe['text'].apply(
-        lambda tokens: [token for token in tokens if not token.is_stop]
+    df['text'] = df['text'].apply(
+        lambda ts: [t for t in ts if not t.is_stop]
     )
-    dataframe['text'] = dataframe['text'].apply(
-        lambda tokens: [token._.emoji_desc if token._.is_emoji else token.text for token in tokens]
+    df['text'] = df['text'].apply(
+        lambda ts: [t._.emoji_desc if t._.is_emoji else t.text for t in ts]
     )
-    dataframe['text'] = dataframe['text'].apply(lambda tokens: [stemmer.stem(token) for token in tokens])
-    dataframe['text'] = dataframe['text'].apply(
-        lambda tokens: ' '.join([str(token) for token in tokens if token is not None])
+    df['text'] = df['text'].apply(
+        lambda ts: [stemmer.stem(t) for t in ts]
     )
-
-    dataframe['len'] = dataframe['text'].str.len()
-    dataframe.drop(index=dataframe.loc[dataframe['len'] == 0, :].index, inplace=True)
-    dataframe.drop(columns=['len'], inplace=True)
-
-    return dataframe
+    df['text'] = df['text'].apply(
+        lambda ts: ' '.join([str(t) for t in ts if t is not None])
+    )
+    return df
 
 # obsluga zbyt dlugich wpisow
 def drop_too_long(df: pd.DataFrame, tokenizer) -> pd.DataFrame:
@@ -150,9 +140,10 @@ def fine_tune(model_path: str):
         pd.read_csv(os.path.join('data', 'final', 'train_preprocessed_english.csv')),
         split_train_test=True
     )
+
     tokenized_dataset = dataset.map(lambda x: apply_tokenizer(tokenizer, x), batched=True)
-    id2label = { 0: 'non-depressed', 1: 'depressed' }
-    label2id = { 'non-depressed': 0, 'depressed': 1 }
+    id2label = {0: 'non-depressed', 1: 'depressed'}
+    label2id = {'non-depressed': 0, 'depressed': 1}
 
     model = AutoModelForSequenceClassification.from_pretrained(
         model_path,
