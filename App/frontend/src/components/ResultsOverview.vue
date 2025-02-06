@@ -13,8 +13,8 @@ const time = ref(0)
 const records = ref(0)
 const after_create = ref([])
 const title = ref('Co to są "trudne" rekordy?')
-const subtitle = ref('Są to rekordy, którym nie da się jednoznacznie określić występowania depresji. ' +
-    'Jej wartość dla takich wpisów znajduję się w przedziale od 45% do 55% włącznie. ')
+const subtitle = ref('Są to rekordy, dla których nie można jednoznacznie określić obecności depresji. ' +
+    'Wartość prawdopodobieństwa depresji znajduję się w przedziale od 45% do 55% włącznie. ')
 const response_status = defineModel('response_status')
 
 
